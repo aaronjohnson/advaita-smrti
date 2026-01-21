@@ -1,0 +1,29 @@
+# Database files (contain user answers)
+*.db
+
+# Exported answer files
+*_answers.json
+sea_answers.json
+
+# Claude Code session files
+.sea_question_context.json
+.sea_answer.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
