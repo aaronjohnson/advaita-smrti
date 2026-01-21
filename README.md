@@ -56,6 +56,7 @@ Two example configs are included in `examples/` - copy one to `questions_config.
 - **Context passing** - Questions, helper text, and related answers provided automatically
 - **Answer capture** - Claude writes final answer to file, you approve before saving
 - **CLAUDE.md workflow** - Instructions tell Claude exactly how to help
+- **Custom commands** - `/form-start`, `/form-save`, `/form-status`
 
 ## Quick Start
 
@@ -109,6 +110,16 @@ When you select a question and press `[C]`, the assistant:
 5. **You approve** - back in the assistant, confirm to save to database
 
 This is the core pattern: **load context → collaborative dialog → capture output → iterate**
+
+### Claude Commands
+
+Once in a Claude Code session, you can use these commands:
+
+| Command | Purpose |
+|---------|---------|
+| `/form-start` | Read the question context and begin discussion |
+| `/form-save` | Write the finalized answer to `.sea_answer.md` |
+| `/form-status` | Check current question and any pending answer |
 
 ## Session Logging
 
