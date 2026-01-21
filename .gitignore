@@ -9,6 +9,9 @@ sea_answers.json
 .sea_question_context.json
 .sea_answer.md
 
+# Session logs (contain user journey data)
+session_log.json
+
 # Python
 __pycache__/
 *.py[cod]

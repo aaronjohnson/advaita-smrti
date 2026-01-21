@@ -2,7 +2,7 @@
 """
 Form Application Helper
 A tool to help work through multi-section applications and questionnaires
-with executive function support for neurodivergent applicants.
+with structured support for anyone who benefits from breaking big tasks into steps.
 
 Loads questions from questions_config.json - swap this file to use different forms.
 """
@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 class SEAApplicationHelper:
-    def __init__(self, db_path="sea_application.db", config_path=None):
+    def __init__(self, db_path="sea_application.db", config_path=None, log_path=None):
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row
@@ -26,6 +26,12 @@ class SEAApplicationHelper:
         self.config_path = Path(config_path)
         self.config = self._load_config()
 
+        # Session logging
+        if log_path is None:
+            log_path = Path(__file__).parent / "session_log.json"
+        self.log_path = Path(log_path)
+        self.session_log = self._load_session_log()
+
         self.init_database()
 
     def _load_config(self):
@@ -34,6 +40,53 @@ class SEAApplicationHelper:
             with open(self.config_path, 'r') as f:
                 return json.load(f)
         return None
+
+    def _load_session_log(self):
+        """Load existing session log or create new one"""
+        if self.log_path.exists():
+            try:
+                with open(self.log_path, 'r') as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError):
+                return {"sessions": []}
+        return {"sessions": []}
+
+    def _save_session_log(self):
+        """Save session log to file"""
+        with open(self.log_path, 'w') as f:
+            json.dump(self.session_log, f, indent=2)
+
+    def log_event(self, event_type, question_id=None, details=None):
+        """Log a session event for tracking user journey"""
+        event = {
+            "timestamp": datetime.now().isoformat(),
+            "event": event_type,
+        }
+        if question_id:
+            event["question_id"] = question_id
+        if details:
+            event.update(details)
+
+        self.session_log["sessions"].append(event)
+        self._save_session_log()
+
+    def get_session_history(self, question_id=None):
+        """Get session history, optionally filtered by question"""
+        events = self.session_log.get("sessions", [])
+        if question_id:
+            events = [e for e in events if e.get("question_id") == question_id]
+        return events
+
+    def get_question_journey(self, question_id):
+        """Get the full journey for a specific question"""
+        events = self.get_session_history(question_id)
+        return {
+            "question_id": question_id,
+            "total_events": len(events),
+            "events": events,
+            "claude_sessions": len([e for e in events if e.get("event") == "claude_session_start"]),
+            "revisions": len([e for e in events if e.get("event") == "answer_saved"])
+        }
 
     def get_form_info(self):
         """Get information about the loaded form"""

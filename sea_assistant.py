@@ -3,6 +3,8 @@
 Interactive Form Application Assistant
 Choose Your Own Adventure style interface for completing applications
 with AI-assisted collaboration via Claude Code.
+
+Tracks your journey through session logging - see how your thinking evolves.
 """
 
 import sys
@@ -44,6 +46,7 @@ class InteractiveAssistant:
         print("  [5] Show progress dashboard")
         print("  [6] Export answers to file")
         print("  [7] Tips for answering questions")
+        print("  [8] View session history")
         print()
         print("  [C] Work with Claude on a question (collaborative AI session)")
         print()
@@ -156,6 +159,11 @@ class InteractiveAssistant:
                 status = 'in_progress' if '[DRAFT]' in final_answer else 'complete'
 
             self.helper.save_answer(question_id, final_answer, status=status)
+            self.helper.log_event("answer_saved", question_id, {
+                "source": "manual",
+                "status": status,
+                "answer_length": len(final_answer)
+            })
             print("\nSaved!")
         else:
             print("\nNo changes made")
@@ -186,6 +194,9 @@ class InteractiveAssistant:
         if notes:
             current_answer = q.get('answer_text', '[NOTES ONLY]')
             self.helper.save_answer(question_id, current_answer, notes=notes)
+            self.helper.log_event("notes_added", question_id, {
+                "notes_length": len(notes)
+            })
             print("\nNotes saved!")
 
         input("\nPress Enter to continue...")
@@ -214,6 +225,13 @@ class InteractiveAssistant:
             print(f"\nQuestion '{question_id}' not found")
             input("Press Enter to continue...")
             return
+
+        # Log session start
+        self.helper.log_event("claude_session_start", question_id, {
+            "had_draft": bool(q.get('answer_text')),
+            "had_notes": bool(q.get('notes')),
+            "section": q.get('section_title')
+        })
 
         # Prepare context file
         context = {
@@ -302,10 +320,15 @@ class InteractiveAssistant:
                 save_choice = input("\nSave this answer? [Y/n]: ").strip().lower()
                 if save_choice != 'n':
                     self.helper.save_answer(question_id, answer, status='complete')
+                    self.helper.log_event("answer_saved", question_id, {
+                        "source": "claude_session",
+                        "answer_length": len(answer)
+                    })
                     print("Answer saved to database!")
                     # Clean up
                     answer_file.unlink()
                 else:
+                    self.helper.log_event("answer_declined", question_id)
                     print("Answer not saved. File preserved at .sea_answer.md")
             else:
                 print("\nAnswer file was empty. No changes made.")
@@ -512,6 +535,69 @@ class InteractiveAssistant:
 
         input("Press Enter to continue...")
 
+    def show_session_history(self):
+        """Show session history - track your journey"""
+        self.clear_screen()
+        self.show_header()
+
+        print("SESSION HISTORY\n")
+        print("Your journey through the application:\n")
+
+        events = self.helper.get_session_history()
+
+        if not events:
+            print("No session history yet. Start working on questions to build your journey!")
+            input("\nPress Enter to continue...")
+            return
+
+        # Show recent events
+        recent = events[-20:] if len(events) > 20 else events
+        print(f"Showing {len(recent)} most recent events (of {len(events)} total):\n")
+
+        for event in recent:
+            timestamp = event.get('timestamp', '')[:16].replace('T', ' ')
+            event_type = event.get('event', 'unknown')
+            q_id = event.get('question_id', '')
+
+            # Format event nicely
+            if event_type == 'claude_session_start':
+                print(f"  [{timestamp}] Started Claude session for Q{q_id}")
+            elif event_type == 'answer_saved':
+                source = event.get('source', 'unknown')
+                length = event.get('answer_length', 0)
+                print(f"  [{timestamp}] Saved answer for Q{q_id} ({source}, {length} chars)")
+            elif event_type == 'answer_declined':
+                print(f"  [{timestamp}] Declined Claude answer for Q{q_id}")
+            elif event_type == 'notes_added':
+                print(f"  [{timestamp}] Added notes for Q{q_id}")
+            else:
+                print(f"  [{timestamp}] {event_type} - Q{q_id}")
+
+        # Summary stats
+        print("\n" + "-" * 50)
+        print("Summary:")
+        claude_sessions = len([e for e in events if e.get('event') == 'claude_session_start'])
+        answers_saved = len([e for e in events if e.get('event') == 'answer_saved'])
+        notes_added = len([e for e in events if e.get('event') == 'notes_added'])
+        print(f"  Claude sessions: {claude_sessions}")
+        print(f"  Answers saved: {answers_saved}")
+        print(f"  Notes added: {notes_added}")
+
+        # Questions with most activity
+        question_counts = {}
+        for e in events:
+            q_id = e.get('question_id')
+            if q_id:
+                question_counts[q_id] = question_counts.get(q_id, 0) + 1
+
+        if question_counts:
+            print("\nMost worked-on questions:")
+            sorted_qs = sorted(question_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+            for q_id, count in sorted_qs:
+                print(f"  Q{q_id}: {count} events")
+
+        input("\nPress Enter to continue...")
+
     def run(self):
         """Main application loop - Choose Your Own Adventure!"""
         while self.running:
@@ -539,6 +625,8 @@ class InteractiveAssistant:
                 self.export_answers()
             elif choice == '7':
                 self.show_tips()
+            elif choice == '8':
+                self.show_session_history()
             elif choice.upper() == 'C':
                 q_id = input("\nEnter question ID to work on with Claude (e.g., '1', '2a', '34b'): ").strip()
                 q = self.helper.get_question(q_id)
