@@ -1,6 +1,9 @@
 # Database files (contain user answers)
 *.db
 
+# Active config (user selects from examples/ on first run)
+questions_config.json
+
 # Exported answer files
 *_answers.json
 sea_answers.json

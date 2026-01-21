@@ -10,14 +10,135 @@ Tracks your journey through session logging - see how your thinking evolves.
 import sys
 import json
 import subprocess
-import os
+import shutil
 from pathlib import Path
 from sea_application_helper import SEAApplicationHelper
 
 
+def get_config_path():
+    """Get the path to the active config file"""
+    return Path(__file__).parent / "questions_config.json"
+
+
+def get_examples_dir():
+    """Get the path to the examples directory"""
+    return Path(__file__).parent / "examples"
+
+
+def list_available_configs():
+    """List all available config files"""
+    examples_dir = get_examples_dir()
+    configs = []
+
+    if examples_dir.exists():
+        for f in sorted(examples_dir.glob("*_config.json")):
+            try:
+                with open(f, 'r') as file:
+                    data = json.load(file)
+                    configs.append({
+                        'path': f,
+                        'name': data.get('form_name', f.stem),
+                        'description': data.get('form_description', ''),
+                        'questions': len(data.get('questions', []))
+                    })
+            except (json.JSONDecodeError, IOError):
+                pass
+
+    return configs
+
+
+def select_config_interactive():
+    """Interactive config selection for first run"""
+    print("\n" + "=" * 70)
+    print("  FORM COPILOT - First Time Setup")
+    print("=" * 70)
+    print("\nNo active form found. Let's choose one to get started.\n")
+
+    configs = list_available_configs()
+
+    if not configs:
+        print("No example configs found in examples/ directory.")
+        print("Create a questions_config.json file to get started.")
+        print("See README.md for the config file format.")
+        sys.exit(1)
+
+    print("Available forms:\n")
+    for i, cfg in enumerate(configs, 1):
+        print(f"  [{i}] {cfg['name']}")
+        print(f"      {cfg['description']}")
+        print(f"      ({cfg['questions']} questions)")
+        print()
+
+    print("  [C] Create a new custom form")
+    print("  [Q] Quit")
+    print()
+
+    while True:
+        choice = input("Select a form to start with: ").strip()
+
+        if choice.upper() == 'Q':
+            print("\nGoodbye!")
+            sys.exit(0)
+
+        if choice.upper() == 'C':
+            print("\nTo create a custom form:")
+            print("1. Copy an example: cp examples/college_app_config.json questions_config.json")
+            print("2. Edit questions_config.json with your sections and questions")
+            print("3. Run this assistant again")
+            print("\nSee README.md for the full config file format.")
+            sys.exit(0)
+
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(configs):
+                selected = configs[idx]
+
+                # Copy to active config
+                config_path = get_config_path()
+                shutil.copy(selected['path'], config_path)
+
+                print(f"\nActivated: {selected['name']}")
+                print(f"Config copied to: {config_path.name}")
+                print()
+                return config_path
+        except ValueError:
+            pass
+
+        print("Invalid choice. Try again.")
+
+
+def get_db_path_for_config(config_path):
+    """Generate database path based on config name"""
+    # Use config filename (without _config.json) as db name
+    config_name = config_path.stem.replace('_config', '')
+    if config_name == 'questions':
+        # For the generic questions_config.json, read the form name
+        try:
+            with open(config_path, 'r') as f:
+                data = json.load(f)
+                form_name = data.get('form_name', 'default')
+                # Sanitize for filename
+                config_name = form_name.lower().replace(' ', '_')[:30]
+        except (json.JSONDecodeError, IOError):
+            config_name = 'default'
+
+    return Path(__file__).parent / f"{config_name}.db"
+
+
 class InteractiveAssistant:
-    def __init__(self):
-        self.helper = SEAApplicationHelper()
+    def __init__(self, config_path=None):
+        if config_path is None:
+            config_path = get_config_path()
+
+        # Check if active config exists
+        if not config_path.exists():
+            select_config_interactive()
+
+        # Determine database path based on form
+        db_path = get_db_path_for_config(config_path)
+
+        self.config_path = config_path
+        self.helper = SEAApplicationHelper(db_path=str(db_path), config_path=str(config_path))
         self.running = True
         self.form_info = self.helper.get_form_info()
 
@@ -47,6 +168,7 @@ class InteractiveAssistant:
         print("  [6] Export answers to file")
         print("  [7] Tips for answering questions")
         print("  [8] View session history")
+        print("  [9] Switch to different form")
         print()
         print("  [C] Work with Claude on a question (collaborative AI session)")
         print()
@@ -598,6 +720,64 @@ class InteractiveAssistant:
 
         input("\nPress Enter to continue...")
 
+    def switch_form(self):
+        """Switch to a different form/config"""
+        self.clear_screen()
+        self.show_header()
+
+        print("SWITCH FORM\n")
+        print(f"Current form: {self.form_info['name']}\n")
+
+        configs = list_available_configs()
+
+        if not configs:
+            print("No other forms available in examples/ directory.")
+            input("\nPress Enter to continue...")
+            return
+
+        print("Available forms:\n")
+        for i, cfg in enumerate(configs, 1):
+            current = " (current)" if cfg['name'] == self.form_info['name'] else ""
+            print(f"  [{i}] {cfg['name']}{current}")
+            print(f"      {cfg['questions']} questions")
+            print()
+
+        print("  [B] Back to menu")
+        print()
+
+        print("Note: Each form has its own database. Your progress is saved separately.")
+        print()
+
+        choice = input("Select form: ").strip()
+
+        if choice.upper() == 'B':
+            return
+
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(configs):
+                selected = configs[idx]
+
+                # Copy to active config
+                config_path = get_config_path()
+                shutil.copy(selected['path'], config_path)
+
+                # Reinitialize with new config
+                db_path = get_db_path_for_config(config_path)
+                self.helper.close()
+                self.helper = SEAApplicationHelper(db_path=str(db_path), config_path=str(config_path))
+                self.form_info = self.helper.get_form_info()
+
+                print(f"\nSwitched to: {selected['name']}")
+                print(f"Database: {db_path.name}")
+                input("\nPress Enter to continue...")
+                return
+        except ValueError:
+            pass
+
+        print("Invalid choice.")
+        input("\nPress Enter to continue...")
+
     def run(self):
         """Main application loop - Choose Your Own Adventure!"""
         while self.running:
@@ -627,6 +807,8 @@ class InteractiveAssistant:
                 self.show_tips()
             elif choice == '8':
                 self.show_session_history()
+            elif choice == '9':
+                self.switch_form()
             elif choice.upper() == 'C':
                 q_id = input("\nEnter question ID to work on with Claude (e.g., '1', '2a', '34b'): ").strip()
                 q = self.helper.get_question(q_id)

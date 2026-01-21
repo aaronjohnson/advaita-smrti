@@ -60,11 +60,16 @@ Two example configs are included in `examples/` - copy one to `questions_config.
 ## Quick Start
 
 ```bash
-# 1. Run the interactive assistant
+# Run the interactive assistant
 python3 sea_assistant.py
 
-# 2. Follow the menu - it's a choose your own adventure!
+# First run? You'll be prompted to choose a form:
+#   [1] Oregon SEA Application (49 questions)
+#   [2] College Application Essays (17 questions)
+#   [C] Create a new custom form
 ```
+
+Each form gets its own database - switch between forms anytime from the menu.
 
 ## The Adventure Menu
 
@@ -78,6 +83,8 @@ What would you like to do?
   [5] Show progress dashboard
   [6] Export answers to file
   [7] Tips for answering questions
+  [8] View session history
+  [9] Switch to different form
 
   [C] Work with Claude on a question (collaborative AI session)
 
@@ -128,9 +135,13 @@ View your session history to:
 | `sea_assistant.py` | Interactive CLI (main interface) |
 | `sea_application_helper.py` | Core database and functions |
 | `CLAUDE.md` | Instructions for Claude Code sessions |
-| `questions_config.json` | Active form definition (copy from examples/) |
 | `business_direction_analysis.md` | Template for planning your direction |
 | `.gitignore` | Excludes database and temp files |
+
+**Generated on first run:**
+| `questions_config.json` | Active form (copied from your selection in examples/) |
+| `*.db` | Database for each form (stores your answers) |
+| `session_log.json` | Your session history |
 
 ### Example Configs
 
@@ -145,14 +156,30 @@ cp examples/college_app_config.json questions_config.json
 python3 sea_assistant.py
 ```
 
-## Customizing for Your Form
+## Creating Your Own Form
 
-The system loads questions from `questions_config.json`. To use a different form:
+Want to use this for a different application? Create your own config file.
 
-1. Copy `questions_config.json` to create your own
-2. Edit the JSON with your sections and questions
-3. Delete any existing `sea_application.db` to start fresh
-4. Run the assistant - it will load your new config
+### Quick Start: Copy and Modify
+
+```bash
+# Start from an example
+cp examples/college_app_config.json examples/my_form_config.json
+
+# Edit with your questions
+nano examples/my_form_config.json  # or your preferred editor
+
+# Run - it will appear in the form selection menu
+python3 sea_assistant.py
+```
+
+### Step-by-Step Guide
+
+1. **Identify your sections** - Group related questions (e.g., "Personal Info", "Experience", "Goals")
+2. **List all questions** - Copy them exactly as they appear on the form
+3. **Assign priorities** - Which questions are foundational? Which depend on others?
+4. **Add helper text** - What guidance would help you (or others) answer well?
+5. **Save in examples/** - Files matching `*_config.json` appear in the menu
 
 ### Config File Structure
 
@@ -193,6 +220,21 @@ The system loads questions from `questions_config.json`. To use a different form
 - **2** - Important but can wait
 - **3** - Nice to have, do last
 
+### Tips for Good Configs
+
+- **Helper text matters** - Write hints you wish someone had given you
+- **Use question dependencies** - If Q2 only matters when Q1 is "Yes", set `depends_on`
+- **Be specific in IDs** - Use `1a`, `1b` for sub-questions
+- **business_directions is optional** - Only include if your form has multiple paths
+- **Test your config** - Run through a few questions to check the flow
+
+### Sharing Configs
+
+Created a config for a common application? Consider contributing it:
+1. Remove any personal information from helper text
+2. Test that it works from a fresh start
+3. Submit a pull request to add it to `examples/`
+
 ## Privacy
 
 Your answers stay local:
@@ -203,15 +245,19 @@ Your answers stay local:
 
 ## Requirements
 
-- Python 3.6+
-- No external dependencies (standard library only)
-- Claude Code CLI (for AI collaboration feature)
+- **Python 3.6+** - No external dependencies (standard library only)
+- **Claude Code CLI** - For AI collaboration feature
+  - Install: See [Claude Code documentation](https://docs.anthropic.com/claude-code)
+  - The `claude` command must be available in the same shell where you run `python3 sea_assistant.py`
+  - Test with: `claude --version`
+  - If Claude isn't in your PATH, the `[C]` option will show an error but the tool still works for manual answers
 
 ## Version History
 
 - **v0.1** - Initial release: menu-driven interface, database, progress tracking
 - **v0.2** - Claude Code integration, collaborative AI sessions
 - **v0.3** - Session logging, use case documentation, config-driven forms
+- **v0.4** - First-run config selection, form switching, separate databases per form
 
 ## License
 
