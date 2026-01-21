@@ -36,7 +36,7 @@ This pattern works for any complex application requiring thoughtful written resp
 | **Business Loans** | SBA loans, bank applications | Business plans, projections, collateral documentation |
 | **Fellowships** | Fulbright, Rhodes, professional fellowships | Personal statements, research proposals, leadership narratives |
 
-The included example is the Oregon SEA application - swap in your own `questions_config.json` for any form.
+Two example configs are included in `examples/` - copy one to `questions_config.json` to get started.
 
 ## Features
 
@@ -128,9 +128,22 @@ View your session history to:
 | `sea_assistant.py` | Interactive CLI (main interface) |
 | `sea_application_helper.py` | Core database and functions |
 | `CLAUDE.md` | Instructions for Claude Code sessions |
-| `questions_config.json` | Form definition (swap for your form) |
+| `questions_config.json` | Active form definition (copy from examples/) |
 | `business_direction_analysis.md` | Template for planning your direction |
 | `.gitignore` | Excludes database and temp files |
+
+### Example Configs
+
+| File | Questions | Use Case |
+|------|-----------|----------|
+| `examples/oregon_sea_config.json` | 49 | Self-employment assistance, business planning |
+| `examples/college_app_config.json` | 17 | College essays, Common App, supplementals |
+
+To use an example:
+```bash
+cp examples/college_app_config.json questions_config.json
+python3 sea_assistant.py
+```
 
 ## Customizing for Your Form
 
