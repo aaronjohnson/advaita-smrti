@@ -160,6 +160,9 @@ View your session history to:
 |------|-----------|----------|
 | `examples/oregon_sea_config.json` | 49 | Self-employment assistance, business planning |
 | `examples/college_app_config.json` | 17 | College essays, Common App, supplementals |
+| `examples/creative_grant_config.json` | 22 | Artist grants, creative project proposals |
+
+Three examples spanning business, academic, and creative applications.
 
 To use an example:
 ```bash
