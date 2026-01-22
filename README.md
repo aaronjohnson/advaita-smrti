@@ -36,7 +36,7 @@ This pattern works for any complex application requiring thoughtful written resp
 | **Business Loans** | SBA loans, bank applications | Business plans, projections, collateral documentation |
 | **Fellowships** | Fulbright, Rhodes, professional fellowships | Personal statements, research proposals, leadership narratives |
 
-Two example configs are included in `examples/` - copy one to `questions_config.json` to get started.
+Four example configs are included in `examples/` - on first run, you'll be prompted to choose one.
 
 ## Features
 
@@ -167,11 +167,7 @@ View your session history to:
 
 Four examples spanning business, academic, creative, and entrepreneurial applications.
 
-To use an example:
-```bash
-cp examples/college_app_config.json questions_config.json
-python3 sea_assistant.py
-```
+On first run, you'll be prompted to choose which form to use. Switch forms anytime from the menu.
 
 ## Creating Your Own Form
 
