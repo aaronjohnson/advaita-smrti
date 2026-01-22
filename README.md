@@ -78,7 +78,7 @@ Each form gets its own database - switch between forms anytime from the menu.
 What would you like to do?
 
   [1] Work on high-priority questions (recommended to start)
-  [2] Review business directions
+  [2] Review business directions (if configured)
   [3] Browse by section
   [4] View specific question by ID
   [5] Show progress dashboard
@@ -91,6 +91,8 @@ What would you like to do?
 
   [Q] Quit and save
 ```
+
+Menu options adapt to your form - items like "business directions" only appear when configured.
 
 ## Working with Claude (The Magic)
 

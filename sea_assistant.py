@@ -155,13 +155,19 @@ class InteractiveAssistant:
         print(f"  Progress: {progress['complete']}/{progress['total']} complete ({progress['percent_complete']:.1f}%)")
         print("=" * 70 + "\n")
 
+    def has_business_directions(self):
+        """Check if this form has business directions configured"""
+        directions = self.helper.get_business_directions()
+        return len(directions) > 0
+
     def show_menu(self):
         """Show main menu - Choose Your Own Adventure style"""
         self.show_header()
         print("What would you like to do?")
         print()
         print("  [1] Work on high-priority questions (recommended to start)")
-        print("  [2] Review business directions")
+        if self.has_business_directions():
+            print("  [2] Review business directions")
         print("  [3] Browse by section")
         print("  [4] View specific question by ID")
         print("  [5] Show progress dashboard")
@@ -788,7 +794,11 @@ class InteractiveAssistant:
             if choice == '1':
                 self.work_on_priorities()
             elif choice == '2':
-                self.review_business_directions()
+                if self.has_business_directions():
+                    self.review_business_directions()
+                else:
+                    print("\nThis form doesn't have business directions configured.")
+                    input("Press Enter to continue...")
             elif choice == '3':
                 self.browse_sections()
             elif choice == '4':
