@@ -49,6 +49,7 @@ Press `[C]` on any question to launch a Claude Code session:
 | `/form-start` | Read question context, begin discussion |
 | `/form-save` | Write final answer to file |
 | `/generate-config` | Create a config from pasted questions |
+| `/export-docs` | Export to Markdown/Texinfo/PDF |
 
 ## Create Your Own Config
 

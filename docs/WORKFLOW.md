@@ -53,6 +53,7 @@ Once in a Claude Code session, you can use these commands:
 | `/form-save` | Write the finalized answer to `.sea_answer.md` |
 | `/form-status` | Check current question and any pending answer |
 | `/generate-config` | Generate a new config from pasted questions |
+| `/export-docs` | Export to Markdown/Texinfo, build PDF |
 
 ## Session Logging
 
