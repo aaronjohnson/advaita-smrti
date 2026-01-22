@@ -294,7 +294,7 @@ class SEAApplicationHelper:
     def get_questions_by_section(self, section_id):
         """Get all questions for a section"""
         self.cursor.execute("""
-            SELECT q.*, a.answer_text, a.status, s.title as section_title
+            SELECT q.*, a.answer_text, a.notes, a.status, s.title as section_title
             FROM questions q
             LEFT JOIN answers a ON q.id = a.question_id
             LEFT JOIN sections s ON q.section_id = s.id
