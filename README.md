@@ -24,12 +24,15 @@ Four [example configs](docs/EXAMPLES.md) included. Or create your own from any s
 ## Quick Start
 
 ```bash
-python3 sea_assistant.py
+python3 form_copilot.py                # Interactive mode
+python3 form_copilot.py list           # See available configs
+python3 form_copilot.py status         # Check progress
+python3 form_copilot.py export pdf     # Export to PDF
 ```
 
 First run prompts you to choose a form. Each form gets its own database.
 
-Export to **Markdown** for review or **Texinfo** for PDF/print. Combine multiple forms into one document.
+Export to **Markdown**, **Texinfo**, **HTML**, or **PDF**. Combine multiple forms into one document.
 
 ## The Magic: Claude Collaboration
 

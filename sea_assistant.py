@@ -126,18 +126,21 @@ def get_db_path_for_config(config_path):
 
 
 class InteractiveAssistant:
-    def __init__(self, config_path=None):
+    def __init__(self, config_path=None, db_path=None):
         if config_path is None:
             config_path = get_config_path()
 
         # Check if active config exists
         if not config_path.exists():
             select_config_interactive()
+            config_path = get_config_path()  # Reload after selection
 
-        # Determine database path based on form
-        db_path = get_db_path_for_config(config_path)
+        # Determine database path based on form (if not specified)
+        if db_path is None:
+            db_path = get_db_path_for_config(config_path)
 
         self.config_path = config_path
+        self.db_path = db_path
         self.helper = SEAApplicationHelper(db_path=str(db_path), config_path=str(config_path))
         self.running = True
         self.form_info = self.helper.get_form_info()
