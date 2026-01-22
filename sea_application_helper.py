@@ -318,6 +318,165 @@ class SEAApplicationHelper:
 
         return filepath
 
+    def export_markdown(self, filepath=None):
+        """Export all answers to Markdown format"""
+        form_info = self.get_form_info()
+        progress = self.get_progress()
+
+        if filepath is None:
+            safe_name = form_info['name'].lower().replace(' ', '_')
+            filepath = f"{safe_name}_export.md"
+
+        lines = []
+        lines.append(f"# {form_info['name']}")
+        lines.append("")
+        if form_info.get('description'):
+            lines.append(f"> {form_info['description']}")
+            lines.append("")
+        lines.append(f"**Exported:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        lines.append(f"**Progress:** {progress['complete']}/{progress['total']} complete ({progress['percent_complete']:.1f}%)")
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+
+        # Get sections
+        sections = self.get_sections()
+
+        for section in sections:
+            lines.append(f"## {section['title']}")
+            if section.get('description'):
+                lines.append(f"*{section['description']}*")
+            lines.append("")
+
+            questions = self.get_questions_by_section(section['id'])
+
+            for q in questions:
+                status_icon = {"complete": "✓", "in_progress": "◐", "not_started": "○"}.get(q.get('status', 'not_started'), "○")
+                lines.append(f"### {status_icon} Question {q['id']}: {q['question_text']}")
+                lines.append("")
+
+                if q.get('helper_text'):
+                    lines.append(f"*Helper: {q['helper_text']}*")
+                    lines.append("")
+
+                if q.get('answer_text'):
+                    lines.append("**Answer:**")
+                    lines.append("")
+                    lines.append(q['answer_text'])
+                    lines.append("")
+                else:
+                    lines.append("*No answer yet*")
+                    lines.append("")
+
+                if q.get('notes'):
+                    lines.append("**Notes:**")
+                    lines.append(f"> {q['notes']}")
+                    lines.append("")
+
+                lines.append("---")
+                lines.append("")
+
+        with open(filepath, 'w') as f:
+            f.write('\n'.join(lines))
+
+        return filepath
+
+    def export_texinfo(self, filepath=None):
+        """Export all answers to Texinfo format"""
+        form_info = self.get_form_info()
+        progress = self.get_progress()
+
+        if filepath is None:
+            safe_name = form_info['name'].lower().replace(' ', '_')
+            filepath = f"{safe_name}_export.texi"
+
+        # Escape special texinfo characters
+        def escape_texi(text):
+            if not text:
+                return ""
+            return text.replace('@', '@@').replace('{', '@{').replace('}', '@}')
+
+        lines = []
+
+        # Texinfo header
+        lines.append("\\input texinfo")
+        lines.append(f"@settitle {escape_texi(form_info['name'])}")
+        lines.append("@documentencoding UTF-8")
+        lines.append("")
+        lines.append("@titlepage")
+        lines.append(f"@title {escape_texi(form_info['name'])}")
+        if form_info.get('description'):
+            lines.append(f"@subtitle {escape_texi(form_info['description'])}")
+        lines.append(f"@subtitle Exported: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        lines.append(f"@subtitle Progress: {progress['complete']}/{progress['total']} complete ({progress['percent_complete']:.1f}%)")
+        lines.append("@end titlepage")
+        lines.append("")
+        lines.append("@contents")
+        lines.append("")
+        lines.append("@ifnottex")
+        lines.append(f"@node Top")
+        lines.append(f"@top {escape_texi(form_info['name'])}")
+        lines.append("@end ifnottex")
+        lines.append("")
+
+        # Menu
+        lines.append("@menu")
+        sections = self.get_sections()
+        for section in sections:
+            node_name = section['title'].replace(' ', '-')
+            lines.append(f"* {node_name}:: {escape_texi(section.get('description', section['title']))}")
+        lines.append("@end menu")
+        lines.append("")
+
+        # Sections and questions
+        for section in sections:
+            node_name = section['title'].replace(' ', '-')
+            lines.append(f"@node {node_name}")
+            lines.append(f"@chapter {escape_texi(section['title'])}")
+            lines.append("")
+            if section.get('description'):
+                lines.append(escape_texi(section['description']))
+                lines.append("")
+
+            questions = self.get_questions_by_section(section['id'])
+
+            for q in questions:
+                q_node = f"Question-{q['id']}"
+                lines.append(f"@section Question {q['id']}")
+                lines.append("")
+                lines.append(f"@strong{{{escape_texi(q['question_text'])}}}")
+                lines.append("")
+
+                if q.get('helper_text'):
+                    lines.append("@quotation Helper")
+                    lines.append(escape_texi(q['helper_text']))
+                    lines.append("@end quotation")
+                    lines.append("")
+
+                status = q.get('status', 'not_started')
+                status_text = {"complete": "Complete", "in_progress": "In Progress", "not_started": "Not Started"}.get(status, "Not Started")
+                lines.append(f"@emph{{Status: {status_text}}}")
+                lines.append("")
+
+                if q.get('answer_text'):
+                    lines.append("@quotation Answer")
+                    lines.append(escape_texi(q['answer_text']))
+                    lines.append("@end quotation")
+                    lines.append("")
+
+                if q.get('notes'):
+                    lines.append("@quotation Notes")
+                    lines.append(escape_texi(q['notes']))
+                    lines.append("@end quotation")
+                    lines.append("")
+
+        lines.append("@bye")
+
+        with open(filepath, 'w') as f:
+            f.write('\n'.join(lines))
+
+        return filepath
+
     def close(self):
         """Close database connection"""
         self.conn.close()

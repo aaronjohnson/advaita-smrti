@@ -624,19 +624,42 @@ class InteractiveAssistant:
         input("Press Enter to continue...")
 
     def export_answers(self):
-        """Export answers to JSON file"""
+        """Export answers to various formats"""
         self.clear_screen()
         self.show_header()
 
         print("EXPORT ANSWERS\n")
+        print("Choose a format:")
+        print()
+        print("  [1] JSON (data, for backups)")
+        print("  [2] Markdown (readable, for review)")
+        print("  [3] Texinfo (for PDF/HTML/print)")
+        print("  [B] Back")
+        print()
 
-        filepath = self.helper.export_answers()
+        choice = input("Your choice: ").strip().upper()
 
-        print(f"Answers exported to: {filepath}")
-        print("\nThis JSON file contains all your answers and notes.")
-        print("You can review it, share it, or use it to fill out the paper form.\n")
+        if choice == 'B':
+            return
 
-        input("Press Enter to continue...")
+        if choice == '1':
+            filepath = self.helper.export_answers()
+            print(f"\nExported to: {filepath}")
+            print("JSON format - good for backups and data transfer.")
+        elif choice == '2':
+            filepath = self.helper.export_markdown()
+            print(f"\nExported to: {filepath}")
+            print("Markdown format - view on GitHub or any text editor.")
+        elif choice == '3':
+            filepath = self.helper.export_texinfo()
+            print(f"\nExported to: {filepath}")
+            print("Texinfo format - build with:")
+            print("  makeinfo --pdf {0}   # PDF".format(filepath))
+            print("  makeinfo --html {0}  # HTML".format(filepath))
+        else:
+            print("\nInvalid choice.")
+
+        input("\nPress Enter to continue...")
 
     def show_tips(self):
         """Show tips for answering questions"""

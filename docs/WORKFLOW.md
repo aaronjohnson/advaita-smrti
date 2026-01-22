@@ -81,6 +81,7 @@ View your session history (menu option 8) to:
 | `CLAUDE.md` | Instructions for Claude Code sessions |
 | `validate_config.py` | Config validation script |
 | `config_schema.json` | JSON Schema for IDE validation |
+| `export_docs.py` | Export to Markdown/Texinfo, combine databases |
 
 **Generated on first run:**
 
@@ -89,6 +90,41 @@ View your session history (menu option 8) to:
 | `questions_config.json` | Active form (copied from your selection) |
 | `*.db` | Database for each form (stores your answers) |
 | `session_log.json` | Your session history |
+
+## Exporting Your Work
+
+Menu option [6] exports your answers in multiple formats:
+
+| Format | Use Case |
+|--------|----------|
+| **JSON** | Data backup, transfer between systems |
+| **Markdown** | Review on GitHub, share with others, simple editing |
+| **Texinfo** | Professional PDF, HTML, or Info output |
+
+### Texinfo Output
+
+After exporting to texinfo, build your preferred format:
+
+```bash
+makeinfo --pdf form_export.texi     # PDF (requires TeX)
+makeinfo --html form_export.texi    # HTML website
+makeinfo form_export.texi           # Info format (Emacs/terminal)
+```
+
+### Combining Multiple Forms
+
+Use `export_docs.py` for advanced exports:
+
+```bash
+# Export all databases to markdown
+python3 export_docs.py --all
+
+# Combine multiple forms into one PDF-ready document
+python3 export_docs.py --all --combine --format texinfo
+
+# Export specific databases
+python3 export_docs.py college.db scholarship.db --combine
+```
 
 ## Privacy
 

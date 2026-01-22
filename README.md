@@ -29,6 +29,8 @@ python3 sea_assistant.py
 
 First run prompts you to choose a form. Each form gets its own database.
 
+Export to **Markdown** for review or **Texinfo** for PDF/print. Combine multiple forms into one document.
+
 ## The Magic: Claude Collaboration
 
 Press `[C]` on any question to launch a Claude Code session:
