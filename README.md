@@ -175,7 +175,33 @@ On first run, you'll be prompted to choose which form to use. Switch forms anyti
 
 Want to use this for a different application? Create your own config file.
 
+### Let Claude Build It
+
+The fastest way to create a config: paste your application into Claude and ask it to generate one.
+
+**Works with anything:**
+- PDF applications (copy/paste the text)
+- Web forms (paste the URL or screenshot)
+- Paper forms (type or photograph the questions)
+- Grant RFPs, job applications, visa forms, surveys...
+
+**Example prompt:**
+```
+Here are the questions from my [grant application / college supplement / business loan form].
+Create a form-copilot config JSON file with:
+- Logical sections grouping related questions
+- Priority 1 for foundational questions, 2-3 for others
+- Helpful helper_text for complex questions
+- Question types (text, long_text, yes_no, number, choice)
+
+[paste your questions here]
+```
+
+Claude will generate a complete config file. Save it to `examples/my_form_config.json`, run `python3 validate_config.py` to check it, and you're ready to go.
+
 ### Quick Start: Copy and Modify
+
+Prefer to start from an existing example:
 
 ```bash
 # Start from an example
