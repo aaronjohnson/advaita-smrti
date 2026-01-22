@@ -147,6 +147,8 @@ View your session history to:
 | `sea_application_helper.py` | Core database and functions |
 | `CLAUDE.md` | Instructions for Claude Code sessions |
 | `business_direction_analysis.md` | Template for planning your direction |
+| `validate_config.py` | Config validation script |
+| `config_schema.json` | JSON Schema for IDE validation |
 | `.gitignore` | Excludes database and temp files |
 
 **Generated on first run:**
@@ -241,7 +243,30 @@ python3 sea_assistant.py
 - **Use question dependencies** - If Q2 only matters when Q1 is "Yes", set `depends_on`
 - **Be specific in IDs** - Use `1a`, `1b` for sub-questions
 - **business_directions is optional** - Only include if your form has multiple paths
-- **Test your config** - Run through a few questions to check the flow
+- **Test your config** - Run the validator before using
+
+### Validating Your Config
+
+The project includes validation tools to catch common mistakes:
+
+```bash
+# Validate a single config
+python3 validate_config.py examples/my_form_config.json
+
+# Validate all configs in examples/
+python3 validate_config.py --all
+```
+
+The validator checks:
+- Required fields (`form_name`, `sections`, `questions`)
+- Unique question and section IDs
+- Valid `section_id` references (questions point to existing sections)
+- Valid `depends_on` references (dependencies point to existing questions)
+- Section ID gaps (warns if IDs skip numbers)
+- Valid priority values (1, 2, or 3)
+- Valid question types (`text`, `long_text`, `yes_no`, `number`, `choice`)
+
+A JSON Schema (`config_schema.json`) is also available for IDE validation and autocomplete.
 
 ### Sharing Configs
 
