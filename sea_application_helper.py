@@ -88,6 +88,62 @@ class SEAApplicationHelper:
             "revisions": len([e for e in events if e.get("event") == "answer_saved"])
         }
 
+    def analyze_session_log(self):
+        """Analyze session log and return summary statistics"""
+        events = self.session_log.get("sessions", [])
+
+        if not events:
+            return None
+
+        # Basic stats
+        total_events = len(events)
+        timestamps = [e.get("timestamp") for e in events if e.get("timestamp")]
+
+        # Date range
+        first_event = min(timestamps) if timestamps else None
+        last_event = max(timestamps) if timestamps else None
+
+        # Event type counts
+        event_types = {}
+        for e in events:
+            etype = e.get("event", "unknown")
+            event_types[etype] = event_types.get(etype, 0) + 1
+
+        # Questions with most activity
+        question_activity = {}
+        for e in events:
+            qid = e.get("question_id")
+            if qid:
+                question_activity[qid] = question_activity.get(qid, 0) + 1
+
+        # Top questions by activity
+        top_questions = sorted(question_activity.items(), key=lambda x: x[1], reverse=True)[:5]
+
+        # Claude session stats
+        claude_sessions = [e for e in events if e.get("event") == "claude_session_start"]
+        questions_with_claude = set(e.get("question_id") for e in claude_sessions if e.get("question_id"))
+
+        # Revision stats
+        revisions = [e for e in events if e.get("event") == "answer_saved"]
+        questions_revised = {}
+        for e in revisions:
+            qid = e.get("question_id")
+            if qid:
+                questions_revised[qid] = questions_revised.get(qid, 0) + 1
+        most_revised = sorted(questions_revised.items(), key=lambda x: x[1], reverse=True)[:3]
+
+        return {
+            "total_events": total_events,
+            "first_event": first_event,
+            "last_event": last_event,
+            "event_types": event_types,
+            "top_questions": top_questions,
+            "claude_sessions_total": len(claude_sessions),
+            "questions_with_claude": len(questions_with_claude),
+            "total_revisions": len(revisions),
+            "most_revised": most_revised
+        }
+
     def get_form_info(self):
         """Get information about the loaded form"""
         if self.config:
@@ -376,6 +432,47 @@ class SEAApplicationHelper:
                 lines.append("---")
                 lines.append("")
 
+        # Appendix: Session Log Analysis
+        analysis = self.analyze_session_log()
+        if analysis:
+            lines.append("## Appendix: Session Analysis")
+            lines.append("")
+            lines.append("Summary of your journey through this form.")
+            lines.append("")
+
+            # Timeline
+            if analysis['first_event'] and analysis['last_event']:
+                first = analysis['first_event'][:10]
+                last = analysis['last_event'][:10]
+                lines.append(f"**Timeline:** {first} to {last}")
+                lines.append("")
+
+            # Stats table
+            lines.append("### Activity Summary")
+            lines.append("")
+            lines.append("| Metric | Value |")
+            lines.append("|--------|-------|")
+            lines.append(f"| Total Events | {analysis['total_events']} |")
+            lines.append(f"| Claude Sessions | {analysis['claude_sessions_total']} across {analysis['questions_with_claude']} questions |")
+            lines.append(f"| Answer Revisions | {analysis['total_revisions']} |")
+            lines.append("")
+
+            # Most active questions
+            if analysis['top_questions']:
+                lines.append("### Most Active Questions")
+                lines.append("")
+                for qid, count in analysis['top_questions']:
+                    lines.append(f"- Question {qid}: {count} events")
+                lines.append("")
+
+            # Most revised
+            if analysis['most_revised']:
+                lines.append("### Most Revised Answers")
+                lines.append("")
+                for qid, count in analysis['most_revised']:
+                    lines.append(f"- Question {qid}: {count} revisions")
+                lines.append("")
+
         with open(filepath, 'w') as f:
             f.write('\n'.join(lines))
 
@@ -425,6 +522,9 @@ class SEAApplicationHelper:
         for section in sections:
             node_name = section['title'].replace(' ', '-')
             lines.append(f"* {node_name}:: {escape_texi(section.get('description', section['title']))}")
+        # Add appendix if we have session data
+        if self.analyze_session_log():
+            lines.append("* Session-Analysis:: Summary of your journey")
         lines.append("@end menu")
         lines.append("")
 
@@ -469,6 +569,70 @@ class SEAApplicationHelper:
                     lines.append(escape_texi(q['notes']))
                     lines.append("@end quotation")
                     lines.append("")
+
+        # Appendix: Session Log Analysis
+        analysis = self.analyze_session_log()
+        if analysis:
+            lines.append("@node Session-Analysis")
+            lines.append("@appendix Session Analysis")
+            lines.append("")
+            lines.append("Summary of your journey through this form.")
+            lines.append("")
+
+            # Timeline
+            if analysis['first_event'] and analysis['last_event']:
+                first = analysis['first_event'][:10]  # Just date
+                last = analysis['last_event'][:10]
+                lines.append(f"@strong{{Timeline:}} {first} to {last}")
+                lines.append("")
+
+            # Overall stats
+            lines.append("@section Activity Summary")
+            lines.append("")
+            lines.append("@table @strong")
+            lines.append(f"@item Total Events")
+            lines.append(f"{analysis['total_events']}")
+            lines.append(f"@item Claude Sessions")
+            lines.append(f"{analysis['claude_sessions_total']} sessions across {analysis['questions_with_claude']} questions")
+            lines.append(f"@item Answer Revisions")
+            lines.append(f"{analysis['total_revisions']} total saves")
+            lines.append("@end table")
+            lines.append("")
+
+            # Most active questions
+            if analysis['top_questions']:
+                lines.append("@section Most Active Questions")
+                lines.append("")
+                lines.append("Questions that received the most attention:")
+                lines.append("")
+                lines.append("@enumerate")
+                for qid, count in analysis['top_questions']:
+                    lines.append(f"@item Question {qid}: {count} events")
+                lines.append("@end enumerate")
+                lines.append("")
+
+            # Most revised
+            if analysis['most_revised']:
+                lines.append("@section Most Revised Answers")
+                lines.append("")
+                lines.append("Questions that went through multiple iterations:")
+                lines.append("")
+                lines.append("@enumerate")
+                for qid, count in analysis['most_revised']:
+                    lines.append(f"@item Question {qid}: {count} revisions")
+                lines.append("@end enumerate")
+                lines.append("")
+
+            # Event breakdown
+            if analysis['event_types']:
+                lines.append("@section Event Breakdown")
+                lines.append("")
+                lines.append("@table @code")
+                for etype, count in sorted(analysis['event_types'].items()):
+                    lines.append(f"@item {etype}")
+                    lines.append(f"{count}")
+                lines.append("@end table")
+                lines.append("")
 
         lines.append("@bye")
 
