@@ -1,344 +1,83 @@
-# Form Helper - Choose Your Own Adventure
+# Form Copilot
 
 > *Your AI co-pilot for complex paperwork.*
 
-A toolkit for completing complex multi-section applications and questionnaires. Load context, collaborate with AI, capture answers, iterate. A reusable pattern for human-AI collaboration on thoughtful written work.
+A Choose Your Own Adventure toolkit for completing multi-section applications with Claude Code. Load context, collaborate with AI, capture answers, iterate.
 
 ## The Big Idea
 
-Complex forms ask hard questions. Questions that require reflection, specific details, and coherent narratives across sections. This tool provides:
-
-1. **Structure** - Break overwhelming forms into manageable pieces
-2. **Memory** - Track your progress, save drafts, capture notes
-3. **Partnership** - Bring AI into focused conversations when you need help
-4. **Iteration** - Refine answers over time, see your thinking evolve
-
-## Philosophy: Choose Your Own Adventure
-
-Remember those books from the 1980s where every decision led somewhere different? This tool embraces that spirit:
-
-- **You drive the journey** - Start anywhere, skip around, come back later
-- **Multiple paths to completion** - Work by priority, by section, or by question
-- **AI as your co-pilot** - Launch focused Claude Code sessions for any question
-- **No wrong moves** - Draft, save notes, mark complete, or skip. Every choice is valid.
+Complex forms ask hard questions - questions requiring reflection, specific details, and coherent narratives. This tool provides structure, memory, AI partnership, and iteration.
 
 ## Use Cases
 
-This pattern works for any complex application requiring thoughtful written responses:
+| Application Type | Example |
+|-----------------|---------|
+| **Self-Employment Programs** | Oregon SEA, state business grants |
+| **College Applications** | Common App, UC apps, supplements |
+| **Research Grants** | NSF, NIH, private foundations |
+| **Immigration** | I-485, N-400, visa applications |
+| **Business Loans** | SBA loans, bank applications |
+| **Fellowships** | Fulbright, Rhodes, professional fellowships |
 
-| Application Type | Example | Why It's Hard |
-|-----------------|---------|---------------|
-| **Self-Employment Programs** | Oregon SEA, state business grants | Business planning, financial projections, market analysis |
-| **College Applications** | Common App, UC apps, supplements | Personal essays, activity descriptions, "why this school" |
-| **Research Grants** | NSF, NIH, private foundations | Specific aims, broader impacts, budget justification |
-| **Financial Aid** | FAFSA, CSS Profile | Complex financial details, family circumstances |
-| **Immigration** | I-485, N-400, visa applications | Detailed personal history, travel records, employment |
-| **Business Loans** | SBA loans, bank applications | Business plans, projections, collateral documentation |
-| **Fellowships** | Fulbright, Rhodes, professional fellowships | Personal statements, research proposals, leadership narratives |
-
-Four example configs are included in `examples/` - on first run, you'll be prompted to choose one.
-
-## Features
-
-### Core Capabilities
-- **SQLite database** - Persistent storage for your answers and notes
-- **Progress tracking** - See what's complete, in progress, not started
-- **Priority system** - Questions ranked by importance (tackle high-priority first)
-- **Section organization** - Logical grouping of related questions
-- **Helper text** - Guidance for complex questions
-- **Notes system** - Capture thoughts separately from official answers
-- **Draft mode** - Mark questions to return to later
-- **Export** - Save all answers to JSON
-- **Session logging** - Track your journey through the application
-
-### Claude Code Integration
-- **Collaborative AI sessions** - Launch Claude Code for any question
-- **Context passing** - Questions, helper text, and related answers provided automatically
-- **Answer capture** - Claude writes final answer to file, you approve before saving
-- **CLAUDE.md workflow** - Instructions tell Claude exactly how to help
-- **Custom commands** - `/form-start`, `/form-save`, `/form-status`
+Four [example configs](docs/EXAMPLES.md) included. Or create your own from any source.
 
 ## Quick Start
 
 ```bash
-# Run the interactive assistant
 python3 sea_assistant.py
-
-# First run? You'll be prompted to choose a form:
-#   [1] Oregon SEA Application (49 questions)
-#   [2] College Application Essays (17 questions)
-#   [C] Create a new custom form
 ```
 
-Each form gets its own database - switch between forms anytime from the menu.
+First run prompts you to choose a form. Each form gets its own database.
 
-## The Adventure Menu
+## The Magic: Claude Collaboration
 
-```
-What would you like to do?
+Press `[C]` on any question to launch a Claude Code session:
 
-  [1] Work on high-priority questions (recommended to start)
-  [2] Review business directions (if configured)
-  [3] Browse by section
-  [4] View specific question by ID
-  [5] Show progress dashboard
-  [6] Export answers to file
-  [7] Tips for answering questions
-  [8] View session history
-  [9] Switch to different form
+1. Context auto-loaded (question, hints, related answers)
+2. Collaborate with Claude to craft your answer
+3. Claude writes to `.sea_answer.md`
+4. You approve, it saves to database
 
-  [C] Work with Claude on a question (collaborative AI session)
-
-  [Q] Quit and save
-```
-
-Menu options adapt to your form - items like "business directions" only appear when configured.
-
-## Working with Claude (The Magic)
-
-When you select a question and press `[C]`, the assistant:
-
-1. **Writes context** to `.sea_question_context.json`:
-   - Question text and helper hints
-   - Your current draft/notes
-   - Related answers from the same section
-
-2. **Launches Claude Code** with a prompt about the question
-
-3. **You collaborate** - discuss, refine, iterate
-
-4. **Claude writes** the final answer to `.sea_answer.md`
-
-5. **You approve** - back in the assistant, confirm to save to database
-
-This is the core pattern: **load context → collaborative dialog → capture output → iterate**
+**The pattern:** load context → dialog → capture → iterate
 
 ### Claude Commands
 
-Once in a Claude Code session, you can use these commands:
-
 | Command | Purpose |
 |---------|---------|
-| `/form-start` | Read the question context and begin discussion |
-| `/form-save` | Write the finalized answer to `.sea_answer.md` |
-| `/form-status` | Check current question and any pending answer |
+| `/form-start` | Read question context, begin discussion |
+| `/form-save` | Write final answer to file |
+| `/generate-config` | Create a config from pasted questions |
 
-## Session Logging
+## Create Your Own Config
 
-The tool logs your journey through the application:
+Paste any application into Claude:
 
-```json
-{
-  "timestamp": "2025-01-21T14:30:00",
-  "event": "claude_session_start",
-  "question_id": "1",
-  "had_draft": true
-}
+```
+Here are questions from my [grant / college app / loan form].
+Create a form-copilot config JSON with sections, priorities, and helper text.
+
+[paste questions]
 ```
 
-View your session history to:
-- See how your thinking evolved over time
-- Track which questions needed the most iteration
-- Understand your own working patterns
+Or use `/generate-config` in Claude Code. Validate with `python3 validate_config.py`.
 
-## Files
+See [docs/CONFIG.md](docs/CONFIG.md) for details.
 
-| File | Purpose |
-|------|---------|
-| `sea_assistant.py` | Interactive CLI (main interface) |
-| `sea_application_helper.py` | Core database and functions |
-| `CLAUDE.md` | Instructions for Claude Code sessions |
-| `business_direction_analysis.md` | Template for planning your direction |
-| `validate_config.py` | Config validation script |
-| `config_schema.json` | JSON Schema for IDE validation |
-| `.gitignore` | Excludes database and temp files |
+## Documentation
 
-**Generated on first run:**
-| `questions_config.json` | Active form (copied from your selection in examples/) |
-| `*.db` | Database for each form (stores your answers) |
-| `session_log.json` | Your session history |
-
-### Example Configs
-
-| File | Questions | Use Case |
-|------|-----------|----------|
-| `examples/oregon_sea_config.json` | 49 | Self-employment assistance, business planning |
-| `examples/college_app_config.json` | 17 | College essays, Common App, supplementals |
-| `examples/creative_grant_config.json` | 22 | Artist grants, creative project proposals |
-| `examples/product_concept_config.json` | 44 | Product pitches, startup planning, idea validation |
-
-Four examples spanning business, academic, creative, and entrepreneurial applications.
-
-On first run, you'll be prompted to choose which form to use. Switch forms anytime from the menu.
-
-## Creating Your Own Form
-
-Want to use this for a different application? Create your own config file.
-
-### Let Claude Build It
-
-The fastest way to create a config: paste your application into Claude and ask it to generate one.
-
-**Works with anything:**
-- PDF applications (copy/paste the text)
-- Web forms (paste the URL or screenshot)
-- Paper forms (type or photograph the questions)
-- Grant RFPs, job applications, visa forms, surveys...
-
-**Example prompt:**
-```
-Here are the questions from my [grant application / college supplement / business loan form].
-Create a form-copilot config JSON file with:
-- Logical sections grouping related questions
-- Priority 1 for foundational questions, 2-3 for others
-- Helpful helper_text for complex questions
-- Question types (text, long_text, yes_no, number, choice)
-
-[paste your questions here]
-```
-
-Claude will generate a complete config file. Save it to `examples/my_form_config.json`, run `python3 validate_config.py` to check it, and you're ready to go.
-
-### Quick Start: Copy and Modify
-
-Prefer to start from an existing example:
-
-```bash
-# Start from an example
-cp examples/college_app_config.json examples/my_form_config.json
-
-# Edit with your questions
-nano examples/my_form_config.json  # or your preferred editor
-
-# Run - it will appear in the form selection menu
-python3 sea_assistant.py
-```
-
-### Step-by-Step Guide
-
-1. **Identify your sections** - Group related questions (e.g., "Personal Info", "Experience", "Goals")
-2. **List all questions** - Copy them exactly as they appear on the form
-3. **Assign priorities** - Which questions are foundational? Which depend on others?
-4. **Add helper text** - What guidance would help you (or others) answer well?
-5. **Save in examples/** - Files matching `*_config.json` appear in the menu
-
-### Config File Structure
-
-```json
-{
-  "form_name": "Your Application Name",
-  "form_description": "Description of the form",
-  "version": "1.0",
-  "sections": [
-    {"id": 1, "name": "section_key", "title": "Section Title", "description": "..."}
-  ],
-  "questions": [
-    {
-      "id": "1",
-      "section_id": 1,
-      "question_text": "Your question here?",
-      "question_type": "long_text",
-      "priority": 1,
-      "depends_on": null,
-      "helper_text": "Guidance for answering"
-    }
-  ],
-  "business_directions": [
-    {"name": "Direction 1", "description": "..."}
-  ]
-}
-```
-
-### Question Types
-- `long_text` - Multi-line text answer
-- `text` - Single line text
-- `yes_no` - Yes/No question
-- `number` - Numeric answer
-- `choice` - Multiple choice (list options in helper_text)
-
-### Priority Levels
-- **1** - Most important, do these first
-- **2** - Important but can wait
-- **3** - Nice to have, do last
-
-### Tips for Good Configs
-
-- **Helper text matters** - Write hints you wish someone had given you
-- **Use question dependencies** - If Q2 only matters when Q1 is "Yes", set `depends_on`
-- **Be specific in IDs** - Use `1a`, `1b` for sub-questions
-- **business_directions is optional** - Only include if your form has multiple paths
-- **Test your config** - Run the validator before using
-
-### Validating Your Config
-
-The project includes validation tools to catch common mistakes:
-
-```bash
-# Validate a single config
-python3 validate_config.py examples/my_form_config.json
-
-# Validate all configs in examples/
-python3 validate_config.py --all
-```
-
-The validator checks:
-- Required fields (`form_name`, `sections`, `questions`)
-- Unique question and section IDs
-- Valid `section_id` references (questions point to existing sections)
-- Valid `depends_on` references (dependencies point to existing questions)
-- Section ID gaps (warns if IDs skip numbers)
-- Valid priority values (1, 2, or 3)
-- Valid question types (`text`, `long_text`, `yes_no`, `number`, `choice`)
-
-A JSON Schema (`config_schema.json`) is also available for IDE validation and autocomplete.
-
-### Sharing Configs
-
-Created a config for a common application? Consider contributing it:
-1. Remove any personal information from helper text
-2. Test that it works from a fresh start
-3. Submit a pull request to add it to `examples/`
-
-## Privacy
-
-Your answers stay local:
-- Database: `*.db` files (gitignored)
-- Exports: `*_answers.json` files (gitignored)
-- Session files: `.sea_question_context.json`, `.sea_answer.md` (gitignored)
-- Session logs: `session_log.json` (gitignored)
+- [CONFIG.md](docs/CONFIG.md) - Creating and validating configs
+- [WORKFLOW.md](docs/WORKFLOW.md) - Menu options, Claude integration, files
+- [EXAMPLES.md](docs/EXAMPLES.md) - Included example configs
 
 ## Requirements
 
-- **Python 3.6+** - No external dependencies (standard library only)
-- **Claude Code CLI** - For AI collaboration feature
-  - Install: See [Claude Code documentation](https://docs.anthropic.com/claude-code)
-  - The `claude` command must be available in the same shell where you run `python3 sea_assistant.py`
-  - Test with: `claude --version`
-  - If Claude isn't in your PATH, the `[C]` option will show an error but the tool still works for manual answers
-
-## Version History
-
-- **v0.1** - Initial release: menu-driven interface, database, progress tracking
-- **v0.2** - Claude Code integration, collaborative AI sessions
-- **v0.3** - Session logging, use case documentation, config-driven forms
-- **v0.4** - First-run config selection, form switching, separate databases per form
+- Python 3.6+ (standard library only)
+- [Claude Code CLI](https://docs.anthropic.com/claude-code) for AI features
 
 ## License
 
-MIT - Use freely, modify as needed.
-
-## Why This Exists
-
-Complex applications are overwhelming. Dozens of questions across multiple sections, each requiring specific details and coherent narratives. It's easy to lose track, forget what you've done, and feel paralyzed by the scope.
-
-This tool helps anyone who:
-- Finds large forms overwhelming
-- Benefits from breaking big tasks into small steps
-- Wants AI assistance without losing control of the process
-- Needs to track progress across multiple sessions
-
-**You don't have to do this alone.**
+MIT
 
 ---
 
-*Inspired by Choose Your Own Adventure books (1980s) and the belief that thoughtful AI collaboration can help people navigate complex processes.*
+*Inspired by Choose Your Own Adventure books and the belief that AI collaboration can help people navigate complex processes.*
