@@ -161,8 +161,9 @@ View your session history to:
 | `examples/oregon_sea_config.json` | 49 | Self-employment assistance, business planning |
 | `examples/college_app_config.json` | 17 | College essays, Common App, supplementals |
 | `examples/creative_grant_config.json` | 22 | Artist grants, creative project proposals |
+| `examples/product_concept_config.json` | 44 | Product pitches, startup planning, idea validation |
 
-Three examples spanning business, academic, and creative applications.
+Four examples spanning business, academic, creative, and entrepreneurial applications.
 
 To use an example:
 ```bash
