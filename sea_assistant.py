@@ -180,6 +180,7 @@ class InteractiveAssistant:
         print("  [9] Switch to different form")
         print()
         print("  [C] Work with Claude on a question (collaborative AI session)")
+        print("  [P] Patterns - synthesize insights from your answers")
         print()
         print("  [Q] Quit and save")
         print()
@@ -689,6 +690,111 @@ class InteractiveAssistant:
 
         input("Press Enter to continue...")
 
+    def show_patterns(self):
+        """Show synthesized patterns from your answers"""
+        self.clear_screen()
+        self.show_header()
+
+        print("PATTERN SYNTHESIS\n")
+        print("Insights extracted from your completed answers:\n")
+
+        # Check if memory layer is available
+        if not self.helper.memory:
+            print("Memory layer not available. Patterns require the memory layer.")
+            input("\nPress Enter to continue...")
+            return
+
+        # Get patterns
+        patterns = self.helper.synthesize_patterns()
+
+        if not patterns:
+            print("No patterns detected yet.")
+            print("\nPatterns emerge as you complete more answers.")
+            print("Keep working on questions to build up data for synthesis.")
+            input("\nPress Enter to continue...")
+            return
+
+        print(f"Found {len(patterns)} patterns:\n")
+
+        for i, pattern in enumerate(patterns, 1):
+            # Confidence bar
+            conf_bar = '█' * int(pattern.confidence * 10) + '░' * (10 - int(pattern.confidence * 10))
+            print(f"  {i}. [{conf_bar}] {pattern.description}")
+            if pattern.evidence:
+                evidence_preview = ', '.join(pattern.evidence[:3])
+                if len(pattern.evidence) > 3:
+                    evidence_preview += f" (+{len(pattern.evidence) - 3} more)"
+                print(f"     Evidence: {evidence_preview}")
+            print()
+
+        # Memory summary
+        summary = self.helper.get_memory_summary()
+        if summary:
+            print("-" * 50)
+            print("Memory Status:")
+            print(f"  Tasks: {summary['tasks']['total']}")
+            print(f"  Decisions: {summary['decisions']['total']}")
+
+            # Show task status breakdown
+            if summary['tasks']['by_status']:
+                print("\n  Answer status:")
+                for status, count in summary['tasks']['by_status'].items():
+                    print(f"    - {status}: {count}")
+
+        print("\n" + "-" * 50)
+        print("Options:")
+        print("  [D] Start a decision trail for a question")
+        print("  [B] Back to main menu")
+        print()
+
+        choice = input("Your choice: ").strip().upper()
+
+        if choice == 'D':
+            self.start_decision()
+
+    def start_decision(self):
+        """Start a decision trail for a question"""
+        print("\nStarting a decision helps you think through complex questions.")
+        print("You'll consider multiple approaches before choosing one.\n")
+
+        q_id = input("Enter question ID to decide on: ").strip()
+        q = self.helper.get_question(q_id)
+
+        if not q:
+            print(f"Question '{q_id}' not found")
+            input("\nPress Enter to continue...")
+            return
+
+        print(f"\nQuestion: {q['question_text'][:70]}...")
+        context = input("What are you trying to decide? ").strip()
+
+        if not context:
+            print("No context provided. Cancelled.")
+            input("\nPress Enter to continue...")
+            return
+
+        # Create decision in memory layer
+        if self.helper.memory:
+            decision = self.helper.memory.decisions.begin(context, task_id=None)
+            print(f"\nDecision started: {decision.id}")
+            print("\nAdd hypotheses (different approaches you're considering):")
+
+            hypo_count = 0
+            while hypo_count < 5:  # Max 5 hypotheses
+                hypo = input(f"\nHypothesis {hypo_count + 1} (or Enter to finish): ").strip()
+                if not hypo:
+                    break
+                self.helper.memory.decisions.hypothesize(decision.id, hypo)
+                hypo_count += 1
+
+            if hypo_count == 0:
+                print("No hypotheses added. Decision saved but incomplete.")
+            else:
+                print(f"\n{hypo_count} hypotheses recorded.")
+                print(f"Use 'form_copilot.py memory decisions' to review later.")
+
+        input("\nPress Enter to continue...")
+
     def show_session_history(self):
         """Show session history - track your journey"""
         self.clear_screen()
@@ -853,6 +959,8 @@ class InteractiveAssistant:
                 else:
                     print(f"\nQuestion '{q_id}' not found")
                     input("Press Enter to continue...")
+            elif choice.upper() == 'P':
+                self.show_patterns()
             elif choice.upper() == 'Q':
                 print("\nSaving and exiting...")
                 self.helper.export_answers()
