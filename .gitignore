@@ -1,0 +1,21 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Editor backup files
+*~
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Secrets (if any added later)
+.env
+*.key

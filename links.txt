@@ -1,0 +1,30 @@
+
+
+Pi Foundation Display - 7" Touchscreen Display for Raspberry Pi
+https://www.adafruit.com/product/2718
+
+Raspberry Pi Touch Display 2 - 7" 720x1280 with Capacitive Touch
+https://www.adafruit.com/product/6079
+
+Raspberry Pi 3 - Model B+ - 1.4GHz Cortex-A53 with 1GB RAM
+https://www.adafruit.com/product/3775
+
+Official Raspberry Pi Power Supply 5.1V 3A with USB C - 1.5 meter long
+https://www.adafruit.com/product/4298
+
+One of the following two choices,
+
+SmartiPi Touch 2 - Stand for Raspberry Pi 7" Touchscreen Display - Compatible with Pi 4 and Pi 5
+https://www.adafruit.com/product/4377
+
+Metal enclosure: https://kksb-cases.com/products/kksb-display-stand-for-raspberry-pi-5-touch-display-v2-with-case-for-hats
+
+
+Alternate larger format screens
+
+Elo touch 1502L
+
+https://volcora.com/products/15-6-touchscreen-monitor $214
+
+https://www.beetronics.com/c-touchscreens/7-inch-touchscreens (many sizes to choose from) $389
+
