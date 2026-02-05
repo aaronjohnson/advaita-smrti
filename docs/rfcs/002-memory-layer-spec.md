@@ -352,6 +352,33 @@ connections = mem.synthesize.connections(task.id)
 
 ---
 
+## Future Considerations
+
+### SQLite as Memory Backend
+
+The Memory API could support pluggable storage backends:
+
+```python
+# Current: JSONL + SQLite index
+memory = Memory(".memory", backend="jsonl")
+
+# Future: Pure SQLite backend
+memory = Memory(".memory", backend="sqlite")
+
+# Future: Remote/cloud backend
+memory = Memory(".memory", backend="s3")
+```
+
+SQLite as a backend would:
+- Keep the Memory API as the interface
+- Store tasks/decisions in SQLite tables directly
+- Remove JSONL layer for simpler stack
+- Trade git-friendliness for query performance
+
+This is a future refactor option if JSONL complexity becomes burdensome.
+
+---
+
 ## References
 
 - [beads](https://github.com/steveyegge/beads) - Original task graph implementation
