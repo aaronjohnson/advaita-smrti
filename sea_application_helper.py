@@ -12,9 +12,16 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+# Memory layer import (optional - graceful degradation if not available)
+try:
+    from memory import Memory
+    MEMORY_AVAILABLE = True
+except ImportError:
+    MEMORY_AVAILABLE = False
+
 
 class SEAApplicationHelper:
-    def __init__(self, db_path="sea_application.db", config_path=None, log_path=None):
+    def __init__(self, db_path="sea_application.db", config_path=None, log_path=None, memory_path=None):
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row
@@ -31,6 +38,18 @@ class SEAApplicationHelper:
             log_path = Path(__file__).parent / "session_log.json"
         self.log_path = Path(log_path)
         self.session_log = self._load_session_log()
+
+        # Memory layer (beads/quint-inspired persistence)
+        # Dual-write: SQLite remains primary, Memory layer shadows for future migration
+        self.memory = None
+        if MEMORY_AVAILABLE:
+            if memory_path is None:
+                memory_path = Path(__file__).parent / ".memory"
+            try:
+                self.memory = Memory(str(memory_path), prefix="fc")
+            except Exception as e:
+                # Graceful degradation - log but continue without memory
+                print(f"Warning: Memory layer unavailable: {e}")
 
         self.init_database()
 
@@ -57,7 +76,12 @@ class SEAApplicationHelper:
             json.dump(self.session_log, f, indent=2)
 
     def log_event(self, event_type, question_id=None, details=None):
-        """Log a session event for tracking user journey"""
+        """Log a session event for tracking user journey
+
+        Dual-writes to:
+        1. session_log.json (primary) - existing behavior
+        2. Memory layer (shadow) - for future synthesis
+        """
         event = {
             "timestamp": datetime.now().isoformat(),
             "event": event_type,
@@ -67,8 +91,37 @@ class SEAApplicationHelper:
         if details:
             event.update(details)
 
+        # Primary: session_log.json
         self.session_log["sessions"].append(event)
         self._save_session_log()
+
+        # Shadow: Memory layer - log as task comment or metadata
+        if self.memory and question_id:
+            self._memory_log_event(event_type, question_id, details)
+
+    def _memory_log_event(self, event_type, question_id, details=None):
+        """Shadow log event to memory layer"""
+        # Find the task for this question
+        existing_tasks = [t for t in self.memory.tasks.all()
+                         if t.metadata.get('question_id') == question_id]
+
+        if not existing_tasks:
+            return  # No task yet, event will be captured when answer is saved
+
+        task = existing_tasks[0]
+
+        # Add event to task's event history in metadata
+        events = task.metadata.get('events', [])
+        events.append({
+            'type': event_type,
+            'timestamp': datetime.now().isoformat(),
+            'details': details
+        })
+
+        self.memory.tasks.update(
+            task.id,
+            metadata={**task.metadata, 'events': events}
+        )
 
     def get_session_history(self, question_id=None):
         """Get session history, optionally filtered by question"""
@@ -270,13 +323,68 @@ class SEAApplicationHelper:
         return [dict(row) for row in self.cursor.fetchall()]
 
     def save_answer(self, question_id, answer_text, notes=None, status="in_progress"):
-        """Save or update an answer"""
+        """Save or update an answer
+
+        Dual-writes to:
+        1. SQLite (primary) - existing behavior
+        2. Memory layer (shadow) - beads-style task tracking
+        """
+        # Primary: SQLite
         self.cursor.execute("""
             INSERT OR REPLACE INTO answers
             (question_id, answer_text, notes, last_updated, status)
             VALUES (?, ?, ?, ?, ?)
         """, (question_id, answer_text, notes, datetime.now().isoformat(), status))
         self.conn.commit()
+
+        # Shadow: Memory layer (if available)
+        if self.memory:
+            self._memory_save_answer(question_id, answer_text, notes, status)
+
+    def _memory_save_answer(self, question_id, answer_text, notes=None, status="in_progress"):
+        """Shadow write to memory layer as beads-style task"""
+        # Get question details for context
+        question = self.get_question(question_id)
+        section_title = question.get('section_title', 'Unknown') if question else 'Unknown'
+        question_text = question.get('question_text', '') if question else ''
+
+        # Map status to memory layer status
+        memory_status = {
+            'not_started': 'open',
+            'in_progress': 'in_progress',
+            'complete': 'closed'
+        }.get(status, 'open')
+
+        # Check if task exists for this question
+        existing_tasks = [t for t in self.memory.tasks.all()
+                         if t.metadata.get('question_id') == question_id]
+
+        if existing_tasks:
+            # Update existing task
+            task = existing_tasks[0]
+            self.memory.tasks.update(
+                task.id,
+                description=answer_text or '',
+                status=memory_status,
+                metadata={
+                    **task.metadata,
+                    'question_id': question_id,
+                    'notes': notes,
+                    'section': section_title,
+                }
+            )
+        else:
+            # Create new task
+            self.memory.tasks.create(
+                title=f"Q:{question_id} - {question_text[:50]}",
+                description=answer_text or '',
+                labels=['question', f'section:{section_title}', f'priority:{question.get("priority", 3)}'] if question else ['question'],
+                metadata={
+                    'question_id': question_id,
+                    'notes': notes,
+                    'section': section_title,
+                }
+            )
 
     def get_question(self, question_id):
         """Get a specific question with its answer if it exists"""
@@ -641,9 +749,23 @@ class SEAApplicationHelper:
 
         return filepath
 
+    def get_memory_summary(self):
+        """Get summary from memory layer (if available)"""
+        if not self.memory:
+            return None
+        return self.memory.summary()
+
+    def synthesize_patterns(self, label=None):
+        """Run pattern synthesis on memory layer (if available)"""
+        if not self.memory:
+            return []
+        return self.memory.synthesize.patterns(label=label)
+
     def close(self):
-        """Close database connection"""
+        """Close database and memory connections"""
         self.conn.close()
+        if self.memory:
+            self.memory.close()
 
 
 def main():
