@@ -15,6 +15,11 @@ the conversation:
 I have hardware options ready from ~$600 to ~$1,200 depending
 on durability needs. Software development is $5,000 as scoped.
 
+One point we discussed: since this is a custom system, having
+duplicate hardware on hand for quick recovery may be worth
+considering. Adds to the upfront cost but avoids downtime if
+something fails.
+
 Talk soon,
 Aaron
 
