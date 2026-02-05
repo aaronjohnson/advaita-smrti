@@ -12,17 +12,34 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-# Memory layer import (optional - graceful degradation if not available)
+# Memory layer import (primary storage)
 try:
     from memory import Memory
     MEMORY_AVAILABLE = True
 except ImportError:
     MEMORY_AVAILABLE = False
+    print("Warning: Memory layer not found. Install or check import path.")
+
+# SQLite is now optional - for backwards compatibility or fallback
+SQLITE_ENABLED = False  # Set True to enable legacy SQLite backing store
 
 
 class SEAApplicationHelper:
-    def __init__(self, db_path="sea_application.db", config_path=None, log_path=None, memory_path=None):
+    def __init__(self, db_path="sea_application.db", config_path=None, log_path=None,
+                 memory_path=None, use_sqlite=None):
+        """Initialize the application helper.
+
+        Args:
+            db_path: SQLite database path (for questions/sections config cache)
+            config_path: JSON config file path
+            log_path: Session log file path
+            memory_path: Memory layer directory path
+            use_sqlite: Override SQLITE_ENABLED for answers storage
+        """
         self.db_path = db_path
+        self.use_sqlite = use_sqlite if use_sqlite is not None else SQLITE_ENABLED
+
+        # SQLite for questions/sections (config cache - always needed)
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row
         self.cursor = self.conn.cursor()
@@ -39,8 +56,7 @@ class SEAApplicationHelper:
         self.log_path = Path(log_path)
         self.session_log = self._load_session_log()
 
-        # Memory layer (beads/quint-inspired persistence)
-        # Dual-write: SQLite remains primary, Memory layer shadows for future migration
+        # Memory layer (PRIMARY storage for answers and decisions)
         self.memory = None
         if MEMORY_AVAILABLE:
             if memory_path is None:
@@ -48,8 +64,9 @@ class SEAApplicationHelper:
             try:
                 self.memory = Memory(str(memory_path), prefix="fc")
             except Exception as e:
-                # Graceful degradation - log but continue without memory
-                print(f"Warning: Memory layer unavailable: {e}")
+                print(f"Error: Memory layer failed: {e}")
+                if not self.use_sqlite:
+                    raise RuntimeError("Memory layer required but unavailable")
 
         self.init_database()
 
@@ -325,21 +342,21 @@ class SEAApplicationHelper:
     def save_answer(self, question_id, answer_text, notes=None, status="in_progress"):
         """Save or update an answer
 
-        Dual-writes to:
-        1. SQLite (primary) - existing behavior
-        2. Memory layer (shadow) - beads-style task tracking
+        Primary: Memory layer (beads-style task tracking)
+        Optional: SQLite (legacy backing store, off by default)
         """
-        # Primary: SQLite
-        self.cursor.execute("""
-            INSERT OR REPLACE INTO answers
-            (question_id, answer_text, notes, last_updated, status)
-            VALUES (?, ?, ?, ?, ?)
-        """, (question_id, answer_text, notes, datetime.now().isoformat(), status))
-        self.conn.commit()
-
-        # Shadow: Memory layer (if available)
+        # Primary: Memory layer
         if self.memory:
             self._memory_save_answer(question_id, answer_text, notes, status)
+
+        # Optional: SQLite backing store
+        if self.use_sqlite:
+            self.cursor.execute("""
+                INSERT OR REPLACE INTO answers
+                (question_id, answer_text, notes, last_updated, status)
+                VALUES (?, ?, ?, ?, ?)
+            """, (question_id, answer_text, notes, datetime.now().isoformat(), status))
+            self.conn.commit()
 
     def _memory_save_answer(self, question_id, answer_text, notes=None, status="in_progress"):
         """Shadow write to memory layer as beads-style task"""
@@ -374,10 +391,11 @@ class SEAApplicationHelper:
                 }
             )
         else:
-            # Create new task
+            # Create new task with correct status
             self.memory.tasks.create(
                 title=f"Q:{question_id} - {question_text[:50]}",
                 description=answer_text or '',
+                status=memory_status,
                 labels=['question', f'section:{section_title}', f'priority:{question.get("priority", 3)}'] if question else ['question'],
                 metadata={
                     'question_id': question_id,
@@ -387,29 +405,99 @@ class SEAApplicationHelper:
             )
 
     def get_question(self, question_id):
-        """Get a specific question with its answer if it exists"""
+        """Get a specific question with its answer if it exists
+
+        Question metadata from SQLite (config cache).
+        Answer from Memory layer (primary) or SQLite (fallback).
+        """
+        # Get question metadata from SQLite (config-driven)
         self.cursor.execute("""
-            SELECT q.*, a.answer_text, a.notes, a.status, a.last_updated,
-                   s.title as section_title
+            SELECT q.*, s.title as section_title
             FROM questions q
-            LEFT JOIN answers a ON q.id = a.question_id
             LEFT JOIN sections s ON q.section_id = s.id
             WHERE q.id = ?
         """, (question_id,))
         row = self.cursor.fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+
+        result = dict(row)
+
+        # Get answer from Memory layer (primary)
+        if self.memory:
+            answer_data = self._memory_get_answer(question_id)
+            if answer_data:
+                result.update(answer_data)
+                return result
+
+        # Fallback: SQLite answers table
+        if self.use_sqlite:
+            self.cursor.execute("""
+                SELECT answer_text, notes, status, last_updated
+                FROM answers WHERE question_id = ?
+            """, (question_id,))
+            answer_row = self.cursor.fetchone()
+            if answer_row:
+                result.update(dict(answer_row))
+
+        return result
+
+    def _memory_get_answer(self, question_id):
+        """Get answer data from memory layer"""
+        if not self.memory:
+            return None
+
+        # Find task for this question
+        for task in self.memory.tasks.all():
+            if task.metadata.get('question_id') == question_id:
+                # Map memory status to legacy status
+                status_map = {
+                    'open': 'not_started',
+                    'in_progress': 'in_progress',
+                    'closed': 'complete',
+                    'archived': 'complete'
+                }
+                return {
+                    'answer_text': task.description,
+                    'notes': task.metadata.get('notes'),
+                    'status': status_map.get(task.status, 'not_started'),
+                    'last_updated': task.updated_at
+                }
+        return None
 
     def get_questions_by_section(self, section_id):
-        """Get all questions for a section"""
+        """Get all questions for a section
+
+        Question metadata from SQLite, answers from Memory layer.
+        """
         self.cursor.execute("""
-            SELECT q.*, a.answer_text, a.notes, a.status, s.title as section_title
+            SELECT q.*, s.title as section_title
             FROM questions q
-            LEFT JOIN answers a ON q.id = a.question_id
             LEFT JOIN sections s ON q.section_id = s.id
             WHERE q.section_id = ?
             ORDER BY q.id
         """, (section_id,))
-        return [dict(row) for row in self.cursor.fetchall()]
+
+        questions = []
+        for row in self.cursor.fetchall():
+            q = dict(row)
+            # Merge answer from memory layer
+            if self.memory:
+                answer_data = self._memory_get_answer(q['id'])
+                if answer_data:
+                    q.update(answer_data)
+            elif self.use_sqlite:
+                # Fallback to SQLite answers
+                self.cursor.execute("""
+                    SELECT answer_text, notes, status
+                    FROM answers WHERE question_id = ?
+                """, (q['id'],))
+                answer_row = self.cursor.fetchone()
+                if answer_row:
+                    q.update(dict(answer_row))
+            questions.append(q)
+
+        return questions
 
     def get_sections(self):
         """Get all sections"""
@@ -419,35 +507,70 @@ class SEAApplicationHelper:
         return [dict(row) for row in self.cursor.fetchall()]
 
     def get_priority_questions(self, priority=1):
-        """Get high priority questions that aren't answered"""
+        """Get high priority questions that aren't complete"""
+        # Get all questions at or above priority level
         self.cursor.execute("""
             SELECT q.*, s.title as section_title
             FROM questions q
-            LEFT JOIN answers a ON q.id = a.question_id
             LEFT JOIN sections s ON q.section_id = s.id
-            WHERE q.priority <= ? AND (a.status IS NULL OR a.status != 'complete')
+            WHERE q.priority <= ?
             ORDER BY q.priority, q.section_id, q.id
         """, (priority,))
-        return [dict(row) for row in self.cursor.fetchall()]
+
+        questions = []
+        for row in self.cursor.fetchall():
+            q = dict(row)
+            # Check answer status from memory
+            if self.memory:
+                answer_data = self._memory_get_answer(q['id'])
+                if answer_data:
+                    q.update(answer_data)
+                    if answer_data.get('status') == 'complete':
+                        continue  # Skip complete questions
+            elif self.use_sqlite:
+                self.cursor.execute("""
+                    SELECT answer_text, notes, status
+                    FROM answers WHERE question_id = ?
+                """, (q['id'],))
+                answer_row = self.cursor.fetchone()
+                if answer_row:
+                    q.update(dict(answer_row))
+                    if answer_row['status'] == 'complete':
+                        continue
+            questions.append(q)
+
+        return questions
 
     def get_progress(self):
-        """Get overall progress statistics"""
+        """Get overall progress statistics
+
+        Counts from Memory layer (primary) or SQLite (fallback).
+        """
         self.cursor.execute("SELECT COUNT(*) as total FROM questions")
         total = self.cursor.fetchone()['total']
 
-        self.cursor.execute("""
-            SELECT COUNT(*) as complete
-            FROM answers
-            WHERE status = 'complete'
-        """)
-        complete = self.cursor.fetchone()['complete']
+        complete = 0
+        in_progress = 0
 
-        self.cursor.execute("""
-            SELECT COUNT(*) as in_progress
-            FROM answers
-            WHERE status = 'in_progress'
-        """)
-        in_progress = self.cursor.fetchone()['in_progress']
+        if self.memory:
+            # Count from memory layer
+            for task in self.memory.tasks.all():
+                if task.metadata.get('question_id'):  # Only count question tasks
+                    if task.status == 'closed':
+                        complete += 1
+                    elif task.status == 'in_progress':
+                        in_progress += 1
+        elif self.use_sqlite:
+            # Fallback to SQLite
+            self.cursor.execute("""
+                SELECT COUNT(*) as complete FROM answers WHERE status = 'complete'
+            """)
+            complete = self.cursor.fetchone()['complete']
+
+            self.cursor.execute("""
+                SELECT COUNT(*) as in_progress FROM answers WHERE status = 'in_progress'
+            """)
+            in_progress = self.cursor.fetchone()['in_progress']
 
         return {
             'total': total,
