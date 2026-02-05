@@ -1,6 +1,11 @@
 # Database files (contain user answers)
 *.db
 
+# Job evaluation configs (may contain company/person names)
+# Keep these local - don't commit to public repo
+*_job_eval_config.json
+private/
+
 # Active config (user selects from examples/ on first run)
 questions_config.json
 
