@@ -39,3 +39,5 @@ venv/
 .DS_Store
 Thumbs.db
 .coverage
+venv/
+.pytest_cache/
