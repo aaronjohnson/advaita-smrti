@@ -355,6 +355,126 @@ def cmd_list(args):
     print()
 
 
+def cmd_memory(args):
+    """Memory layer operations"""
+    try:
+        from memory import Memory
+    except ImportError:
+        print("Error: Memory layer not available")
+        sys.exit(1)
+
+    memory_path = args.memory_path or '.memory'
+    memory = Memory(memory_path)
+
+    if args.memory_command == 'status':
+        summary = memory.summary()
+        print(f"\n{'=' * 50}")
+        print("  Memory Layer Status")
+        print(f"{'=' * 50}")
+        print(f"\nPath: {memory_path}")
+        print(f"\nTasks: {summary['tasks']['total']}")
+        if summary['tasks']['by_status']:
+            for status, count in summary['tasks']['by_status'].items():
+                print(f"  - {status}: {count}")
+        print(f"\nDecisions: {summary['decisions']['total']}")
+        if summary['decisions']['by_phase']:
+            for phase, count in summary['decisions']['by_phase'].items():
+                print(f"  - {phase}: {count}")
+        print()
+
+    elif args.memory_command == 'tasks':
+        tasks = memory.tasks.all()
+        if not tasks:
+            print("No tasks in memory")
+        else:
+            print(f"\n{'=' * 60}")
+            print(f"  Tasks ({len(tasks)} total)")
+            print(f"{'=' * 60}\n")
+            for task in tasks:
+                status_icon = {'open': '○', 'in_progress': '◐', 'closed': '●', 'archived': '◌'}.get(task.status, '?')
+                print(f"{status_icon} {task.id}: {task.title}")
+                if task.labels:
+                    print(f"    labels: {', '.join(task.labels)}")
+                if args.verbose and task.description:
+                    desc = task.description[:100] + '...' if len(task.description) > 100 else task.description
+                    print(f"    {desc}")
+            print()
+
+    elif args.memory_command == 'decisions':
+        decisions = memory.decisions.all()
+        if not decisions:
+            print("No decisions in memory")
+        else:
+            print(f"\n{'=' * 60}")
+            print(f"  Decisions ({len(decisions)} total)")
+            print(f"{'=' * 60}\n")
+            for decision in decisions:
+                phase_icon = {'abduction': '?', 'deduction': '→', 'induction': '↻', 'decided': '✓'}.get(decision.phase, '?')
+                print(f"{phase_icon} {decision.id}: {decision.context}")
+                print(f"    phase: {decision.phase}, hypotheses: {len(decision.hypotheses)}")
+                if decision.selected:
+                    print(f"    selected: {decision.selected}")
+            print()
+
+    elif args.memory_command == 'patterns':
+        patterns = memory.synthesize.patterns(label=args.label)
+        if not patterns:
+            print("No patterns detected")
+        else:
+            print(f"\n{'=' * 60}")
+            print(f"  Patterns ({len(patterns)} detected)")
+            print(f"{'=' * 60}\n")
+            for pattern in patterns:
+                confidence_bar = '█' * int(pattern.confidence * 10) + '░' * (10 - int(pattern.confidence * 10))
+                print(f"[{confidence_bar}] {pattern.description}")
+                if args.verbose and pattern.evidence:
+                    print(f"    evidence: {', '.join(pattern.evidence[:5])}")
+            print()
+
+    elif args.memory_command == 'decide':
+        if not args.context:
+            print("Error: --context required for starting a decision")
+            sys.exit(1)
+        decision = memory.decisions.begin(args.context, task_id=args.task_id)
+        print(f"Decision started: {decision.id}")
+        print(f"Context: {decision.context}")
+        print(f"Phase: {decision.phase}")
+        print("\nNext: Add hypotheses with 'memory hypo'")
+
+    elif args.memory_command == 'hypo':
+        if not args.decision_id or not args.description:
+            print("Error: --decision and --description required")
+            sys.exit(1)
+        decision = memory.decisions.hypothesize(
+            args.decision_id,
+            args.description,
+            rationale=args.rationale or '',
+            confidence=args.confidence or 0.5
+        )
+        if decision:
+            print(f"Hypothesis added to {decision.id}")
+            print(f"Total hypotheses: {len(decision.hypotheses)}")
+        else:
+            print(f"Error: Decision {args.decision_id} not found")
+
+    elif args.memory_command == 'select':
+        if not args.decision_id or not args.hypothesis_id:
+            print("Error: --decision and --hypothesis required")
+            sys.exit(1)
+        decision = memory.decisions.decide(
+            args.decision_id,
+            args.hypothesis_id,
+            rationale=args.rationale or ''
+        )
+        if decision:
+            print(f"Decision {decision.id}: selected {decision.selected}")
+            print(f"Rationale: {decision.selection_rationale}")
+        else:
+            print(f"Error: Could not select hypothesis")
+
+    memory.close()
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Form Copilot - Your AI co-pilot for complex paperwork',
@@ -407,6 +527,32 @@ Examples:
     # List command
     list_parser = subparsers.add_parser('list', help='List configs and databases')
 
+    # Memory command
+    memory_parser = subparsers.add_parser('memory', help='Memory layer operations')
+    memory_parser.add_argument('memory_command',
+                               choices=['status', 'tasks', 'decisions', 'patterns', 'decide', 'hypo', 'select'],
+                               help='Memory operation')
+    memory_parser.add_argument('--memory-path', '-m', metavar='PATH', default='.memory',
+                               help='Memory directory path (default: .memory)')
+    memory_parser.add_argument('--verbose', '-v', action='store_true',
+                               help='Show detailed output')
+    memory_parser.add_argument('--label', '-l', metavar='LABEL',
+                               help='Filter by label (for patterns)')
+    memory_parser.add_argument('--context', metavar='TEXT',
+                               help='Decision context (for decide)')
+    memory_parser.add_argument('--task-id', '-t', metavar='ID',
+                               help='Related task ID (for decide)')
+    memory_parser.add_argument('--decision-id', '--decision', metavar='ID',
+                               help='Decision ID (for hypo, select)')
+    memory_parser.add_argument('--hypothesis-id', '--hypothesis', metavar='ID',
+                               help='Hypothesis ID (for select)')
+    memory_parser.add_argument('--description', metavar='TEXT',
+                               help='Hypothesis description (for hypo)')
+    memory_parser.add_argument('--rationale', metavar='TEXT',
+                               help='Rationale (for hypo, select)')
+    memory_parser.add_argument('--confidence', type=float, metavar='N',
+                               help='Confidence 0.0-1.0 (for hypo)')
+
     args = parser.parse_args()
 
     if args.command == 'export':
@@ -419,6 +565,8 @@ Examples:
         cmd_status(args)
     elif args.command == 'list':
         cmd_list(args)
+    elif args.command == 'memory':
+        cmd_memory(args)
     else:
         # Default: interactive mode
         cmd_interactive(args)
