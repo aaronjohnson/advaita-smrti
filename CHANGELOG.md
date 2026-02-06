@@ -65,6 +65,8 @@ A major refactor introducing a memory layer inspired by [beads](https://github.c
 ### Security
 
 - `.memory/` added to `.gitignore` - personal answers never committed to public repo
+- Pre-commit hook (`hooks/pre-commit`) - blocks commits containing personal data
+  - Install: `ln -sf ../../hooks/pre-commit .git/hooks/pre-commit`
 
 ### Commits
 
@@ -77,6 +79,7 @@ A major refactor introducing a memory layer inspired by [beads](https://github.c
 - `Begin at the beginning` - Tests and future notes
 - `I can't go back to yesterday` - Synthesis and migration
 - `We're all mad here` - Protect personal data from git
+- `A stitch in time` - Pre-commit hook for defense in depth
 
 ---
 
