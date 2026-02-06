@@ -62,6 +62,10 @@ A major refactor introducing a memory layer inspired by [beads](https://github.c
   - Reads answers from Memory, falls back to SQLite
   - New methods: `get_memory_summary()`, `synthesize_patterns()`
 
+### Security
+
+- `.memory/` added to `.gitignore` - personal answers never committed to public repo
+
 ### Commits
 
 - `Down the rabbit hole` - RFC 001 proposes integration
@@ -72,6 +76,7 @@ A major refactor introducing a memory layer inspired by [beads](https://github.c
 - `Off with their heads` - Memory becomes primary
 - `Begin at the beginning` - Tests and future notes
 - `I can't go back to yesterday` - Synthesis and migration
+- `We're all mad here` - Protect personal data from git
 
 ---
 
