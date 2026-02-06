@@ -9,6 +9,55 @@ Commit messages follow an Alice in Wonderland theme.
 
 ---
 
+## [0.3.0] - 2026-02-05 - "The Queen's Garden"
+
+> "I could tell you my adventures---beginning from this morning," said Alice a little timidly:
+> "but it's no use going back to yesterday, because I was a different person then."
+
+The queen's garden session: 49/49 SEA questions answered in a single Claude Code session, proving the "queen's garden" workflow where Claude IS the copilot with no Python intermediary. LaTeX export with Tufte margin notes, all formats from memory layer.
+
+### Added
+
+- **LaTeX export with Tufte margin notes** (`export_docs.py --format latex`)
+  - Robert Greene / 48 Laws of Power style layout
+  - Wide right margins with helper hints, priority badges, clickable cross-references
+  - `tufte-handout` document class with `hyperref` internal links
+  - Automatic PDF compilation via `pdflatex` (two-pass for link resolution)
+  - `--no-pdf` flag for `.tex` source only
+
+- **All export formats from memory layer** (`--memory` + `--config` flags)
+  - Markdown: `--format markdown --memory .memory --config config.json`
+  - Texinfo: `--format texinfo --memory .memory --config config.json`
+  - LaTeX: `--format latex --memory .memory --config config.json`
+  - No SQLite required for any export path
+
+- **Context note pattern** for cross-question reference
+  - Bank context as open tasks with `context-note` label
+  - Pull relevant notes when reaching tagged questions
+  - Enables coherent narrative across 49 questions
+
+### Changed
+
+- **SQLite helper deprecated** - import is now optional/lazy
+  - Memory layer is the primary and preferred storage
+  - SQLite path still works for legacy databases
+  - All new features target memory layer first
+
+### Proved
+
+- **Queen's garden workflow** - Claude session as the copilot
+  - Skip `sea_assistant.py` entirely
+  - Read config, show questions, discuss, save to memory directly
+  - Context notes banked during discussion surface at relevant questions
+  - 49/49 questions completed in one session
+
+### Commits
+
+- `Through the looking-glass` - LaTeX export with Tufte margin notes
+- `Curiouser and curiouser` - All export formats from memory layer
+
+---
+
 ## [0.2.0] - 2026-02-05 - "Down the Rabbit Hole"
 
 > "But I don't want to go among mad people," Alice remarked.
@@ -110,5 +159,6 @@ A major refactor introducing a memory layer inspired by [beads](https://github.c
 
 | Version | Date | Codename | Focus |
 |---------|------|----------|-------|
+| 0.3.0 | 2026-02-05 | The Queen's Garden | LaTeX export, memory-first exports, queen's garden workflow |
 | 0.2.0 | 2026-02-05 | Down the Rabbit Hole | Memory layer refactor |
 | 0.1.0 | 2026-01-27 | Initial Release | Core functionality |
