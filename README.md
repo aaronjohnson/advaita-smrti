@@ -2,11 +2,50 @@
 
 > *Your AI co-pilot for complex paperwork.*
 
-A Choose Your Own Adventure toolkit for completing multi-section applications with Claude Code. Load context, collaborate with AI, capture answers, iterate.
+A toolkit for completing multi-section applications with AI collaboration. Load context, collaborate, capture answers, iterate. Two ways to work: directly in a Claude Code session (the queen's garden), or through the interactive Python menu.
 
 ## The Big Idea
 
 Complex forms ask hard questions - questions requiring reflection, specific details, and coherent narratives. This tool provides structure, memory, AI partnership, and iteration.
+
+## Two Ways to Work
+
+### The Queen's Garden (preferred)
+
+Work directly in a Claude Code session. Claude reads the config, presents questions, discusses answers collaboratively, banks context notes for later questions, and saves directly to the memory layer. No intermediary scripts needed.
+
+```bash
+# Start a Claude Code session in your project directory, then:
+# 1. Claude reads the config to know all questions
+# 2. You pick questions to work on (by priority, section, or interest)
+# 3. Discuss and draft answers together
+# 4. Claude saves to the memory layer
+# 5. Context notes from earlier answers surface at relevant questions
+# 6. Export when ready
+```
+
+This workflow proved itself completing 49/49 Oregon SEA questions in a single session. Context flows naturally between questions, and banked notes ensure coherent narrative across the entire application.
+
+**Why it works:** The Python menu was designed to shuttle context between you and Claude via JSON files. But if you're already in a Claude session, the shuttling is unnecessary. Claude can hold the full picture - your config, your answers so far, your context notes - and be a genuine thought partner rather than a subprocess.
+
+### The Interactive Menu (alternative)
+
+The Python menu provides a standalone, structured workflow for anyone who prefers step-by-step guidance or isn't using Claude Code:
+
+```bash
+python3 form_copilot.py                # Interactive mode
+python3 form_copilot.py list           # See available configs
+python3 form_copilot.py status         # Check progress
+```
+
+Press `[C]` on any question to launch a Claude Code session with context auto-loaded. When you're done, Claude writes to `.sea_answer.md`, and the menu saves it to the database.
+
+| Command | Purpose |
+|---------|---------|
+| `/form-start` | Read question context, begin discussion |
+| `/form-save` | Write final answer to file |
+| `/generate-config` | Create a config from pasted questions |
+| `/export-docs` | Export to Markdown/Texinfo/PDF |
 
 ## Why Not Just Ralph Wiggum?
 
@@ -41,38 +80,29 @@ If you're familiar with [Ralph Wiggum loops](https://github.com/anthropics/claud
 
 Four [example configs](docs/EXAMPLES.md) included. Or create your own from any source.
 
-## Quick Start
+## Export
+
+Three formats, three purposes:
 
 ```bash
-python3 form_copilot.py                # Interactive mode
-python3 form_copilot.py list           # See available configs
-python3 form_copilot.py status         # Check progress
-python3 form_copilot.py export pdf     # Export to PDF
+# From memory layer (preferred):
+python3 export_docs.py --memory .memory --config config.json                    # markdown
+python3 export_docs.py --memory .memory --config config.json --format texinfo   # texinfo
+python3 export_docs.py --memory .memory --config config.json --format latex     # tufte PDF
+
+# Legacy SQLite:
+python3 export_docs.py form.db
+python3 export_docs.py form.db --format texinfo
+python3 export_docs.py form.db --format latex
 ```
 
-First run prompts you to choose a form. Each form gets its own database.
+| Format | Purpose | Output |
+|--------|---------|--------|
+| **Markdown** | Lingua franca for AI tools and GitHub | `.md` |
+| **Texinfo** | Structured multi-format (PDF, HTML, Info) | `.texi` |
+| **LaTeX** | Tufte margin notes for review and comprehension | `.pdf` |
 
-Export to **Markdown**, **Texinfo**, **HTML**, or **PDF**. Combine multiple forms into one document.
-
-## The Magic: Claude Collaboration
-
-Press `[C]` on any question to launch a Claude Code session:
-
-1. Context auto-loaded (question, hints, related answers)
-2. Collaborate with Claude to craft your answer
-3. Claude writes to `.sea_answer.md`
-4. You approve, it saves to database
-
-**The pattern:** load context → dialog → capture → iterate
-
-### Claude Commands
-
-| Command | Purpose |
-|---------|---------|
-| `/form-start` | Read question context, begin discussion |
-| `/form-save` | Write final answer to file |
-| `/generate-config` | Create a config from pasted questions |
-| `/export-docs` | Export to Markdown/Texinfo/PDF |
+The LaTeX export uses the `tufte-handout` class to produce Robert Greene / 48 Laws of Power style margin notes with helper hints, priority badges, and clickable cross-references between questions.
 
 ## Create Your Own Config
 
@@ -96,13 +126,14 @@ Form Copilot includes a memory layer inspired by [beads](https://github.com/stev
 - **Tasks** - Track answers with hash-based IDs, labels, dependencies
 - **Decisions** - Record reasoning trails (hypotheses considered, why you chose one)
 - **Synthesis** - Detect patterns across accumulated answers
+- **Context notes** - Bank insights from one question for use in later questions
 
 ```bash
 python3 form_copilot.py memory status     # See memory summary
 python3 form_copilot.py memory patterns   # Find themes across answers
 ```
 
-Storage: JSONL source of truth (git-friendly) + SQLite index (fast queries).
+Storage: JSONL source of truth (git-friendly) + SQLite index (fast queries). SQLite answer storage is deprecated in favor of the memory layer.
 
 See [RFC 002](docs/rfcs/002-memory-layer-spec.md) for the full specification.
 
@@ -111,12 +142,14 @@ See [RFC 002](docs/rfcs/002-memory-layer-spec.md) for the full specification.
 - [CONFIG.md](docs/CONFIG.md) - Creating and validating configs
 - [WORKFLOW.md](docs/WORKFLOW.md) - Menu options, Claude integration, files
 - [EXAMPLES.md](docs/EXAMPLES.md) - Included example configs
+- [CHANGELOG.md](CHANGELOG.md) - Version history (Alice in Wonderland themed)
 - [RFCs](docs/rfcs/) - Architecture decisions and specifications
 
 ## Requirements
 
 - Python 3.6+ (standard library only)
-- [Claude Code CLI](https://docs.anthropic.com/claude-code) for AI features
+- [Claude Code CLI](https://docs.anthropic.com/claude-code) for AI features (queen's garden workflow)
+- `texlive-latex-extra` for LaTeX/PDF export (optional)
 
 ## License
 
@@ -124,4 +157,4 @@ MIT
 
 ---
 
-*Inspired by Choose Your Own Adventure books and the belief that AI collaboration can help people navigate complex processes.*
+*Inspired by Choose Your Own Adventure books, Alice in Wonderland, and the belief that AI collaboration can help people navigate complex processes.*
