@@ -13,6 +13,9 @@ questions_config.json
 *_answers.json
 sea_answers.json
 
+# Memory layer (contains personal answers and decisions)
+.memory/
+
 # Claude Code session files
 .sea_question_context.json
 .sea_answer.md
