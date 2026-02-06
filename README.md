@@ -2,7 +2,7 @@
 
 > *Your AI co-pilot for complex paperwork.*
 
-A toolkit for completing multi-section applications with AI collaboration. Load context, collaborate, capture answers, iterate. Two ways to work: directly in a Claude Code session (the queen's garden), or through the interactive Python menu.
+A toolkit for completing multi-section applications with AI collaboration. Load context, collaborate, capture answers, iterate. Two ways to work: directly in a Claude Code session (the queen's garden), or through the interactive Python menu (the wood where things have no names).
 
 ## The Big Idea
 
@@ -28,9 +28,15 @@ This workflow proved itself completing 49/49 Oregon SEA questions in a single se
 
 **Why it works:** The Python menu was designed to shuttle context between you and Claude via JSON files. But if you're already in a Claude session, the shuttling is unnecessary. Claude can hold the full picture - your config, your answers so far, your context notes - and be a genuine thought partner rather than a subprocess.
 
-### The Interactive Menu (alternative)
+### The Wood Where Things Have No Names
 
-The Python menu provides a standalone, structured workflow for anyone who prefers step-by-step guidance or isn't using Claude Code:
+> *"This must be the wood," she said thoughtfully to herself, "where things have no names.
+> I wonder what'll become of my name when I go in?"*
+> --- Lewis Carroll, *Through the Looking-Glass*
+
+In Carroll's story, Alice enters a quiet forest where all labels fall away. A fawn walks beside her without fear, because neither of them remembers the word *stranger*. It is a place of peace before the names return.
+
+This is the offline mode. No AI session, no internet required. Just you, the questions, and a structured menu to think them through at your own pace. Work on a plane, in the woods, or during a break from the noise. The Python menu provides step-by-step guidance, tracks your progress, and holds your answers in the memory layer until you're ready to return to the garden.
 
 ```bash
 python3 form_copilot.py                # Interactive mode
@@ -38,7 +44,7 @@ python3 form_copilot.py list           # See available configs
 python3 form_copilot.py status         # Check progress
 ```
 
-Press `[C]` on any question to launch a Claude Code session with context auto-loaded. When you're done, Claude writes to `.sea_answer.md`, and the menu saves it to the database.
+Press `[C]` on any question to launch a Claude Code session with context auto-loaded --- a door back to the queen's garden whenever you want it. When you're done, Claude writes to `.sea_answer.md`, and the menu saves it to the memory layer.
 
 | Command | Purpose |
 |---------|---------|
@@ -157,4 +163,4 @@ MIT
 
 ---
 
-*Inspired by Choose Your Own Adventure books, Alice in Wonderland, and the belief that AI collaboration can help people navigate complex processes.*
+*Inspired by Choose Your Own Adventure books, Lewis Carroll's Alice, and the belief that complex paperwork deserves both a garden to think out loud and a wood to think in silence.*
