@@ -26,13 +26,18 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-from sea_application_helper import SEAApplicationHelper
-
 try:
     from memory import Memory
     MEMORY_AVAILABLE = True
 except ImportError:
     MEMORY_AVAILABLE = False
+
+# SQLite helper is deprecated; only loaded if needed for legacy database export
+try:
+    from sea_application_helper import SEAApplicationHelper
+    SQLITE_HELPER_AVAILABLE = True
+except ImportError:
+    SQLITE_HELPER_AVAILABLE = False
 
 
 def find_databases():
@@ -255,6 +260,207 @@ def combine_texinfo(db_paths, output_path="combined_export.texi"):
         f.write('\n'.join(lines))
 
     return output_path
+
+
+def _load_memory_answers(config_path, memory_path):
+    """Load config and answers from memory layer. Returns (config, answers dict)."""
+    with open(config_path) as f:
+        config = json.load(f)
+
+    mem = Memory(memory_path, prefix="fc")
+    answers = {}
+    for t in mem.tasks.all():
+        qid = t.metadata.get('question_id')
+        if qid and t.status == 'closed':
+            answers[qid] = t.description
+    mem.close()
+
+    return config, answers
+
+
+def export_markdown_from_memory(config_path, memory_path=".memory",
+                                output_path=None):
+    """Export answers from memory layer to Markdown.
+
+    Args:
+        config_path: Path to JSON config
+        memory_path: Path to memory layer directory
+        output_path: Output .md path
+
+    Returns:
+        Path to output file
+    """
+    config, answers = _load_memory_answers(config_path, memory_path)
+
+    form_name = config.get('form_name', 'Form Export')
+    form_desc = config.get('form_description', '')
+    total = len(config['questions'])
+    done = len(answers)
+
+    sections = {s['id']: s for s in config['sections']}
+    by_section = {}
+    for q in config['questions']:
+        by_section.setdefault(q['section_id'], []).append(q)
+
+    lines = []
+    lines.append(f"# {form_name}")
+    lines.append("")
+    if form_desc:
+        lines.append(f"> {form_desc}")
+        lines.append("")
+    lines.append(f"**Progress:** {done}/{total} questions answered")
+    lines.append(f"**Exported:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    for sid in sorted(sections.keys()):
+        s = sections[sid]
+        lines.append(f"## {s['title']}")
+        if s.get('description'):
+            lines.append(f"*{s['description']}*")
+        lines.append("")
+
+        qs = sorted(by_section.get(sid, []), key=lambda x: x['id'])
+        for q in qs:
+            qid = q['id']
+            priority = q.get('priority', 3)
+            has_answer = qid in answers
+            icon = {True: "\u2713", False: "\u25cb"}[has_answer]
+
+            lines.append(f"### {icon} Q{qid} (P{priority}): {q['question_text']}")
+            lines.append("")
+
+            if q.get('helper_text'):
+                lines.append(f"*Hint: {q['helper_text']}*")
+                lines.append("")
+
+            if has_answer:
+                lines.append(answers[qid])
+            else:
+                lines.append("*No answer yet*")
+            lines.append("")
+            lines.append("---")
+            lines.append("")
+
+    if output_path is None:
+        safe_name = form_name.lower().replace(' ', '_').replace('-', '_')
+        output_path = f"{safe_name}_export.md"
+
+    with open(output_path, 'w') as f:
+        f.write('\n'.join(lines))
+
+    print(f"Markdown: {output_path}")
+    return str(output_path)
+
+
+def export_texinfo_from_memory(config_path, memory_path=".memory",
+                               output_path=None):
+    """Export answers from memory layer to Texinfo.
+
+    Args:
+        config_path: Path to JSON config
+        memory_path: Path to memory layer directory
+        output_path: Output .texi path
+
+    Returns:
+        Path to output file
+    """
+    config, answers = _load_memory_answers(config_path, memory_path)
+
+    form_name = config.get('form_name', 'Form Export')
+    form_desc = config.get('form_description', '')
+    total = len(config['questions'])
+    done = len(answers)
+
+    sections = {s['id']: s for s in config['sections']}
+    by_section = {}
+    for q in config['questions']:
+        by_section.setdefault(q['section_id'], []).append(q)
+
+    def esc(text):
+        if not text:
+            return ""
+        return text.replace('@', '@@').replace('{', '@{').replace('}', '@}')
+
+    lines = []
+    lines.append("\\input texinfo")
+    lines.append(f"@settitle {esc(form_name)}")
+    lines.append("@documentencoding UTF-8")
+    lines.append("")
+    lines.append("@titlepage")
+    lines.append(f"@title {esc(form_name)}")
+    if form_desc:
+        lines.append(f"@subtitle {esc(form_desc)}")
+    lines.append(f"@subtitle Progress: {done}/{total} questions answered")
+    lines.append(f"@subtitle Exported: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    lines.append("@end titlepage")
+    lines.append("")
+    lines.append("@contents")
+    lines.append("")
+    lines.append("@ifnottex")
+    lines.append("@node Top")
+    lines.append(f"@top {esc(form_name)}")
+    lines.append("@end ifnottex")
+    lines.append("")
+
+    # Top-level menu
+    lines.append("@menu")
+    for sid in sorted(sections.keys()):
+        s = sections[sid]
+        node = s['title'].replace(' ', '-')
+        lines.append(f"* {node}:: {esc(s.get('description', s['title']))}")
+    lines.append("@end menu")
+    lines.append("")
+
+    for sid in sorted(sections.keys()):
+        s = sections[sid]
+        node = s['title'].replace(' ', '-')
+        lines.append(f"@node {node}")
+        lines.append(f"@chapter {esc(s['title'])}")
+        lines.append("")
+        if s.get('description'):
+            lines.append(esc(s['description']))
+            lines.append("")
+
+        qs = sorted(by_section.get(sid, []), key=lambda x: x['id'])
+        for q in qs:
+            qid = q['id']
+            priority = q.get('priority', 3)
+
+            lines.append(f"@section Q{qid} (Priority {priority})")
+            lines.append("")
+            lines.append(f"@strong{{{esc(q['question_text'])}}}")
+            lines.append("")
+
+            if q.get('helper_text'):
+                lines.append("@quotation Hint")
+                lines.append(esc(q['helper_text']))
+                lines.append("@end quotation")
+                lines.append("")
+
+            if qid in answers:
+                lines.append("@quotation Answer")
+                lines.append(esc(answers[qid]))
+                lines.append("@end quotation")
+            else:
+                lines.append("@emph{No answer yet}")
+            lines.append("")
+
+    lines.append("@bye")
+
+    if output_path is None:
+        safe_name = form_name.lower().replace(' ', '_').replace('-', '_')
+        output_path = f"{safe_name}_export.texi"
+
+    with open(output_path, 'w') as f:
+        f.write('\n'.join(lines))
+
+    print(f"Texinfo: {output_path}")
+    print(f"  Build PDF:  makeinfo --pdf {output_path}")
+    print(f"  Build HTML: makeinfo --html {output_path}")
+    print(f"  Build Info: makeinfo {output_path}")
+    return str(output_path)
 
 
 def _escape_latex(s):
@@ -737,10 +943,16 @@ After texinfo export, build with:
                 output_path=args.output,
                 compile_pdf=not args.no_pdf
             )
-        else:
-            print(f"Memory layer export currently supports: latex")
-            print(f"For {args.format}, use SQLite database path instead of --memory")
-            sys.exit(1)
+        elif args.format == 'texinfo':
+            filepath = export_texinfo_from_memory(
+                args.config, args.memory,
+                output_path=args.output
+            )
+        elif args.format == 'markdown':
+            filepath = export_markdown_from_memory(
+                args.config, args.memory,
+                output_path=args.output
+            )
 
         print(f"\nExported: {filepath}")
         return 0
