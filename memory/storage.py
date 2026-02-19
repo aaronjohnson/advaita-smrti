@@ -45,6 +45,22 @@ class JsonlStore:
                 if line:
                     yield json.loads(line)
 
+    def unique_id_count(self) -> int:
+        """Count unique IDs in the JSONL file without loading all data."""
+        if not self.path.exists():
+            return 0
+        ids = set()
+        with open(self.path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        record = json.loads(line)
+                        ids.add(record.get("id"))
+                    except json.JSONDecodeError:
+                        continue
+        return len(ids)
+
     def rewrite(self, records: List[Dict[str, Any]]) -> None:
         """Rewrite the entire file (for compaction/updates)."""
         with open(self.path, "w") as f:
@@ -238,8 +254,22 @@ class IndexDb:
         cursor = self.conn.execute(query, params)
         return [row["id"] for row in cursor.fetchall()]
 
-    def rebuild_from_jsonl(self, tasks_store: JsonlStore, decisions_store: JsonlStore) -> None:
-        """Rebuild index from JSONL files."""
+    def task_count(self) -> int:
+        """Return count of tasks in the index."""
+        cursor = self.conn.execute("SELECT COUNT(*) FROM tasks")
+        return cursor.fetchone()[0]
+
+    def decision_count(self) -> int:
+        """Return count of decisions in the index."""
+        cursor = self.conn.execute("SELECT COUNT(*) FROM decisions")
+        return cursor.fetchone()[0]
+
+    def rebuild_from_jsonl(self, tasks_store: JsonlStore, decisions_store: JsonlStore) -> int:
+        """Rebuild index from JSONL files.
+
+        Returns:
+            Number of tasks re-indexed.
+        """
         # Clear existing data
         self.conn.executescript("""
             DELETE FROM tasks;
@@ -262,6 +292,8 @@ class IndexDb:
             decisions_by_id[record["id"]] = record
         for decision in decisions_by_id.values():
             self.index_decision(decision)
+
+        return len(tasks_by_id)
 
     def close(self) -> None:
         """Close the database connection."""
