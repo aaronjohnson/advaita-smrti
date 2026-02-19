@@ -12,7 +12,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from memory import Memory
+from memory import Memory, IndexDriftError
 from memory.models import Task, Decision, Hypothesis
 
 
@@ -322,12 +322,71 @@ class TestPersistence(unittest.TestCase):
         index_path = os.path.join(self.memory_path, "index.db")
         os.remove(index_path)
 
-        # Reopen and rebuild
-        mem2 = Memory(self.memory_path)
+        # Reopen with ignore_drift (index is gone) and rebuild
+        mem2 = Memory(self.memory_path, ignore_drift=True)
+        count = mem2.rebuild_index()
+        all_tasks = mem2.tasks.all()
+        self.assertEqual(len(all_tasks), 2)
+        self.assertEqual(count, 2)
+        mem2.close()
+
+    def test_drift_detection_raises(self):
+        """Direct JSONL writes cause IndexDriftError on next init."""
+        # Create clean state via API
+        mem1 = Memory(self.memory_path)
+        mem1.tasks.create("Task via API")
+        mem1.close()
+
+        # Bypass API: append directly to JSONL
+        jsonl_path = os.path.join(self.memory_path, "tasks.jsonl")
+        with open(jsonl_path, "a") as f:
+            f.write(json.dumps({
+                "id": "rogue-001",
+                "title": "Written outside API",
+                "status": "open",
+                "labels": [],
+                "blocks": [],
+                "blocked_by": [],
+                "created_at": "2026-01-01T00:00:00",
+                "updated_at": "2026-01-01T00:00:00",
+            }) + "\n")
+
+        # Reopen — should raise IndexDriftError
+        with self.assertRaises(IndexDriftError) as ctx:
+            Memory(self.memory_path)
+        self.assertIn("Index drift detected", str(ctx.exception))
+
+    def test_drift_override_allows_init(self):
+        """ignore_drift=True bypasses the drift check."""
+        # Create drift (same as above)
+        mem1 = Memory(self.memory_path)
+        mem1.tasks.create("Task via API")
+        mem1.close()
+
+        jsonl_path = os.path.join(self.memory_path, "tasks.jsonl")
+        with open(jsonl_path, "a") as f:
+            f.write(json.dumps({
+                "id": "rogue-002",
+                "title": "Written outside API",
+                "status": "open",
+                "labels": [],
+                "blocks": [],
+                "blocked_by": [],
+                "created_at": "2026-01-01T00:00:00",
+                "updated_at": "2026-01-01T00:00:00",
+            }) + "\n")
+
+        # Should not raise with ignore_drift
+        mem2 = Memory(self.memory_path, ignore_drift=True)
         mem2.rebuild_index()
         all_tasks = mem2.tasks.all()
         self.assertEqual(len(all_tasks), 2)
         mem2.close()
+
+        # After rebuild, clean init should work
+        mem3 = Memory(self.memory_path)
+        self.assertEqual(len(mem3.tasks.all()), 2)
+        mem3.close()
 
 
 class TestIntegrationWithHelper(unittest.TestCase):

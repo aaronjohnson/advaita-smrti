@@ -237,12 +237,12 @@ class TestCoherenceCheck(unittest.TestCase):
         """Should detect shared terms between answered tasks."""
         self.memory.tasks.create(
             "Q1", status="closed",
-            description="The CACFP funding requires quarterly meal tracking and daily counts for compliance reporting",
+            description="The grant funding requires quarterly activity tracking and daily counts for compliance reporting",
             metadata={"question_id": "1", "section": "Reporting"},
         )
         self.memory.tasks.create(
             "Q2", status="closed",
-            description="Meals are tracked for CACFP compliance with quarterly reporting to the funding agency",
+            description="Activities are tracked for grant compliance with quarterly reporting to the funding agency",
             metadata={"question_id": "2", "section": "Reporting"},
         )
 

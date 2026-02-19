@@ -358,13 +358,21 @@ def cmd_list(args):
 def cmd_memory(args):
     """Memory layer operations"""
     try:
-        from memory import Memory
+        from memory import Memory, IndexDriftError
     except ImportError:
         print("Error: Memory layer not available")
         sys.exit(1)
 
     memory_path = args.memory_path or '.memory'
-    memory = Memory(memory_path)
+
+    # rebuild and compact need ignore_drift since they fix it
+    skip_drift = args.memory_command in ('rebuild', 'compact')
+
+    try:
+        memory = Memory(memory_path, ignore_drift=skip_drift)
+    except IndexDriftError as e:
+        print(f"\n⚠ {e}", file=sys.stderr)
+        sys.exit(1)
 
     if args.memory_command == 'status':
         summary = memory.summary()
@@ -472,6 +480,15 @@ def cmd_memory(args):
         else:
             print(f"Error: Could not select hypothesis")
 
+    elif args.memory_command == 'rebuild':
+        count = memory.rebuild_index()
+        print(f"Index rebuilt from JSONL: {count} tasks re-indexed.")
+
+    elif args.memory_command == 'compact':
+        memory.compact()
+        summary = memory.summary()
+        print(f"JSONL compacted. Tasks: {summary['tasks']['total']}, Decisions: {summary['decisions']['total']}")
+
     memory.close()
 
 
@@ -530,7 +547,7 @@ Examples:
     # Memory command
     memory_parser = subparsers.add_parser('memory', help='Memory layer operations')
     memory_parser.add_argument('memory_command',
-                               choices=['status', 'tasks', 'decisions', 'patterns', 'decide', 'hypo', 'select'],
+                               choices=['status', 'tasks', 'decisions', 'patterns', 'decide', 'hypo', 'select', 'rebuild', 'compact'],
                                help='Memory operation')
     memory_parser.add_argument('--memory-path', '-m', metavar='PATH', default='.memory',
                                help='Memory directory path (default: .memory)')
