@@ -316,6 +316,69 @@ class SEAApplicationHelper:
         print(f"Loaded {len(questions)} questions across {len(sections)} sections")
         print(f"Form: {form_info['name']}")
 
+    def wire_dependencies(self):
+        """Wire config depends_on relationships into memory layer blocks/blocked_by.
+
+        Reads depends_on from the question config and creates corresponding
+        block relationships between memory tasks. Also stores depends_on
+        in task metadata for coherence checking.
+
+        Call after populate_questions() and after memory tasks exist.
+        """
+        if not self.memory or not self.config:
+            return
+
+        questions = self.config.get('questions', [])
+
+        # Build question_id -> memory task lookup
+        qid_to_task = {}
+        for task in self.memory.tasks.all():
+            qid = task.metadata.get('question_id')
+            if qid:
+                qid_to_task[qid] = task
+
+        wired = 0
+        for q in questions:
+            depends_on = q.get('depends_on')
+            if not depends_on:
+                continue
+
+            qid = q['id']
+            task = qid_to_task.get(qid)
+            dep_task = qid_to_task.get(depends_on)
+
+            if not task or not dep_task:
+                continue
+
+            # Store depends_on in metadata for coherence checking
+            if task.metadata.get('depends_on') != depends_on:
+                self.memory.tasks.update(
+                    task.id,
+                    metadata={**task.metadata, 'depends_on': depends_on}
+                )
+
+            # Wire block relationship if not already set
+            if dep_task.id not in task.blocked_by:
+                self.memory.tasks.block(dep_task.id, task.id)
+                wired += 1
+
+        if wired > 0:
+            print(f"Wired {wired} dependency relationships")
+
+    def coherence_check(self, section=None):
+        """Run a coherence check on the current answers.
+
+        Returns a CoherenceReport with findings about dependency violations,
+        gaps, and cross-reference opportunities.
+
+        Args:
+            section: Section title to check, or None for all sections.
+        """
+        if not self.memory:
+            return None
+
+        return self.memory.synthesize.coherence_check(section=section)
+
     def add_business_direction(self, name, description):
         """Add a potential business direction to consider"""
         self.cursor.execute("""

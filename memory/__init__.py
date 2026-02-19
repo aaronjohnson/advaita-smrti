@@ -28,7 +28,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from .models import Task, Decision, Hypothesis, Pattern, Connection, DecaySummary
+from .models import Task, Decision, Hypothesis, Pattern, Connection, DecaySummary, CoherenceFinding, CoherenceReport
 from .storage import JsonlStore, IndexDb
 from .tasks import TaskStore
 from .decisions import DecisionStore
@@ -43,6 +43,8 @@ __all__ = [
     "Pattern",
     "Connection",
     "DecaySummary",
+    "CoherenceFinding",
+    "CoherenceReport",
 ]
 
 
