@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://form-copilot/config-schema.json",
+  "title": "Form Copilot Configuration",
+  "description": "Schema for form-copilot question configuration files",
+  "type": "object",
+  "required": ["form_name", "sections", "questions"],
+  "properties": {
+    "form_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Display name for the form"
+    },
+    "form_description": {
+      "type": "string",
+      "description": "Brief description of what this form is for"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Version in X.Y format"
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "title"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Unique section ID (referenced by questions)"
+          },
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z_]+$",
+            "description": "Internal name (lowercase, underscores)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Section description"
+          }
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "section_id", "question_text"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9]+[a-z]?$",
+            "description": "Unique question ID (e.g., '1', '2a', '10b')"
+          },
+          "section_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Must reference a valid section ID"
+          },
+          "question_text": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The question to ask"
+          },
+          "question_type": {
+            "type": "string",
+            "enum": ["text", "long_text", "yes_no", "number", "choice"],
+            "default": "long_text",
+            "description": "Type of answer expected"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3,
+            "default": 2,
+            "description": "1=high, 2=medium, 3=low"
+          },
+          "depends_on": {
+            "type": ["string", "null"],
+            "description": "Question ID this depends on (or null)"
+          },
+          "helper_text": {
+            "type": ["string", "null"],
+            "description": "Guidance for answering"
+          }
+        }
+      }
+    },
+    "business_directions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

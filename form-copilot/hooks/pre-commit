@@ -1,0 +1,53 @@
+#!/bin/bash
+# Pre-commit hook: Block commits containing personal data
+#
+# Install: cp hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# Or:      ln -sf ../../hooks/pre-commit .git/hooks/pre-commit
+
+set -e
+
+# Patterns that should never be committed
+BLOCKED_PATTERNS=(
+    "^\.memory/"
+    "\.db$"
+    "_answers\.json$"
+    "^session_log\.json$"
+    "^\.sea_answer\.md$"
+    "^\.sea_question_context\.json$"
+)
+
+# Get staged files
+STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
+
+if [ -z "$STAGED" ]; then
+    exit 0
+fi
+
+BLOCKED=""
+
+for file in $STAGED; do
+    for pattern in "${BLOCKED_PATTERNS[@]}"; do
+        if echo "$file" | grep -qE "$pattern"; then
+            BLOCKED="$BLOCKED\n  - $file (matches: $pattern)"
+        fi
+    done
+done
+
+if [ -n "$BLOCKED" ]; then
+    echo "============================================================"
+    echo "  COMMIT BLOCKED - Personal data detected"
+    echo "============================================================"
+    echo ""
+    echo "The following files contain personal data and should not"
+    echo "be committed to a public repository:"
+    echo -e "$BLOCKED"
+    echo ""
+    echo "These files are already in .gitignore. If you're seeing"
+    echo "this, the file may have been force-added with 'git add -f'."
+    echo ""
+    echo "To proceed anyway (NOT recommended): git commit --no-verify"
+    echo "============================================================"
+    exit 1
+fi
+
+exit 0
