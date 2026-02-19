@@ -9,6 +9,31 @@ Commit messages follow an Alice in Wonderland theme.
 
 ---
 
+## [0.4.0] - 2026-02-19 - "The Looking-Glass Insects"
+
+> "Of course they answer to their names?" the Gnat remarked carelessly.
+> "I never knew them to do it."
+
+Index drift detection: the memory layer now notices when JSONL and SQLite fall out of sync, and tells you why and how to fix it. Like the Looking-Glass insects that don't answer to their names, records written outside the API don't register in the index.
+
+### Added
+
+- **Index drift detection** — `Memory()` init checks JSONL unique IDs against SQLite row count. Raises `IndexDriftError` with an explanation if they differ.
+- **`ignore_drift` parameter** — `Memory(ignore_drift=True)` bypasses the check for rebuild operations.
+- **`form_copilot.py memory rebuild`** — CLI command to repair the SQLite index from JSONL source of truth.
+- **`form_copilot.py memory compact`** — CLI command to remove old JSONL versions.
+- **`JsonlStore.unique_id_count()`** — count unique IDs without loading all data.
+- **`IndexDb.task_count()` / `decision_count()`** — fast row counts from SQLite.
+- **3 new tests** — drift detection, drift override, and rebuild-after-drift.
+- **CLAUDE.md guidance** — documents the Memory Python API and explains when/why to use it over direct JSONL writes.
+- **README section** — complementary use of form-copilot memory with Claude Code's MEMORY.md.
+
+### Changed
+
+- `rebuild_from_jsonl()` and `rebuild_index()` now return the count of tasks re-indexed.
+
+---
+
 ## [0.3.0] - 2026-02-05 - "The Queen's Garden"
 
 > "I could tell you my adventures---beginning from this morning," said Alice a little timidly:

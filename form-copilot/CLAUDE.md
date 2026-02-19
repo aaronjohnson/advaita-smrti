@@ -40,7 +40,32 @@ When the user indicates they're done, write ONLY the answer text to `.sea_answer
 - No "Final Answer:" prefix
 - Just the clean answer text ready to paste into the application
 
-## Database
+## Memory Layer (preferred storage)
+Think carefully before writing to `.memory/tasks.jsonl` or `.memory/decisions.jsonl` directly.
+The Memory Python API keeps JSONL and SQLite in sync. Bypassing it causes index drift,
+which blocks the next session until repaired. If you have a reason to write JSONL directly
+(bulk import, migration, emergency), discuss with the human first and run
+`form_copilot.py memory rebuild` after.
+
+Prefer the API:
+
+```python
+from memory import Memory
+mem = Memory(".memory")
+
+# Create or update tasks
+task = mem.tasks.create("Title", description="...")
+mem.tasks.update(task.id, status="closed", description="Updated answer")
+
+# Decisions
+decision = mem.decisions.begin("Context")
+mem.decisions.hypothesize(decision.id, "Option A")
+mem.decisions.decide(decision.id, "h1", rationale="Why")
+
+mem.close()
+```
+
+## Database (legacy)
 - SQLite database: `sea_application.db`
 - Use `sea_application_helper.py` for programmatic access
 - The Python assistant handles saving answers to the database
