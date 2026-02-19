@@ -1,0 +1,265 @@
+{
+  "form_name": "Creative Project Grant Application",
+  "form_description": "Grant application for artists, writers, musicians, and creative practitioners seeking funding for a new project",
+  "version": "1.0",
+  "sections": [
+    {
+      "id": 1,
+      "name": "artist_info",
+      "title": "Artist Background",
+      "description": "Who you are and your creative journey"
+    },
+    {
+      "id": 2,
+      "name": "project_overview",
+      "title": "Project Overview",
+      "description": "What you want to create"
+    },
+    {
+      "id": 3,
+      "name": "artistic_vision",
+      "title": "Artistic Vision & Context",
+      "description": "The deeper meaning and context of your work"
+    },
+    {
+      "id": 4,
+      "name": "timeline_budget",
+      "title": "Timeline & Budget",
+      "description": "How you'll use the time and money"
+    },
+    {
+      "id": 5,
+      "name": "impact",
+      "title": "Impact & Audience",
+      "description": "Who will experience your work and why it matters"
+    },
+    {
+      "id": 6,
+      "name": "work_samples",
+      "title": "Work Samples",
+      "description": "Describing your previous work"
+    }
+  ],
+  "questions": [
+    {
+      "id": "1a",
+      "section_id": 1,
+      "question_text": "Provide a brief biography highlighting your artistic background, training, and significant achievements.",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "2-3 paragraphs. Include education, exhibitions/publications/performances, awards. Write in third person if required by the grant."
+    },
+    {
+      "id": "1b",
+      "section_id": 1,
+      "question_text": "Describe your artistic practice. What mediums do you work in? What themes recur in your work?",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "This is your chance to help reviewers understand your body of work as a whole. What connects your pieces?"
+    },
+    {
+      "id": "1c",
+      "section_id": 1,
+      "question_text": "What drew you to your artistic discipline? Describe a pivotal moment in your creative development.",
+      "question_type": "long_text",
+      "priority": 2,
+      "depends_on": null,
+      "helper_text": "Be genuine. Reviewers read hundreds of applications - authentic stories stand out."
+    },
+    {
+      "id": "2a",
+      "section_id": 2,
+      "question_text": "Describe the creative project you are proposing. What will you create?",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Be specific and vivid. If it's a series, describe individual pieces. If it's a performance, describe what the audience will experience."
+    },
+    {
+      "id": "2b",
+      "section_id": 2,
+      "question_text": "What is the scope of this project? (e.g., number of pieces, length, scale)",
+      "question_type": "text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Be concrete: '12 paintings, 24x36 inches each' or 'a 90-minute documentary' or 'an album of 10 original compositions'"
+    },
+    {
+      "id": "2c",
+      "section_id": 2,
+      "question_text": "What stage is this project currently in? What work have you already completed?",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Grants often favor projects already in progress. Describe research, sketches, drafts, prototypes."
+    },
+    {
+      "id": "2d",
+      "section_id": 2,
+      "question_text": "What materials, tools, or resources will you need to complete this project?",
+      "question_type": "long_text",
+      "priority": 2,
+      "depends_on": null,
+      "helper_text": "Be specific. This connects to your budget. Include studio space, equipment, materials, collaborators."
+    },
+    {
+      "id": "3a",
+      "section_id": 3,
+      "question_text": "What is the central concept, question, or theme your project explores?",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Go deeper than description. What ideas drive this work? What are you investigating or expressing?"
+    },
+    {
+      "id": "3b",
+      "section_id": 3,
+      "question_text": "How does this project connect to or depart from your previous work?",
+      "question_type": "long_text",
+      "priority": 2,
+      "depends_on": null,
+      "helper_text": "Show evolution. Is this a continuation, a new direction, or a synthesis?"
+    },
+    {
+      "id": "3c",
+      "section_id": 3,
+      "question_text": "What artists, movements, or traditions influence this project? How does your work engage with or respond to them?",
+      "question_type": "long_text",
+      "priority": 2,
+      "depends_on": null,
+      "helper_text": "Situate your work in context. Who are your creative ancestors? Who are your contemporaries working on similar questions?"
+    },
+    {
+      "id": "3d",
+      "section_id": 3,
+      "question_text": "Why is this the right time for you to create this work?",
+      "question_type": "long_text",
+      "priority": 2,
+      "depends_on": null,
+      "helper_text": "Personal readiness, cultural moment, technical capability - why now?"
+    },
+    {
+      "id": "4a",
+      "section_id": 4,
+      "question_text": "Provide a timeline for completing this project. Include major milestones.",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Be realistic. Include research, creation, revision, and presentation/exhibition phases. Month-by-month or quarter-by-quarter."
+    },
+    {
+      "id": "4b",
+      "section_id": 4,
+      "question_text": "Provide a detailed budget. How will grant funds be used?",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Be specific: materials ($X), equipment ($X), studio rental ($X), travel ($X), collaborator fees ($X). Show you've thought this through."
+    },
+    {
+      "id": "4c",
+      "section_id": 4,
+      "question_text": "What other funding sources are you pursuing or have secured for this project?",
+      "question_type": "long_text",
+      "priority": 2,
+      "depends_on": null,
+      "helper_text": "Grants like to see leveraged funding. Include in-kind support, other applications pending, personal investment."
+    },
+    {
+      "id": "5a",
+      "section_id": 5,
+      "question_text": "Who is the intended audience for this work? How will they encounter it?",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Be specific about venue, format, distribution. Gallery? Festival? Online? Publication? Performance space?"
+    },
+    {
+      "id": "5b",
+      "section_id": 5,
+      "question_text": "What impact do you hope this work will have? What do you want audiences to feel, think, or do?",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Be honest about your ambitions. Provoke? Comfort? Challenge? Celebrate? Document?"
+    },
+    {
+      "id": "5c",
+      "section_id": 5,
+      "question_text": "How does this project contribute to your community or field?",
+      "question_type": "long_text",
+      "priority": 2,
+      "depends_on": null,
+      "helper_text": "Many grants value community impact. Will you teach? Collaborate? Create access? Preserve traditions? Break new ground?"
+    },
+    {
+      "id": "5d",
+      "section_id": 5,
+      "question_text": "Do you have confirmed or potential venues, publishers, or presenters for this work?",
+      "question_type": "long_text",
+      "priority": 2,
+      "depends_on": null,
+      "helper_text": "Letters of interest or commitment strengthen applications. Even 'in conversation with' counts."
+    },
+    {
+      "id": "6a",
+      "section_id": 6,
+      "question_text": "For Work Sample #1: Provide title, date, medium, and a brief description.",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Describe what the reviewer will see/hear/read. Context matters: was this commissioned? Part of a series? Award-winning?"
+    },
+    {
+      "id": "6b",
+      "section_id": 6,
+      "question_text": "For Work Sample #2: Provide title, date, medium, and a brief description.",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Choose samples that demonstrate range OR depth, depending on what serves your application best."
+    },
+    {
+      "id": "6c",
+      "section_id": 6,
+      "question_text": "For Work Sample #3: Provide title, date, medium, and a brief description.",
+      "question_type": "long_text",
+      "priority": 2,
+      "depends_on": null,
+      "helper_text": "If possible, choose at least one sample that connects thematically or technically to your proposed project."
+    },
+    {
+      "id": "6d",
+      "section_id": 6,
+      "question_text": "How do your work samples demonstrate your readiness to complete the proposed project?",
+      "question_type": "long_text",
+      "priority": 1,
+      "depends_on": null,
+      "helper_text": "Connect the dots for reviewers. Your samples should show you have the skills, vision, and track record to deliver."
+    }
+  ],
+  "business_directions": [
+    {
+      "name": "Visual Arts",
+      "description": "Painting, sculpture, photography, installation, mixed media, digital art"
+    },
+    {
+      "name": "Literary Arts",
+      "description": "Fiction, poetry, creative nonfiction, playwriting, screenwriting"
+    },
+    {
+      "name": "Performing Arts",
+      "description": "Music composition, choreography, theater, performance art"
+    },
+    {
+      "name": "Media Arts",
+      "description": "Film, video, audio, interactive media, game design"
+    },
+    {
+      "name": "Interdisciplinary",
+      "description": "Work that crosses or combines multiple disciplines"
+    }
+  ]
+}
