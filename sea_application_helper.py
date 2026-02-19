@@ -60,7 +60,8 @@ class SEAApplicationHelper:
         self.memory = None
         if MEMORY_AVAILABLE:
             if memory_path is None:
-                memory_path = Path(__file__).parent / ".memory"
+                db_p = Path(db_path)
+                memory_path = db_p.parent / f".memory_{db_p.stem}"
             try:
                 self.memory = Memory(str(memory_path), prefix="fc")
             except Exception as e:

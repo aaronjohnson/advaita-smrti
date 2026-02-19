@@ -25,6 +25,7 @@ Usage:
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -33,6 +34,11 @@ from .storage import JsonlStore, IndexDb
 from .tasks import TaskStore
 from .decisions import DecisionStore
 from .synthesis import Synthesizer
+
+
+class IndexDriftError(Exception):
+    """Raised when the SQLite index has drifted from the JSONL source of truth."""
+    pass
 
 
 __all__ = [
@@ -57,12 +63,13 @@ class Memory:
     - synthesize: Pattern detection and context decay
     """
 
-    def __init__(self, path: str = ".memory", prefix: str = "fc"):
+    def __init__(self, path: str = ".memory", prefix: str = "fc", ignore_drift: bool = False):
         """Initialize memory layer.
 
         Args:
             path: Directory for memory storage (default: .memory)
             prefix: ID prefix for tasks (default: fc for form-copilot)
+            ignore_drift: If True, skip index drift check (use only for rebuild)
         """
         self.path = Path(path)
         self.path.mkdir(parents=True, exist_ok=True)
@@ -80,6 +87,10 @@ class Memory:
         self.decisions = DecisionStore(self._decisions_jsonl, self._index, prefix="qt")
         self.synthesize = Synthesizer(self.tasks, self.decisions)
 
+        # Detect index drift (hard gate unless explicitly overridden)
+        if not ignore_drift:
+            self._check_index_drift()
+
     def _init_config(self) -> None:
         """Initialize or load config."""
         config_path = self.path / "config.json"
@@ -96,12 +107,47 @@ class Memory:
             with open(config_path, "w") as f:
                 json.dump(self._config, f, indent=2)
 
-    def rebuild_index(self) -> None:
-        """Rebuild SQLite index from JSONL files."""
-        self._index.rebuild_from_jsonl(self._tasks_jsonl, self._decisions_jsonl)
+    def _check_index_drift(self) -> None:
+        """Check if SQLite index has drifted from JSONL source of truth.
+
+        Raises IndexDriftError if drift is detected. This happens when
+        records are appended directly to the JSONL files bypassing the
+        Memory Python API.
+        """
+        jsonl_task_count = self._tasks_jsonl.unique_id_count()
+        index_task_count = self._index.task_count()
+
+        jsonl_decision_count = self._decisions_jsonl.unique_id_count()
+        index_decision_count = self._index.decision_count()
+
+        if jsonl_task_count != index_task_count or jsonl_decision_count != index_decision_count:
+            raise IndexDriftError(
+                f"\n"
+                f"  Index drift detected.\n"
+                f"    Tasks:     JSONL has {jsonl_task_count}, index has {index_task_count}\n"
+                f"    Decisions: JSONL has {jsonl_decision_count}, index has {index_decision_count}\n"
+                f"\n"
+                f"  This typically happens when records are appended directly to\n"
+                f"  tasks.jsonl bypassing the Memory Python API. The API writes to\n"
+                f"  both JSONL and SQLite together, keeping them in sync.\n"
+                f"\n"
+                f"  If you need to write JSONL directly (bulk import, migration),\n"
+                f"  discuss with the project owner first, then run rebuild after.\n"
+                f"\n"
+                f"  To repair: form_copilot.py memory rebuild\n"
+            )
+
+    def rebuild_index(self) -> int:
+        """Rebuild SQLite index from JSONL files.
+
+        Returns:
+            Number of tasks re-indexed.
+        """
+        count = self._index.rebuild_from_jsonl(self._tasks_jsonl, self._decisions_jsonl)
         # Reload caches
         self.tasks._load_cache()
         self.decisions._load_cache()
+        return count
 
     def compact(self) -> None:
         """Compact JSONL files to remove old versions."""

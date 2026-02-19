@@ -141,7 +141,26 @@ python3 form_copilot.py memory patterns   # Find themes across answers
 
 Storage: JSONL source of truth (git-friendly) + SQLite index (fast queries). SQLite answer storage is deprecated in favor of the memory layer.
 
+Index drift detection: if the SQLite index falls out of sync with JSONL (e.g., from a direct JSONL write), the next `Memory()` init will raise `IndexDriftError` and prompt a rebuild. This steers usage toward the Python API, which keeps both stores in sync.
+
+```bash
+python3 form_copilot.py memory rebuild   # Repair index from JSONL
+python3 form_copilot.py memory compact   # Remove old JSONL versions
+```
+
 See [RFC 002](docs/rfcs/002-memory-layer-spec.md) for the full specification.
+
+### Complementary use with Claude Code MEMORY.md
+
+Claude Code provides a built-in `MEMORY.md` file that is loaded into the system prompt at the start of every session. It's brief, curated, and high-level — a briefing card.
+
+Form Copilot's memory layer is the structured archive underneath: detailed, append-only, queryable. Too large to load into a prompt, but available for targeted queries via the Python API or SQLite.
+
+They work together:
+- **MEMORY.md** knows *that* there are 43 questions and 12 are deferred to a stakeholder.
+- **Form Copilot memory** knows *which* 12, *what* was said, *when*, and *why*.
+
+One is the index card on the dashboard. The other is the filing cabinet. MEMORY.md can reference the memory layer for deeper context: "Query `.memory/index.db` for open tasks by section."
 
 ## Documentation
 
