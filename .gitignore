@@ -19,3 +19,6 @@ __pycache__/
 # Secrets (if any added later)
 .env
 *.key
+
+# Local backups (originals tracked in git)
+.emo-backup/
