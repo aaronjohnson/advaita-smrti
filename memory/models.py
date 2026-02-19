@@ -174,3 +174,51 @@ class DecaySummary:
             "insights": self.insights,
             "task_ids": self.task_ids,
         }
+
+
+@dataclass
+class CoherenceFinding:
+    """A single finding from a coherence check."""
+
+    severity: str  # "error", "warning", "info"
+    category: str  # "dependency", "gap", "cross_reference"
+    message: str
+    task_ids: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "severity": self.severity,
+            "category": self.category,
+            "message": self.message,
+            "task_ids": self.task_ids,
+        }
+
+
+@dataclass
+class CoherenceReport:
+    """Results of a coherence check across a set of tasks."""
+
+    section: str  # Section name or "all"
+    findings: List[CoherenceFinding] = field(default_factory=list)
+    tasks_checked: int = 0
+    tasks_complete: int = 0
+    tasks_with_dependencies: int = 0
+    unresolved_dependencies: int = 0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "section": self.section,
+            "findings": [f.to_dict() for f in self.findings],
+            "tasks_checked": self.tasks_checked,
+            "tasks_complete": self.tasks_complete,
+            "tasks_with_dependencies": self.tasks_with_dependencies,
+            "unresolved_dependencies": self.unresolved_dependencies,
+        }
+
+    @property
+    def has_errors(self) -> bool:
+        return any(f.severity == "error" for f in self.findings)
+
+    @property
+    def has_warnings(self) -> bool:
+        return any(f.severity == "warning" for f in self.findings)

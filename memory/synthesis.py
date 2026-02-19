@@ -10,7 +10,7 @@ This module provides the structure; LLM calls can be added later.
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-from .models import Connection, DecaySummary, Pattern, Task, Decision
+from .models import Connection, CoherenceFinding, CoherenceReport, DecaySummary, Pattern, Task, Decision
 from .tasks import TaskStore
 from .decisions import DecisionStore
 
@@ -197,6 +197,168 @@ class Synthesizer:
             insights=insights,
             task_ids=archived_ids,
         )
+
+    def coherence_check(
+        self,
+        section: Optional[str] = None,
+        question_tasks_only: bool = True,
+    ) -> CoherenceReport:
+        """Check coherence across tasks in a section or globally.
+
+        Structural checks (no LLM required):
+        - Dependency violations: task answered but its dependency is not
+        - Gap detection: open tasks that block answered tasks
+        - Status inconsistency: closed task with open dependencies
+        - Orphan detection: tasks with missing dependency targets
+        - Section completeness: how complete is the section
+
+        Args:
+            section: Section label to filter (e.g., "section:Data and Reporting").
+                     If None, checks all tasks.
+            question_tasks_only: If True, only check tasks with question_id metadata.
+        """
+        # Gather relevant tasks
+        all_tasks = self.tasks.all()
+
+        if question_tasks_only:
+            all_tasks = [t for t in all_tasks if t.metadata.get('question_id')]
+
+        if section:
+            tasks = [t for t in all_tasks if
+                     f"section:{section}" in t.labels or
+                     t.metadata.get('section') == section]
+        else:
+            tasks = all_tasks
+
+        report = CoherenceReport(
+            section=section or "all",
+            tasks_checked=len(tasks),
+            tasks_complete=sum(1 for t in tasks if t.status == "closed"),
+        )
+
+        if not tasks:
+            return report
+
+        # Build lookup: question_id -> task
+        qid_to_task = {}
+        for t in all_tasks:
+            qid = t.metadata.get('question_id')
+            if qid:
+                qid_to_task[qid] = t
+
+        # Check 1: Dependency violations
+        # A task is answered (closed/in_progress) but its blocked_by tasks are still open
+        for task in tasks:
+            if task.status in ("closed", "in_progress") and task.blocked_by:
+                for blocker_id in task.blocked_by:
+                    blocker = self.tasks.get(blocker_id)
+                    if blocker and blocker.status == "open":
+                        report.findings.append(CoherenceFinding(
+                            severity="warning",
+                            category="dependency",
+                            message=f"Task '{task.title}' is {task.status} but depends on "
+                                    f"'{blocker.title}' which is still open",
+                            task_ids=[task.id, blocker_id],
+                        ))
+                        report.unresolved_dependencies += 1
+
+        # Check 2: Gap detection using config depends_on metadata
+        # If a task has a config-level depends_on, check if that dependency is answered
+        for task in tasks:
+            depends_on_qid = task.metadata.get('depends_on')
+            if not depends_on_qid:
+                continue
+
+            report.tasks_with_dependencies += 1
+            dep_task = qid_to_task.get(depends_on_qid)
+
+            if not dep_task:
+                report.findings.append(CoherenceFinding(
+                    severity="error",
+                    category="dependency",
+                    message=f"Task '{task.title}' depends on question {depends_on_qid} "
+                            f"which has no corresponding task",
+                    task_ids=[task.id],
+                ))
+            elif task.status == "closed" and dep_task.status == "open":
+                report.findings.append(CoherenceFinding(
+                    severity="warning",
+                    category="dependency",
+                    message=f"Q{task.metadata.get('question_id')} is complete but "
+                            f"depends on Q{depends_on_qid} which is unanswered",
+                    task_ids=[task.id, dep_task.id],
+                ))
+            elif task.status in ("closed", "in_progress") and dep_task.status == "open":
+                report.findings.append(CoherenceFinding(
+                    severity="info",
+                    category="gap",
+                    message=f"Q{task.metadata.get('question_id')} has work but "
+                            f"its dependency Q{depends_on_qid} is unanswered — "
+                            f"revisit after completing Q{depends_on_qid}",
+                    task_ids=[task.id, dep_task.id],
+                ))
+
+        # Check 3: Section completeness
+        if section:
+            total = len(tasks)
+            closed = sum(1 for t in tasks if t.status == "closed")
+            in_progress = sum(1 for t in tasks if t.status == "in_progress")
+            open_count = sum(1 for t in tasks if t.status == "open")
+
+            if closed == total and total > 0:
+                report.findings.append(CoherenceFinding(
+                    severity="info",
+                    category="completeness",
+                    message=f"Section '{section}' is complete ({total}/{total})",
+                    task_ids=[t.id for t in tasks],
+                ))
+            elif open_count > 0:
+                open_qids = [t.metadata.get('question_id', '?') for t in tasks if t.status == "open"]
+                report.findings.append(CoherenceFinding(
+                    severity="info",
+                    category="completeness",
+                    message=f"Section '{section}': {closed} complete, {in_progress} in progress, "
+                            f"{open_count} not started (Q{', Q'.join(open_qids)})",
+                    task_ids=[t.id for t in tasks if t.status == "open"],
+                ))
+
+        # Check 4: Cross-reference opportunities
+        # Find tasks in the same section that reference the same terms
+        # (simple keyword overlap in descriptions)
+        answered_tasks = [t for t in tasks if t.status in ("closed", "in_progress")
+                          and t.description and len(t.description) > 50]
+        if len(answered_tasks) >= 2:
+            for i, t1 in enumerate(answered_tasks):
+                for t2 in answered_tasks[i + 1:]:
+                    shared = self._find_shared_terms(t1.description, t2.description)
+                    if shared:
+                        q1 = t1.metadata.get('question_id', '?')
+                        q2 = t2.metadata.get('question_id', '?')
+                        report.findings.append(CoherenceFinding(
+                            severity="info",
+                            category="cross_reference",
+                            message=f"Q{q1} and Q{q2} both reference: {', '.join(shared[:5])}. "
+                                    f"Verify consistency.",
+                            task_ids=[t1.id, t2.id],
+                        ))
+
+        return report
+
+    def _find_shared_terms(self, text1: str, text2: str, min_length: int = 5) -> list:
+        """Find significant shared terms between two texts."""
+        stop_words = {
+            'about', 'after', 'again', 'being', 'between', 'could', 'daily',
+            'does', 'during', 'each', 'first', 'from', 'have', 'their',
+            'them', 'then', 'there', 'these', 'they', 'this', 'through',
+            'what', 'when', 'where', 'which', 'while', 'will', 'with',
+            'would', 'answer', 'question', 'helper', 'status', 'should',
+        }
+        words1 = {w.lower().strip('.,;:()[]"\'') for w in text1.split()
+                   if len(w) >= min_length}
+        words2 = {w.lower().strip('.,;:()[]"\'') for w in text2.split()
+                   if len(w) >= min_length}
+        shared = (words1 & words2) - stop_words
+        return sorted(shared)[:10]
 
     def summary(self) -> dict:
         """Generate overall summary of memory state."""
