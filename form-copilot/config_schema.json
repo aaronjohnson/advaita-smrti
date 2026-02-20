@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://form-copilot/config-schema.json",
-  "title": "Form Copilot Configuration",
-  "description": "Schema for form-copilot question configuration files",
+  "$id": "https://advaita-smrti/config-schema.json",
+  "title": "smrti Configuration",
+  "description": "Schema for smrti question configuration files",
   "type": "object",
   "required": ["form_name", "sections", "questions"],
   "properties": {

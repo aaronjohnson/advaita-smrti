@@ -1,6 +1,6 @@
 # Creating Your Own Form Config
 
-Want to use form-copilot for a different application? Create your own config file.
+Want to use smrti for a different application? Create your own config file.
 
 ## Let Claude Build It
 
@@ -15,7 +15,7 @@ The fastest way to create a config: paste your application into Claude and ask i
 **Example prompt:**
 ```
 Here are the questions from my [grant application / college supplement / business loan form].
-Create a form-copilot config JSON file with:
+Create a smrti config JSON file with:
 - Logical sections grouping related questions
 - Priority 1 for foundational questions, 2-3 for others
 - Helpful helper_text for complex questions

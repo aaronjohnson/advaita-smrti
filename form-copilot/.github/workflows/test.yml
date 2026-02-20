@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [queens-garden]
+    branches: [sutra]
   pull_request:
-    branches: [queens-garden]
+    branches: [sutra]
 
 jobs:
   test:
