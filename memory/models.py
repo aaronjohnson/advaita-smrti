@@ -127,6 +127,51 @@ class Decision:
 
 
 @dataclass
+class Fact:
+    """A stable piece of knowledge — the semantic memory store."""
+
+    id: str
+    fact: str                  # The fact itself
+    source: str = ""           # Where it came from
+    section: str = ""          # Optional grouping
+    confidence: float = 1.0    # 0.0-1.0
+    labels: List[str] = field(default_factory=list)
+    supersedes: Optional[str] = None  # ID of fact this replaces
+    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "fact": self.fact,
+            "source": self.source,
+            "section": self.section,
+            "confidence": self.confidence,
+            "labels": self.labels,
+            "supersedes": self.supersedes,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "metadata": self.metadata,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Fact":
+        return cls(
+            id=data["id"],
+            fact=data["fact"],
+            source=data.get("source", ""),
+            section=data.get("section", ""),
+            confidence=data.get("confidence", 1.0),
+            labels=data.get("labels", []),
+            supersedes=data.get("supersedes"),
+            created_at=data.get("created_at", datetime.now().isoformat()),
+            updated_at=data.get("updated_at", datetime.now().isoformat()),
+            metadata=data.get("metadata", {}),
+        )
+
+
+@dataclass
 class Pattern:
     """A detected pattern from synthesis."""
 
