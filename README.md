@@ -1,180 +1,120 @@
-# Day Shelter Kiosk
+# smrti
 
-A secure, offline check-in kiosk system for day shelters and service centers.
+> स्मृति — "that which is remembered"
 
-**Status:** Pre-development (proposal phase)
-**Client:** EMO Oregon HIV Day Center (via Express Employment)
-**Consultant:** Aaron Johnson
+Non-dual memory for structured knowledge elicitation. A
+toolkit for completing multi-section applications with AI
+collaboration, built around four typed memory stores.
 
----
+## Memory Types
 
-## What This Is
+| Store | File | What it holds |
+|---|---|---|
+| **Procedural** | `tasks.jsonl` | Questions, dependencies, status |
+| **Episodic** | `decisions.jsonl` | Events, choices, rationale |
+| **Semantic** | `facts.jsonl` | Stable facts, preferences |
+| **Ephemeral** | `ephemeral/` | Session scratch (not persisted) |
 
-This repository contains two things:
+JSONL is the source of truth (git-friendly, append-only).
+SQLite is a regenerable index for fast queries.
 
-1. **A consulting engagement** — proposal documents, hardware specifications, and project planning for EMO Oregon's day center check-in system
+## Quick Start
 
-2. **A repeatable template** — patterns, research, and documentation that can be adapted for similar nonprofit kiosk projects
+```bash
+# Clone
+git clone https://github.com/aaronjohnson/advaita-smrti.git
+cd advaita-smrti
 
-The system being designed is a self-contained, offline kiosk for client check-in at a day shelter serving individuals who may be experiencing homelessness or living with HIV. It prioritizes data privacy (HIPAA-adjacent), local data residency (no cloud), and operational simplicity.
+# Interactive mode
+python3 smrti.py
 
----
-
-## The System
-
-### Core Requirements
-
-- **Offline-first**: No internet required for daily operation
-- **Encrypted at rest**: SQLite + SQLCipher (AES-256)
-- **On-premises data**: All client data stays on the physical device
-- **Touch-optimized**: Self-service check-in for clients
-- **Dual-screen**: Client-facing kiosk + staff-facing admin
-- **HMIS-compatible**: CSV export matching HUD data standards (if needed)
-- **Tamper-resistant**: Read-only root filesystem, automatic recovery
-
-### Proposed Architecture
-
-```
-┌─────────────────┐       ┌──────────────────────┐
-│  CLIENT SCREEN  │       │  STAFF SCREEN        │
-│  7" touch       │       │  10-15" touch        │
-│                 │       │                      │
-│  Check in/out   │       │  Register clients    │
-│  Select services│       │  Run reports         │
-│                 │       │  Export to USB       │
-└────────┬────────┘       └──────────┬───────────┘
-         │                          │
-         └──────────┬───────────────┘
-                    │
-           ┌────────┴────────┐
-           │  Raspberry Pi   │
-           │  or Commercial  │
-           │  Linux Device   │
-           │                 │
-           │  Flask + SQLite │
-           │  Cage Wayland   │
-           └─────────────────┘
+# Or work directly in a Claude Code session (preferred)
+# Claude reads the config, presents questions, saves to memory
 ```
 
-### Hardware Options Under Consideration
+No dependencies beyond Python 3.6+ standard library.
 
-| Option | Hardware Cost | Durability |
-|--------|---------------|------------|
-| Elo I-Series (commercial all-in-one) | ~$1,200 | Commercial-grade |
-| CM5 + Waveshare kiosk + Elo staff | ~$1,015 | Semi-industrial |
-| CM5 + Waveshare + Volcora | ~$680 | Mixed |
-| Pi 5 + KKSB + Volcora | ~$605 | Consumer-premium |
+## CLI
 
-Development cost is $5,000 regardless of hardware path.
+```bash
+smrti.py                    # Interactive mode
+smrti.py list               # Available configs and databases
+smrti.py status             # Progress summary
+smrti.py validate cfg.json  # Validate a config file
 
----
+smrti.py export markdown    # Export answers
+smrti.py export pdf         # Export to PDF (requires texinfo)
 
-## Repository Contents
+smrti.py memory status      # Memory layer summary
+smrti.py memory rebuild     # Repair index from JSONL
+smrti.py memory compact     # Remove old JSONL versions
+```
 
-### Client-Facing Documents
+## Create Your Own Config
 
-| File | Description |
-|------|-------------|
-| `EMO_Oregon_Statement_of_Work-1.docx` | Original SOW (draft, Jan 2026) |
-| `EMO_Oregon_Budget_Addendum-1.docx` | Budget breakdown |
-| `EMO_Oregon_Hardware_and_Services_Quote.md` | Hardware quote v3 with deployment topology |
-| `Recommended_System_A1.md` | Detailed BOM with purchase URLs and diagrams |
-| `Daily_Data_Procedure.md` | Staff one-pager for daily operations |
-| `Meeting_Notes_Hardware_Options.md` | Discussion document for hardware decisions |
+Paste any application into Claude:
 
-### Internal Notes
+```
+Here are questions from my [grant / college app / form].
+Create a smrti config JSON with sections, priorities,
+and helper text.
 
-| File | Description |
-|------|-------------|
-| `Notes_Secure_Storage_and_Boot_Architecture.md` | Two-database design, hardware-encrypted USB options |
-| `Notes_Consulting_Engagement_Patterns.md` | Personal reflection on consulting boundaries |
-| `links.txt` | Raw hardware links (initial research) |
+[paste questions]
+```
 
----
+Or use `/generate-config` in Claude Code. Validate with
+`python3 validate_config.py`.
 
-## Learnings So Far
+## What Makes This Different
 
-### On the Technical Side
+Most memory systems start from conversation. smrti starts
+from **structured forms**: sections, questions, dependencies,
+priorities. This gives it:
 
-1. **Offline kiosk architecture is well-solved.** Cage (Wayland compositor) + Chromium + Flask is a clean stack. The Pi ecosystem has mature kiosk tooling.
+- The form itself as procedural memory (no extraction needed)
+- Coherence checking across answers
+- Dependency-aware ordering
+- A clear "done" criterion
 
-2. **The boot/encryption tradeoff is real.** Unattended boot vs. encrypted database requires either stored keys (less secure) or a two-tier database design (operational data auto-unlocks, sensitive data requires staff auth).
+Maps to grant applications, clinical intake, legal discovery,
+insurance claims — anywhere humans complete complex multi-part
+forms with an AI collaborator.
 
-3. **Hardware-encrypted USB drives exist and are reasonably priced.** Apricorn Aegis, Kingston IronKey, iStorage datAshur — $65-75 for FIPS-certified, PIN-pad drives. This shifts encryption responsibility from software to hardware.
+## Documentation
 
-4. **HMIS compatibility is a CSV export problem, not an integration problem.** The HUD CSV spec is well-documented. Real-time API integration with regional HMIS vendors is out of scope and unnecessary.
+- [CONFIG.md](docs/CONFIG.md) — Creating and validating configs
+- [WORKFLOW.md](docs/WORKFLOW.md) — CLI, Claude integration, files
+- [RFCs](docs/rfcs/) — Architecture decisions and specs
 
-5. **Data retention requirements overlap.** Oregon medical records (10 years) is the longest; satisfying it automatically covers HIPAA (6 years), HMIS (7 years), and federal grants (3 years).
+## Inspirations and References
 
-### On the Consulting Side
+- [beads](https://github.com/steveyegge/beads) — git-backed
+  task graphs
+- [quint-code](https://github.com/m0n0x41d/quint-code) —
+  decision reasoning trails
+- [ENGRAM](https://arxiv.org/abs/2511.12960) (Patel & Patel,
+  2026) — typed memory stores: episodic, semantic, procedural
+- [Memory in the Age of AI Agents](https://arxiv.org/abs/2512.13564)
+  (Hu et al., 2025) — survey and taxonomy
+- [Context Engineering: Sessions & Memory](https://www.kaggle.com/whitepaper-context-engineering-sessions-and-memory)
+  (Google, 2025) — whitepaper
 
-1. **The blueprint is the deliverable, not the sales pitch.** Detailed specs, hardware research, architecture design — this is paid work, not proposal work.
+## See Also
 
-2. **Paid discovery should be the entry point.** 2-4 hours of billable research before writing a detailed proposal filters tire-kickers and values the work appropriately.
-
-3. **Time-box proposals.** Maximum 2 hours of free work. Beyond that, it's Phase 1 (paid).
-
-4. **Intermediaries have their own incentives.** A staffing company referring work wants to close deals and look good. They won't protect consultant boundaries — that's the consultant's job.
-
-5. **Structures protect against over-delivery.** Written scope, time limits, contracts before work. These aren't adversarial; they enable generosity within boundaries.
-
----
-
-## Repeatable Template
-
-This engagement is being documented as a template for similar projects:
-
-**Target use cases:**
-- Nonprofit service centers needing client check-in
-- Day shelters, food banks, community health centers
-- Organizations with data residency requirements (no cloud)
-- HMIS-participating homeless service providers
-
-**What's reusable:**
-- Hardware research and BOM patterns
-- Deployment topology options
-- Data retention policy framework
-- HMIS CSV export approach
-- Boot/encryption architecture
-- Staff procedure documentation style
-- Proposal and quote document structure
-
-**What's client-specific:**
-- Exact data fields collected
-- Services tracked at check-in
-- Branding and UI customization
-- Funding source requirements (HMIS, RSR, etc.)
-
-If this project proceeds and the code is open-sourced (recommended), the software itself becomes the most reusable asset.
-
----
-
-## Project Status
-
-- [x] Initial proposal and SOW
-- [x] Hardware research and options
-- [x] Deployment topology design
-- [x] Data retention and compliance research
-- [x] Meeting preparation documents
-- [ ] Client approval and contract signing
-- [ ] Hardware procurement
-- [ ] Phase 1: Discovery
-- [ ] Phase 2: Development
-- [ ] Phase 3: Testing and documentation
-- [ ] Phase 4: Deployment and training
-
----
+- [Zep](https://github.com/getzep/zep) — temporal knowledge
+  graphs for agent memory
+- [Letta](https://github.com/letta-ai/letta) — filesystem
+  memory that outperforms specialized systems
+- [Mem0](https://github.com/mem0ai/mem0) — structured
+  summarization and conflict resolution
+- [Pinecone](https://www.pinecone.io/) — vector database for
+  semantic retrieval
 
 ## License
 
-Code (when written): MIT License (pending client approval of open source approach)
-
-Documentation in this repo: Private consulting materials, not for distribution.
+Apache 2.0 — see [LICENSE](LICENSE)
 
 ---
 
-## Contact
-
-Aaron Johnson
-Independent Technical Consultant
-Portland, Oregon
+*advaita-smrti (अद्वैत-स्मृति) — the tool and the thinker
+are not separate.*

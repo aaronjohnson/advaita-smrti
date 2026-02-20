@@ -1,25 +1,46 @@
-# Python virtual environment
-.venv/
-venv/
-env/
+# Database files (contain user answers)
+*.db
 
-# Byte-compiled / optimized / DLL files
+# Job evaluation configs (may contain company/person names)
+# Keep these local - don't commit to public repo
+*_job_eval_config.json
+private/
+
+# Active config (user selects from examples/ on first run)
+questions_config.json
+
+# Exported answer files
+*_answers.json
+sea_answers.json
+
+# Memory layer (contains personal answers and decisions)
+.memory/
+
+# Claude Code session files
+.sea_question_context.json
+.sea_answer.md
+
+# Session logs (contain user journey data)
+session_log.json
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+env/
+venv/
 
-# Editor backup files
-*~
+# IDE
+.vscode/
+.idea/
 *.swp
 *.swo
 
-# macOS
+# OS
 .DS_Store
-
-# Secrets (if any added later)
-.env
-*.key
-
-# Local backups (originals tracked in git)
-.emo-backup/
-papers/
+Thumbs.db
+.coverage
+venv/
+.pytest_cache/
