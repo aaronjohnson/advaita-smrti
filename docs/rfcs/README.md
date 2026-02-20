@@ -10,3 +10,4 @@ Design decisions for [smrti](../../README.md).
 | [003](003-recursive-context-and-complementary-cognition.md) | Partial (v0.4.0) | Dependency graph, coherence checks, complementary cognition |
 | [004](004-smrti-rename-and-typed-memory.md) | Implemented (v0.5.0) | Rename to smrti, typed memory stores |
 | [005](005-ephemeral-store.md) | Draft | Session-scoped scratch and triage |
+| [006](006-web-interface-resume-fit.md) | Concept | Web interface — resume fit and honest discovery |
