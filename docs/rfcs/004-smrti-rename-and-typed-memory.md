@@ -1,8 +1,9 @@
 # RFC 004: smrti — Rename and Typed Memory
 
-**Status:** Draft
+**Status:** Implemented (v0.5.0)
 **Author:** Aaron Johnson
 **Created:** 2026-02-19
+**Implemented:** 2026-02-20
 **Parent:** RFC 002
 
 ## Purpose
@@ -88,7 +89,7 @@ multi-part forms with an AI collaborator.
 |---|---|
 | `form_copilot.py` | `smrti.py` |
 | repo: `form-copilot` | repo: `advaita-smrti` |
-| branch: `queens-garden` | TBD (drop Alice in Wonderland theme) |
+| branch: `queens-garden` | branch: `sutra` |
 | prefix: `fc` | prefix: `sm` |
 
 ### Imports
@@ -119,9 +120,9 @@ python3 smrti.py status
 ### Default branch
 
 The `queens-garden` branch name comes from the Alice in
-Wonderland theme. A new name is needed. Options TBD — could
-be `main`, could be Sanskrit-themed. Decision deferred to
-implementation.
+Wonderland theme. Renamed to **sutra** (सूत्र, "thread") —
+continues the Sanskrit theme, evokes the thread of
+continuity running through the memory stores.
 
 ### What stays
 
@@ -136,7 +137,6 @@ implementation.
 
 - All string references to "form-copilot" and "form_copilot"
 - The Alice in Wonderland release names in CHANGELOG.md
-- `business_direction_analysis.md` (stale, pre-rename context)
 
 ---
 
@@ -362,15 +362,54 @@ history preserved in git.
 - quint-code — decision reasoning trails.
   github.com/m0n0x41d/quint-code.
 
-## Open Questions
+## Decisions (resolved during implementation)
 
-1. **Default branch name** — drop `queens-garden`. Options:
-   `main`, or a Sanskrit term. Suggestions welcome.
-2. **Version number** — v0.5.0 (incremental) or v1.0.0
-   (the rename is a milestone)?
-3. **sea_application_helper.py / sea_assistant.py** — these
-   names are SEA-grant-specific. Rename to generic names in
-   this pass, or defer?
-4. **PyPI name** — `smrti` is taken (screen manager, 0.0.1).
-   Alternatives: `advaita-smrti`, `py-smrti`. Or defer until
-   we actually publish.
+1. **Default branch name** — `sutra` (सूत्र, "thread").
+   Continues the Sanskrit theme. Dropped Alice in Wonderland.
+
+2. **Version number** — v0.5.0. Incremental, not v1.0.0.
+   The rename is significant but the API surface didn't
+   change enough to warrant a major version bump.
+
+3. **sea_application_helper.py / sea_assistant.py** — deferred.
+   These are SEA-grant-specific but functional. Rename when
+   the tool generalizes beyond the SEA use case.
+
+4. **PyPI name** — deferred. Not publishing yet. `smrti` is
+   taken on PyPI (trivial package, 0.0.1). Will revisit if
+   we publish; `advaita-smrti` is available.
+
+5. **"Ephemeral" not "working"** — the fourth memory type is
+   called ephemeral, not working memory. Emphasizes that it
+   is not persisted by default. Avoids cognitive science
+   connotations about fixed-capacity buffers.
+
+6. **Ephemeral store implementation** — deferred to RFC 005.
+   The directory convention (`ephemeral/`) and `.gitignore`
+   entry are specified here; implementation details and
+   triage workflow are a separate concern.
+
+7. **License** — changed from MIT to Apache 2.0 during
+   implementation. Patent grant and retaliation clause are
+   worth the extra length for a project that may be used
+   as a component in commercial AI systems.
+
+8. **business_direction_analysis.md** — kept. It is a useful
+   generic template, not stale content.
+
+9. **CHANGELOG Alice in Wonderland references** — kept in
+   CHANGELOG.md as historical record. Only forward-facing
+   docs (README, CLAUDE.md, CLI) were updated.
+
+## Open Questions (remaining)
+
+1. **Coherence checking for facts** — RFC specifies
+   `fact_conflict` and `fact_staleness` categories. Not yet
+   implemented. Build when the facts store has enough data
+   to make conflicts possible.
+
+2. **Vector embeddings** — deferred per RFC. Revisit when
+   substring search becomes insufficient.
+
+3. **LLM-powered router** — deferred per RFC. Routing is
+   human-directed for now.
