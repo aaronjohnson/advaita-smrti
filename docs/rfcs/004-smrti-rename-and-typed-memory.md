@@ -163,8 +163,8 @@ extracted facts.
 @dataclass
 class Fact:
     id: str              # sm-f-xxxxx
-    fact: str            # "Shelter is on Ainsworth St"
-    source: str          # "site_visit_2026-02-19"
+    fact: str            # "Business registered in Oregon"
+    source: str          # "application_q3"
     section: str         # Optional section grouping
     confidence: float    # 0.0-1.0
     labels: List[str]    # Freeform tags
@@ -181,18 +181,18 @@ mem = Memory(".memory")
 
 # Create
 fact = mem.facts.create(
-    "Shelter is on Ainsworth St",
-    source="site_visit_2026-02-19",
-    section="Location",
+    "Business registered in Oregon",
+    source="application_q3",
+    section="legal",
 )
 
 # Update (creates new version, marks old as superseded)
-mem.facts.update(fact.id, fact="Shelter is at 211 NE Ainsworth")
+mem.facts.update(fact.id, fact="Business registered in Oregon since 2024")
 
 # Query
-facts = mem.facts.by_section("Location")
-facts = mem.facts.by_label("hardware")
-facts = mem.facts.search("ainsworth")  # substring match
+facts = mem.facts.by_section("legal")
+facts = mem.facts.by_label("requirement")
+facts = mem.facts.search("oregon")  # substring match
 
 # All
 all_facts = mem.facts.all()
