@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for form_copilot CLI."""
+"""Tests for smrti CLI."""
 
 import unittest
 import subprocess
@@ -19,19 +19,19 @@ class TestCLIHelp(unittest.TestCase):
     def test_help_flag(self):
         """Should display help with --help."""
         result = subprocess.run(
-            ['python3', 'form_copilot.py', '--help'],
+            ['python3', 'smrti.py', '--help'],
             capture_output=True, text=True,
             cwd=Path(__file__).parent.parent
         )
         self.assertEqual(result.returncode, 0)
-        self.assertIn('Form Copilot', result.stdout)
+        self.assertIn('smrti', result.stdout)
         self.assertIn('export', result.stdout)
         self.assertIn('validate', result.stdout)
 
     def test_export_help(self):
         """Should display export subcommand help."""
         result = subprocess.run(
-            ['python3', 'form_copilot.py', 'export', '--help'],
+            ['python3', 'smrti.py', 'export', '--help'],
             capture_output=True, text=True,
             cwd=Path(__file__).parent.parent
         )
@@ -47,7 +47,7 @@ class TestCLIValidate(unittest.TestCase):
     def test_validate_valid_config(self):
         """Should validate a valid config successfully."""
         result = subprocess.run(
-            ['python3', 'form_copilot.py', 'validate', 'tests/fixtures/valid_config.json'],
+            ['python3', 'smrti.py', 'validate', 'tests/fixtures/valid_config.json'],
             capture_output=True, text=True,
             cwd=Path(__file__).parent.parent
         )
@@ -57,7 +57,7 @@ class TestCLIValidate(unittest.TestCase):
     def test_validate_invalid_config(self):
         """Should fail on invalid config."""
         result = subprocess.run(
-            ['python3', 'form_copilot.py', 'validate', 'tests/fixtures/invalid_config.json'],
+            ['python3', 'smrti.py', 'validate', 'tests/fixtures/invalid_config.json'],
             capture_output=True, text=True,
             cwd=Path(__file__).parent.parent
         )
@@ -67,7 +67,7 @@ class TestCLIValidate(unittest.TestCase):
     def test_validate_all(self):
         """Should validate all configs in examples/."""
         result = subprocess.run(
-            ['python3', 'form_copilot.py', 'validate', '--all'],
+            ['python3', 'smrti.py', 'validate', '--all'],
             capture_output=True, text=True,
             cwd=Path(__file__).parent.parent
         )
@@ -77,7 +77,7 @@ class TestCLIValidate(unittest.TestCase):
     def test_validate_nonexistent_file(self):
         """Should fail for nonexistent file."""
         result = subprocess.run(
-            ['python3', 'form_copilot.py', 'validate', 'nonexistent.json'],
+            ['python3', 'smrti.py', 'validate', 'nonexistent.json'],
             capture_output=True, text=True,
             cwd=Path(__file__).parent.parent
         )
@@ -90,7 +90,7 @@ class TestCLIList(unittest.TestCase):
     def test_list_shows_configs(self):
         """Should list available configs."""
         result = subprocess.run(
-            ['python3', 'form_copilot.py', 'list'],
+            ['python3', 'smrti.py', 'list'],
             capture_output=True, text=True,
             cwd=Path(__file__).parent.parent
         )
@@ -128,7 +128,7 @@ class TestCLIExport(unittest.TestCase):
         output = Path(self.temp_dir) / 'output.json'
         result = subprocess.run(
             [
-                'python3', 'form_copilot.py', 'export', 'json',
+                'python3', 'smrti.py', 'export', 'json',
                 '--db', str(self.db_path),
                 '--config', 'tests/fixtures/valid_config.json',
                 '-o', str(output)
@@ -144,7 +144,7 @@ class TestCLIExport(unittest.TestCase):
         output = Path(self.temp_dir) / 'output.md'
         result = subprocess.run(
             [
-                'python3', 'form_copilot.py', 'export', 'markdown',
+                'python3', 'smrti.py', 'export', 'markdown',
                 '--db', str(self.db_path),
                 '--config', 'tests/fixtures/valid_config.json',
                 '-o', str(output)
@@ -162,7 +162,7 @@ class TestCLIExport(unittest.TestCase):
         output = Path(self.temp_dir) / 'output.texi'
         result = subprocess.run(
             [
-                'python3', 'form_copilot.py', 'export', 'texinfo',
+                'python3', 'smrti.py', 'export', 'texinfo',
                 '--db', str(self.db_path),
                 '--config', 'tests/fixtures/valid_config.json',
                 '-o', str(output)
@@ -203,7 +203,7 @@ class TestCLIStatus(unittest.TestCase):
         """Should show progress summary."""
         result = subprocess.run(
             [
-                'python3', 'form_copilot.py', 'status',
+                'python3', 'smrti.py', 'status',
                 '--db', str(self.db_path),
                 '--config', 'tests/fixtures/valid_config.json'
             ],

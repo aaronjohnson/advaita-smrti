@@ -1,180 +1,114 @@
-# Form Copilot
+# smrti
 
-> *Your AI co-pilot for complex paperwork.*
+> स्मृति — "that which is remembered"
 
-A toolkit for completing multi-section applications with AI collaboration. Load context, collaborate, capture answers, iterate. Two ways to work: directly in a Claude Code session (the queen's garden), or through the interactive Python menu (the wood where things have no names).
+Non-dual memory for structured knowledge elicitation. A
+toolkit for completing multi-section applications with AI
+collaboration, built around four typed memory stores.
 
-## The Big Idea
+## Memory Types
 
-Complex forms ask hard questions - questions requiring reflection, specific details, and coherent narratives. This tool provides structure, memory, AI partnership, and iteration.
-
-## Two Ways to Work
-
-### The Queen's Garden (preferred)
-
-Work directly in a Claude Code session. Claude reads the config, presents questions, discusses answers collaboratively, banks context notes for later questions, and saves directly to the memory layer. No intermediary scripts needed.
-
-```bash
-# Start a Claude Code session in your project directory, then:
-# 1. Claude reads the config to know all questions
-# 2. You pick questions to work on (by priority, section, or interest)
-# 3. Discuss and draft answers together
-# 4. Claude saves to the memory layer
-# 5. Context notes from earlier answers surface at relevant questions
-# 6. Export when ready
-```
-
-This workflow proved itself completing 49/49 Oregon SEA questions in a single session. Context flows naturally between questions, and banked notes ensure coherent narrative across the entire application.
-
-**Why it works:** The Python menu was designed to shuttle context between you and Claude via JSON files. But if you're already in a Claude session, the shuttling is unnecessary. Claude can hold the full picture - your config, your answers so far, your context notes - and be a genuine thought partner rather than a subprocess.
-
-### The Wood Where Things Have No Names
-
-> *"This must be the wood," she said thoughtfully to herself, "where things have no names.
-> I wonder what'll become of my name when I go in?"*
-> --- Lewis Carroll, *Through the Looking-Glass*
-
-In Carroll's story, Alice enters a quiet forest where all labels fall away. A fawn walks beside her without fear, because neither of them remembers the word *stranger*. It is a place of peace before the names return.
-
-This is the offline mode. No AI session, no internet required. Just you, the questions, and a structured menu to think them through at your own pace. Work on a plane, in the woods, or during a break from the noise. The Python menu provides step-by-step guidance, tracks your progress, and holds your answers in the memory layer until you're ready to return to the garden.
-
-```bash
-python3 form_copilot.py                # Interactive mode
-python3 form_copilot.py list           # See available configs
-python3 form_copilot.py status         # Check progress
-```
-
-Press `[C]` on any question to launch a Claude Code session with context auto-loaded --- a door back to the queen's garden whenever you want it. When you're done, Claude writes to `.sea_answer.md`, and the menu saves it to the memory layer.
-
-| Command | Purpose |
-|---------|---------|
-| `/form-start` | Read question context, begin discussion |
-| `/form-save` | Write final answer to file |
-| `/generate-config` | Create a config from pasted questions |
-| `/export-docs` | Export to Markdown/Texinfo/PDF |
-
-## Why Not Just Ralph Wiggum?
-
-If you're familiar with [Ralph Wiggum loops](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) - the "keep trying until done" pattern - you might wonder why form completion needs something different.
-
-**Ralph Wiggum** excels at greenfield tasks with clear completion criteria: build a REST API, get tests passing, generate code. The loop reads files, sees what exists, tries again. No explicit memory needed.
-
-**Form Copilot** handles a different problem: complex questions where *why* matters as much as *what*. Your answer to "What problem does your business solve?" might inform "Describe your competitive advantage" - and you need to remember your reasoning, not just the text.
-
-| | Ralph Wiggum | Form Copilot |
+| Store | File | What it holds |
 |---|---|---|
-| Memory | Files + git | Explicit task/decision store |
-| Reasoning | Implicit in code | Decision trails with hypotheses |
-| Sessions | One long loop | Multi-session with synthesis |
-| Completion | `<promise>DONE</promise>` | Task status + dependencies |
-| Best for | "Make tests pass" | "Help me think through this" |
+| **Procedural** | `tasks.jsonl` | Questions, dependencies, status |
+| **Episodic** | `decisions.jsonl` | Events, choices, rationale |
+| **Semantic** | `facts.jsonl` | Stable facts, preferences |
+| **Ephemeral** | `ephemeral/` | Session scratch (not persisted) |
 
-*In Simpsons terms: Ralph runs into the wall until there's a hole. Lisa keeps a journal of which walls are load-bearing.*
+JSONL is the source of truth (git-friendly, append-only).
+SQLite is a regenerable index for fast queries.
 
-*In Alice terms: Ralph drinks the bottle to see what happens. The Memory layer is the White Queen, remembering "things that happened the week after next."*
-
-## Use Cases
-
-| Application Type | Example |
-|-----------------|---------|
-| **Self-Employment Programs** | Oregon SEA, state business grants |
-| **College Applications** | Common App, UC apps, supplements |
-| **Research Grants** | NSF, NIH, private foundations |
-| **Immigration** | I-485, N-400, visa applications |
-| **Business Loans** | SBA loans, bank applications |
-| **Fellowships** | Fulbright, Rhodes, professional fellowships |
-
-Four [example configs](docs/EXAMPLES.md) included. Or create your own from any source.
-
-## Export
-
-Three formats, three purposes:
+## Quick Start
 
 ```bash
-# From memory layer (preferred):
-python3 export_docs.py --memory .memory --config config.json                    # markdown
-python3 export_docs.py --memory .memory --config config.json --format texinfo   # texinfo
-python3 export_docs.py --memory .memory --config config.json --format latex     # tufte PDF
+# Clone
+git clone https://github.com/aaronjohnson/advaita-smrti.git
+cd advaita-smrti
 
-# Legacy SQLite:
-python3 export_docs.py form.db
-python3 export_docs.py form.db --format texinfo
-python3 export_docs.py form.db --format latex
+# Interactive mode
+python3 smrti.py
+
+# Or work directly in a Claude Code session (preferred)
+# Claude reads the config, presents questions, saves to memory
 ```
 
-| Format | Purpose | Output |
-|--------|---------|--------|
-| **Markdown** | Lingua franca for AI tools and GitHub | `.md` |
-| **Texinfo** | Structured multi-format (PDF, HTML, Info) | `.texi` |
-| **LaTeX** | Tufte margin notes for review and comprehension | `.pdf` |
+No dependencies beyond Python 3.6+ standard library.
 
-The LaTeX export uses the `tufte-handout` class to produce Robert Greene / 48 Laws of Power style margin notes with helper hints, priority badges, and clickable cross-references between questions.
+## CLI
+
+```bash
+smrti.py                    # Interactive mode
+smrti.py list               # Available configs and databases
+smrti.py status             # Progress summary
+smrti.py validate cfg.json  # Validate a config file
+
+smrti.py export markdown    # Export answers
+smrti.py export pdf         # Export to PDF (requires texinfo)
+
+smrti.py memory status      # Memory layer summary
+smrti.py memory rebuild     # Repair index from JSONL
+smrti.py memory compact     # Remove old JSONL versions
+```
 
 ## Create Your Own Config
 
 Paste any application into Claude:
 
 ```
-Here are questions from my [grant / college app / loan form].
-Create a form-copilot config JSON with sections, priorities, and helper text.
+Here are questions from my [grant / college app / form].
+Create a smrti config JSON with sections, priorities,
+and helper text.
 
 [paste questions]
 ```
 
-Or use `/generate-config` in Claude Code. Validate with `python3 validate_config.py`.
+Or use `/generate-config` in Claude Code. Validate with
+`python3 validate_config.py`.
 
-See [docs/CONFIG.md](docs/CONFIG.md) for details.
+## What Makes This Different
 
-## Memory Layer
+Most memory systems start from conversation. smrti starts
+from **structured forms**: sections, questions, dependencies,
+priorities. This gives it:
 
-Form Copilot includes a memory layer inspired by [beads](https://github.com/steveyegge/beads) and [quint-code](https://github.com/m0n0x41d/quint-code):
+- The form itself as procedural memory (no extraction needed)
+- Coherence checking across answers
+- Dependency-aware ordering
+- A clear "done" criterion
 
-- **Tasks** - Track answers with hash-based IDs, labels, dependencies
-- **Decisions** - Record reasoning trails (hypotheses considered, why you chose one)
-- **Synthesis** - Detect patterns across accumulated answers
-- **Context notes** - Bank insights from one question for use in later questions
-
-```bash
-python3 form_copilot.py memory status     # See memory summary
-python3 form_copilot.py memory patterns   # Find themes across answers
-```
-
-Storage: JSONL source of truth (git-friendly) + SQLite index (fast queries). SQLite answer storage is deprecated in favor of the memory layer.
-
-Index drift detection: if the SQLite index falls out of sync with JSONL (e.g., from a direct JSONL write), the next `Memory()` init will raise `IndexDriftError` and prompt a rebuild. This steers usage toward the Python API, which keeps both stores in sync.
-
-```bash
-python3 form_copilot.py memory rebuild   # Repair index from JSONL
-python3 form_copilot.py memory compact   # Remove old JSONL versions
-```
-
-See [RFC 002](docs/rfcs/002-memory-layer-spec.md) for the full specification.
-
-### Complementary use with Claude Code MEMORY.md
-
-Claude Code provides a built-in `MEMORY.md` file that is loaded into the system prompt at the start of every session. It's brief, curated, and high-level — a briefing card.
-
-Form Copilot's memory layer is the structured archive underneath: detailed, append-only, queryable. Too large to load into a prompt, but available for targeted queries via the Python API or SQLite.
-
-They work together:
-- **MEMORY.md** knows *that* there are 43 questions and 12 are deferred to a stakeholder.
-- **Form Copilot memory** knows *which* 12, *what* was said, *when*, and *why*.
-
-One is the index card on the dashboard. The other is the filing cabinet. MEMORY.md can reference the memory layer for deeper context: "Query `.memory/index.db` for open tasks by section."
+Maps to grant applications, clinical intake, legal discovery,
+insurance claims — anywhere humans complete complex multi-part
+forms with an AI collaborator.
 
 ## Documentation
 
-- [CONFIG.md](docs/CONFIG.md) - Creating and validating configs
-- [WORKFLOW.md](docs/WORKFLOW.md) - Menu options, Claude integration, files
-- [EXAMPLES.md](docs/EXAMPLES.md) - Included example configs
-- [CHANGELOG.md](CHANGELOG.md) - Version history (Alice in Wonderland themed)
-- [RFCs](docs/rfcs/) - Architecture decisions and specifications
+- [CONFIG.md](docs/CONFIG.md) — Creating and validating configs
+- [WORKFLOW.md](docs/WORKFLOW.md) — CLI, Claude integration, files
+- [RFCs](docs/rfcs/) — Architecture decisions and specs
 
-## Requirements
+## Inspirations and References
 
-- Python 3.6+ (standard library only)
-- [Claude Code CLI](https://docs.anthropic.com/claude-code) for AI features (queen's garden workflow)
-- `texlive-latex-extra` for LaTeX/PDF export (optional)
+- [beads](https://github.com/steveyegge/beads) — git-backed
+  task graphs
+- [quint-code](https://github.com/m0n0x41d/quint-code) —
+  decision reasoning trails
+- [ENGRAM](https://arxiv.org/abs/2511.12960) (Patel & Patel,
+  2026) — typed memory stores: episodic, semantic, procedural
+- [Memory in the Age of AI Agents](https://arxiv.org/abs/2512.13564)
+  (Hu et al., 2025) — survey and taxonomy
+- [Context Engineering: Sessions & Memory](https://www.kaggle.com/whitepaper-context-engineering-sessions-and-memory)
+  (Google, 2025) — whitepaper
+
+## See Also
+
+- [Zep](https://github.com/getzep/zep) — temporal knowledge
+  graphs for agent memory
+- [Letta](https://github.com/letta-ai/letta) — filesystem
+  memory that outperforms specialized systems
+- [Mem0](https://github.com/mem0ai/mem0) — structured
+  summarization and conflict resolution
+- [Pinecone](https://www.pinecone.io/) — vector database for
+  semantic retrieval
 
 ## License
 
@@ -182,4 +116,5 @@ MIT
 
 ---
 
-*Inspired by Choose Your Own Adventure books, Lewis Carroll's Alice, and the belief that complex paperwork deserves both a garden to think out loud and a wood to think in silence.*
+*advaita-smrti (अद्वैत-स्मृति) — the tool and the thinker
+are not separate.*

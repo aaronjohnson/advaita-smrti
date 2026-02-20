@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run all tests for form-copilot.
+Run all tests for smrti.
 
 Usage:
     python3 tests/run_tests.py           # Run all tests

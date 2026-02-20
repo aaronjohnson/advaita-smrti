@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Validate a form-copilot configuration file.
+Validate a smrti configuration file.
 
 Checks:
 1. JSON structure (via schema)

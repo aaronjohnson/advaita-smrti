@@ -124,6 +124,26 @@ class IndexDb:
             CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_id);
             CREATE INDEX IF NOT EXISTS idx_decisions_task ON decisions(task_id);
             CREATE INDEX IF NOT EXISTS idx_decisions_phase ON decisions(phase);
+
+            CREATE TABLE IF NOT EXISTS facts (
+                id TEXT PRIMARY KEY,
+                fact TEXT,
+                source TEXT,
+                section TEXT,
+                confidence REAL,
+                supersedes TEXT,
+                created_at TEXT,
+                updated_at TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS fact_labels (
+                fact_id TEXT,
+                label TEXT,
+                PRIMARY KEY (fact_id, label)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_facts_section ON facts(section);
+            CREATE INDEX IF NOT EXISTS idx_facts_source ON facts(source);
         """)
         self.conn.commit()
 
@@ -184,6 +204,33 @@ class IndexDb:
             decision.get("created_at"),
             decision.get("decided_at"),
         ))
+        self.conn.commit()
+
+    def index_fact(self, fact: Dict[str, Any]) -> None:
+        """Index a fact for fast queries."""
+        self.conn.execute("""
+            INSERT OR REPLACE INTO facts
+            (id, fact, source, section, confidence, supersedes, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            fact["id"],
+            fact["fact"],
+            fact.get("source", ""),
+            fact.get("section", ""),
+            fact.get("confidence", 1.0),
+            fact.get("supersedes"),
+            fact.get("created_at"),
+            fact.get("updated_at"),
+        ))
+
+        # Clear and re-add labels
+        self.conn.execute("DELETE FROM fact_labels WHERE fact_id = ?", (fact["id"],))
+        for label in fact.get("labels", []):
+            self.conn.execute(
+                "INSERT OR IGNORE INTO fact_labels (fact_id, label) VALUES (?, ?)",
+                (fact["id"], label)
+            )
+
         self.conn.commit()
 
     def query_tasks(
@@ -264,7 +311,17 @@ class IndexDb:
         cursor = self.conn.execute("SELECT COUNT(*) FROM decisions")
         return cursor.fetchone()[0]
 
-    def rebuild_from_jsonl(self, tasks_store: JsonlStore, decisions_store: JsonlStore) -> int:
+    def fact_count(self) -> int:
+        """Return count of facts in the index."""
+        cursor = self.conn.execute("SELECT COUNT(*) FROM facts")
+        return cursor.fetchone()[0]
+
+    def rebuild_from_jsonl(
+        self,
+        tasks_store: JsonlStore,
+        decisions_store: JsonlStore,
+        facts_store: Optional[JsonlStore] = None,
+    ) -> int:
         """Rebuild index from JSONL files.
 
         Returns:
@@ -277,6 +334,8 @@ class IndexDb:
             DELETE FROM task_blocks;
             DELETE FROM task_blocked_by;
             DELETE FROM decisions;
+            DELETE FROM facts;
+            DELETE FROM fact_labels;
         """)
 
         # Re-index tasks (keep latest version of each)
@@ -292,6 +351,14 @@ class IndexDb:
             decisions_by_id[record["id"]] = record
         for decision in decisions_by_id.values():
             self.index_decision(decision)
+
+        # Re-index facts (keep latest version of each)
+        if facts_store:
+            facts_by_id = {}
+            for record in facts_store.iterate():
+                facts_by_id[record["id"]] = record
+            for fact in facts_by_id.values():
+                self.index_fact(fact)
 
         return len(tasks_by_id)
 

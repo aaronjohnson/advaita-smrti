@@ -1,10 +1,10 @@
 # Generate Form Config
 
-Create a form-copilot configuration file from user-provided questions.
+Create a smrti configuration file from user-provided questions.
 
 ## Instructions
 
-When the user provides questions (from a PDF, web form, paper form, grant RFP, etc.), generate a complete `form-copilot` config JSON file.
+When the user provides questions (from a PDF, web form, paper form, grant RFP, etc.), generate a complete `smrti` config JSON file.
 
 ## Process
 

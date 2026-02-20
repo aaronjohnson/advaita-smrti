@@ -1,31 +1,31 @@
 # Workflow Guide
 
-How to use form-copilot day-to-day.
+How to use smrti day-to-day.
 
 ## Command Line Interface
 
-The main entry point is `form_copilot.py`:
+The main entry point is `smrti.py`:
 
 ```bash
 # Interactive mode (default)
-form_copilot.py
-form_copilot.py --db myform.db --config myconfig.json
+smrti.py
+smrti.py --db myform.db --config myconfig.json
 
 # Quick commands
-form_copilot.py list                    # Show available configs and databases
-form_copilot.py status                  # Show progress summary
-form_copilot.py validate config.json    # Validate a config file
-form_copilot.py validate --all          # Validate all configs
+smrti.py list                    # Show available configs and databases
+smrti.py status                  # Show progress summary
+smrti.py validate config.json    # Validate a config file
+smrti.py validate --all          # Validate all configs
 
 # Export
-form_copilot.py export pdf              # Export to PDF
-form_copilot.py export html             # Export to HTML
-form_copilot.py export markdown         # Export to Markdown
-form_copilot.py export texinfo          # Export to Texinfo source
-form_copilot.py export json             # Export answers as JSON
+smrti.py export pdf              # Export to PDF
+smrti.py export html             # Export to HTML
+smrti.py export markdown         # Export to Markdown
+smrti.py export texinfo          # Export to Texinfo source
+smrti.py export json             # Export answers as JSON
 
 # With specific database
-form_copilot.py export pdf --db ../other/form.db --config examples/myconfig.json
+smrti.py export pdf --db ../other/form.db --config examples/myconfig.json
 ```
 
 ## The Adventure Menu

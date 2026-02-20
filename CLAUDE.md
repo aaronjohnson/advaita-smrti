@@ -1,10 +1,15 @@
-# Form Helper - Claude Code Integration
+# smrti — Claude Code Integration
 
-This project helps complete multi-section applications and questionnaires through collaborative AI sessions.
+smrti (स्मृति) helps complete multi-section applications and
+questionnaires through collaborative AI sessions.
+
+Repository: advaita-smrti (अद्वैत-स्मृति, "non-dual memory")
 
 ## Workflow: Answering Questions
 
-When working on questions, Claude Code reads context from `.sea_question_context.json` and writes the final answer to `.sea_answer.md`.
+When working on questions, Claude Code reads context from
+`.sea_question_context.json` and writes the final answer
+to `.sea_answer.md`.
 
 ### Context File Structure (`.sea_question_context.json`)
 ```json
@@ -40,12 +45,24 @@ When the user indicates they're done, write ONLY the answer text to `.sea_answer
 - No "Final Answer:" prefix
 - Just the clean answer text ready to paste into the application
 
-## Memory Layer (preferred storage)
-Think carefully before writing to `.memory/tasks.jsonl` or `.memory/decisions.jsonl` directly.
-The Memory Python API keeps JSONL and SQLite in sync. Bypassing it causes index drift,
-which blocks the next session until repaired. If you have a reason to write JSONL directly
-(bulk import, migration, emergency), discuss with the human first and run
-`form_copilot.py memory rebuild` after.
+## Memory Layer
+
+Four typed stores (see RFC 004):
+
+| Store | File | What it holds |
+|---|---|---|
+| Procedural | `tasks.jsonl` | Questions, dependencies, status |
+| Episodic | `decisions.jsonl` | Events, choices, rationale |
+| Semantic | `facts.jsonl` | Stable facts, preferences |
+| Ephemeral | `ephemeral/` | Session scratch (not persisted) |
+
+Think carefully before writing to JSONL files directly.
+The Memory Python API keeps JSONL and SQLite in sync.
+Bypassing it causes index drift, which blocks the next
+session until repaired. If you have a reason to write
+JSONL directly (bulk import, migration, emergency),
+discuss with the human first and run
+`smrti.py memory rebuild` after.
 
 Prefer the API:
 
@@ -53,11 +70,11 @@ Prefer the API:
 from memory import Memory
 mem = Memory(".memory")
 
-# Create or update tasks
+# Tasks (procedural)
 task = mem.tasks.create("Title", description="...")
 mem.tasks.update(task.id, status="closed", description="Updated answer")
 
-# Decisions
+# Decisions (episodic)
 decision = mem.decisions.begin("Context")
 mem.decisions.hypothesize(decision.id, "Option A")
 mem.decisions.decide(decision.id, "h1", rationale="Why")
@@ -69,13 +86,6 @@ mem.close()
 - SQLite database: `sea_application.db`
 - Use `sea_application_helper.py` for programmatic access
 - The Python assistant handles saving answers to the database
-
-## Background Context
-The applicant will provide their background during the session. Pay attention to:
-- Relevant professional experience
-- Education and certifications
-- Specific skills that apply to their business
-- Personal circumstances that affect their planning
 
 ## Working Style
 - Ask clarifying questions before drafting
