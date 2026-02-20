@@ -1,8 +1,9 @@
-"""Memory layer for form-copilot.
+"""Memory layer for smrti (advaita-smrti).
 
 A pure Python implementation inspired by:
 - beads (https://github.com/steveyegge/beads) - git-backed task graphs
 - quint-code (https://github.com/m0n0x41d/quint-code) - decision reasoning trails
+- ENGRAM (arxiv:2511.12960) - typed memory stores
 
 See docs/rfcs/002-memory-layer-spec.md for full specification.
 
@@ -63,12 +64,12 @@ class Memory:
     - synthesize: Pattern detection and context decay
     """
 
-    def __init__(self, path: str = ".memory", prefix: str = "fc", ignore_drift: bool = False):
+    def __init__(self, path: str = ".memory", prefix: str = "sm", ignore_drift: bool = False):
         """Initialize memory layer.
 
         Args:
             path: Directory for memory storage (default: .memory)
-            prefix: ID prefix for tasks (default: fc for form-copilot)
+            prefix: ID prefix for tasks (default: sm for smrti)
             ignore_drift: If True, skip index drift check (use only for rebuild)
         """
         self.path = Path(path)
@@ -134,7 +135,7 @@ class Memory:
                 f"  If you need to write JSONL directly (bulk import, migration),\n"
                 f"  discuss with the project owner first, then run rebuild after.\n"
                 f"\n"
-                f"  To repair: form_copilot.py memory rebuild\n"
+                f"  To repair: smrti.py memory rebuild\n"
             )
 
     def rebuild_index(self) -> int:
@@ -163,7 +164,7 @@ class Memory:
         self._index.close()
 
 
-def init(path: str = ".memory", prefix: str = "fc") -> Memory:
+def init(path: str = ".memory", prefix: str = "sm") -> Memory:
     """Initialize a new memory layer.
 
     Convenience function for CLI usage.

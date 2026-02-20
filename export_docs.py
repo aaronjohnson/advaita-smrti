@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Export form-copilot databases to Markdown, Texinfo, or LaTeX format.
+Export smrti databases to Markdown, Texinfo, or LaTeX format.
 
 Usage:
     python3 export_docs.py                     # Export current form to markdown
@@ -885,7 +885,7 @@ def export_latex_from_helper(helper, output_path=None, compile_pdf=True):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Export form-copilot answers to Markdown, Texinfo, or LaTeX',
+        description='Export smrti answers to Markdown, Texinfo, or LaTeX',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

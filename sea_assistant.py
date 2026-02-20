@@ -791,7 +791,7 @@ class InteractiveAssistant:
                 print("No hypotheses added. Decision saved but incomplete.")
             else:
                 print(f"\n{hypo_count} hypotheses recorded.")
-                print(f"Use 'form_copilot.py memory decisions' to review later.")
+                print(f"Use 'smrti.py memory decisions' to review later.")
 
         input("\nPress Enter to continue...")
 

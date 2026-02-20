@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Form Copilot - Your AI co-pilot for complex paperwork.
+smrti — non-dual memory for structured knowledge elicitation.
 
-A unified CLI for completing multi-section applications with Claude Code integration.
+A CLI for completing multi-section applications with Claude Code integration.
 
 Usage:
-    form_copilot.py                          # Interactive mode (default)
-    form_copilot.py --db myform.db           # Use specific database
-    form_copilot.py export texinfo           # Export current form
-    form_copilot.py export pdf --db form.db  # Export specific db to PDF
-    form_copilot.py validate config.json     # Validate a config file
-    form_copilot.py status                   # Show progress summary
+    smrti.py                          # Interactive mode (default)
+    smrti.py --db myform.db           # Use specific database
+    smrti.py export texinfo           # Export current form
+    smrti.py export pdf --db form.db  # Export specific db to PDF
+    smrti.py validate config.json     # Validate a config file
+    smrti.py status                   # Show progress summary
 """
 
 import argparse
@@ -494,7 +494,7 @@ def cmd_memory(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Form Copilot - Your AI co-pilot for complex paperwork',
+        description='smrti — non-dual memory for structured knowledge elicitation',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
