@@ -1,9 +1,14 @@
 # RFC 002: Memory Layer Specification
 
-**Status:** Draft
+**Status:** Implemented (v0.3.0, extended in v0.5.0)
 **Author:** Aaron Johnson
 **Created:** 2026-02-05
+**Implemented:** 2026-02-05 (tasks, decisions); 2026-02-20 (facts — RFC 004)
 **Parent:** RFC 001
+
+> **Note:** The default prefix changed from `fc` to `sm` in RFC 004.
+> The semantic (facts) store was added in RFC 004 as a third typed
+> memory store alongside tasks and decisions.
 
 ## Purpose
 

@@ -1,10 +1,22 @@
 # RFC 003: Recursive Context and Complementary Cognition
 
-**Status:** Proposal
+**Status:** Partially Implemented (v0.4.0)
 **Author:** Aaron Johnson + Claude
 **Created:** 2026-02-05
+**Implemented:** 2026-02-17 (P1, P3); P2, P4 deferred
 **References:** Zhang, Kraska, Khattab. "Recursive Language Models." arXiv:2512.24601v2, Jan 2026.
 **Parent:** RFC 002 (Memory Layer Spec)
+
+## Implementation Status
+
+| Proposal | Status | Notes |
+|----------|--------|-------|
+| P1: Dependency graph | Implemented (PR #4) | `blocks`/`blocked_by` wired from config `depends_on` |
+| P2: Contribution tagging | Not implemented | Deferred — build when session instrumentation is needed |
+| P3: Coherence checks | Implemented (PR #4) | Section-scoped checks, finding categories, `CoherenceReport` model |
+| P4: Session dimensions | Not implemented | Deferred — momentum/reach/complementarity metrics not yet needed |
+
+---
 
 ---
 
