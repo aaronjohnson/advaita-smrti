@@ -9,14 +9,16 @@
 
 Rename form-copilot to **smrti** (स्मृति, Sanskrit: "memory,
 remembered tradition") and restructure the memory layer around
-three typed stores: episodic, semantic, and procedural. The
+four typed stores: episodic, semantic, procedural, and
+ephemeral. The
 repository becomes **advaita-smrti** (अद्वैत-स्मृति, "non-dual
 memory").
 
 This RFC covers:
 1. The rename (files, imports, CLI, branch, docs)
-2. Adding a semantic (facts) store alongside existing stores
-3. Adopting ENGRAM's typed memory taxonomy
+2. Adding semantic (facts) and ephemeral (working) stores
+3. Adopting a typed memory taxonomy from ENGRAM and the
+   Google survey paper
 4. What we keep, what we drop, what changes
 
 ---
@@ -140,13 +142,17 @@ implementation.
 
 ## Part 2: Typed Memory Stores
 
-### Taxonomy (from ENGRAM)
+### Taxonomy
 
-| Type | What it stores | Schema | Current analog |
+Combines ENGRAM's typed stores (Patel & Patel, 2026) with the
+working memory concept from the Google survey (Hu et al., 2025).
+
+| Type | What it stores | Persisted | Current analog |
 |---|---|---|---|
-| **Episodic** | Events in time | (title, summary, timestamp) | `decisions.jsonl` |
-| **Semantic** | Stable facts | (fact, timestamp, source) | *missing* |
-| **Procedural** | Tasks and workflows | (title, status, deps) | `tasks.jsonl` |
+| **Procedural** | Tasks, workflows, deps | yes, `tasks.jsonl` | existing |
+| **Episodic** | Events, decisions, cases | yes, `decisions.jsonl` | existing |
+| **Semantic** | Stable facts, preferences | yes, `facts.jsonl` | *missing* |
+| **Ephemeral** | Active session workspace | no, `ephemeral/` | implicit (context files) |
 
 ### New: Semantic Store (`facts.jsonl`)
 
@@ -226,6 +232,58 @@ Decisions: JSONL has N, index has M
 Facts:     JSONL has N, index has M
 ```
 
+### New: Ephemeral Store (`ephemeral/`)
+
+The ephemeral store holds transient state for the active
+session. It is not appended to JSONL — it lives in a
+directory that is cleared or rolled into episodic memory
+when the session ends.
+
+#### What goes here
+
+- **Active question context** — the current question being
+  worked on, related answers pulled from other stores, notes
+  in progress. Currently `.sea_question_context.json`.
+- **Draft state** — the answer being composed. Currently
+  `.sea_answer.md`.
+- **Session scratch** — what's been discussed this session,
+  intermediate reasoning, temporary notes.
+- **Retrieved context** — facts, tasks, and decisions pulled
+  from the persistent stores for the current task.
+
+#### Lifecycle
+
+```
+session start  → ephemeral/ created (or cleared)
+during session → files written and read freely
+session end    → option to:
+                   (a) discard (default)
+                   (b) promote to episodic (save as decision)
+                   (c) extract facts to semantic store
+```
+
+#### Structure
+
+```
+ephemeral/
+  context.json      # Current question/task context
+  draft.md          # Answer or artifact in progress
+  retrieved/        # Cached retrievals from other stores
+    facts.json      # Relevant facts for current task
+    tasks.json      # Related tasks
+    decisions.json  # Related prior decisions
+```
+
+#### Why "ephemeral" not "working"
+
+The Google survey calls this "working memory." We call it
+**ephemeral** to emphasize that it is not persisted by
+default. The cognitive science term "working memory" implies
+a fixed-capacity buffer; our ephemeral store is simply
+session-scoped scratch space with no capacity constraint.
+The name also avoids confusion with a directory name
+suggesting permanence — it is explicitly temporary.
+
 ### Coherence checking additions
 
 The existing `coherence_check()` gains a new category:
@@ -264,21 +322,23 @@ The existing `coherence_check()` gains a new category:
 The README becomes succinct and forward-looking:
 
 1. One paragraph: what smrti is
-2. The three memory types (table)
+2. The four memory types (table)
 3. Quick-start (install, configure, run)
 4. CLI reference
-5. References section:
-   - ENGRAM (arxiv 2511.12960)
+5. Inspirations and references:
+   - beads — git-backed task graphs (original inspiration)
+   - quint-code — decision reasoning trails (original inspiration)
+   - ENGRAM (arxiv 2511.12960) — typed memory stores
+   - Memory in the Age of AI Agents (arxiv 2512.13564) — survey/taxonomy
    - Google/Kaggle: Context Engineering: Sessions & Memory
-   - beads, quint-code (original inspirations)
-6. See also: Zep, Letta, Mem0 (landscape context)
+6. See also: Zep, Letta, Mem0, Pinecone (landscape context)
 
 Drop: project evolution history, Alice in Wonderland references,
 lengthy CHANGELOG prose.
 
 ### CLAUDE.md update
 
-Update the memory layer section to reflect three stores and
+Update the memory layer section to reflect four stores and
 the `smrti.py` entry point.
 
 ### CHANGELOG
