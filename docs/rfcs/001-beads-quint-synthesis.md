@@ -1,9 +1,31 @@
 # RFC 001: Beads, Quint, and Synthesis Integration
 
-**Status:** Draft
+**Status:** Implemented (v0.3.0)
 **Author:** Aaron Johnson
 **Created:** 2026-02-05
+**Implemented:** 2026-02-05
 **Branch:** `rfc/beads-quint-synthesis`
+
+## Decisions (resolved during implementation)
+
+1. **Beads/quint as inspiration, not dependency.** RFC 002 implemented
+   the patterns in pure Python rather than depending on beads CLI or
+   quint MCP server. Same concepts (task graphs, decision trails,
+   synthesis), zero external dependencies.
+
+2. **SQLite kept as regenerable index**, not removed. JSONL is the
+   source of truth; SQLite provides fast queries. This is better than
+   either "SQLite only" (not git-friendly) or "JSONL only" (slow queries).
+
+3. **Sections as labels, not beads.** Questions use labels
+   (`section:business_overview`) rather than a parent task hierarchy.
+   Simpler, works well enough.
+
+4. **Synthesis runs in-process**, not via Claude API calls. Pattern
+   detection and coherence checks use Python logic over the task/decision
+   data, not LLM prompts. LLM-powered synthesis can be added later.
+
+---
 
 ## Summary
 

@@ -1,9 +1,15 @@
 # RFC 000: Form Copilot Specification
 
-**Status:** Living Document
+**Status:** Historical (superseded by RFC 004)
 **Author:** Aaron Johnson
 **Created:** 2026-02-05
-**Purpose:** Capture what form-copilot is, how it works, and why it was built this way
+**Superseded:** 2026-02-20 — form-copilot renamed to smrti (RFC 004)
+**Purpose:** Capture what form-copilot was, how it worked, and why it was built this way
+
+> **Note:** This RFC documents the original form-copilot architecture.
+> The project was renamed to **smrti** (advaita-smrti) in RFC 004.
+> File references (`form_copilot.py`, SQLite-primary storage) reflect
+> the state at time of writing. See RFC 004 for current architecture.
 
 ---
 
@@ -324,10 +330,12 @@ Where the architecture anticipates change:
 
 | RFC | Relationship |
 |-----|--------------|
-| 000 (this) | Baseline specification |
+| 000 (this) | Baseline specification (historical) |
 | 001 | Proposes replacing storage with beads/quint patterns |
 | 002 | Specifies pure Python memory layer |
-| Future | New features, integrations, refactors |
+| 003 | Recursive context and complementary cognition |
+| 004 | Rename to smrti, typed memory stores (supersedes this RFC) |
+| 005 | Ephemeral store |
 
 ---
 
