@@ -1,4 +1,4 @@
-# RFC 008: Tracer — Session Observation Layer
+# RFC 011: Tracer — Session Observation Layer
 
 **Status:** Draft
 **Author:** Aaron Johnson + Claude
