@@ -12,3 +12,4 @@ Design decisions for [smrti](../../README.md).
 | [005](005-ephemeral-store.md) | Draft | Session-scoped scratch and triage |
 | [006](006-web-interface-resume-fit.md) | Concept | Web interface — resume fit and honest discovery |
 | [007](007-python-packaging-and-repo-layout.md) | Concept | Python packaging and repo layout |
+| [011](011-tracer.md) | Draft | Tracer — session observation, token accounting, measurement harness |
