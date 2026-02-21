@@ -1,0 +1,178 @@
+% bibliography.bib — Shared bibliography for advaita-smrti research papers
+%
+% Organized by topic:
+%   Memory systems for AI agents
+%   Token efficiency and prompt economics
+%   Human-AI complementarity and collaboration
+%   Benchmarks and evaluation
+%   Philosophical grounding
+%
+% Convention: cite keys are author-year or system-year
+
+% ===== Memory Systems =====
+
+@article{patel2026engram,
+  title     = {{ENGRAM}: Effective, Lightweight Multi-Type Memory
+               Orchestration for {AI} Agents},
+  author    = {Patel, Dhruvil and Patel, Saket},
+  journal   = {arXiv preprint arXiv:2511.12960},
+  year      = {2026},
+  note      = {Typed memory stores (procedural, episodic, semantic)
+               with independent retrieval and merge}
+}
+
+@article{hu2025memory,
+  title     = {Memory in the Age of {AI} Agents: A Survey},
+  author    = {Hu, Yifan and others},
+  journal   = {arXiv preprint arXiv:2512.13564},
+  year      = {2025},
+  note      = {Taxonomy of memory architectures for LLM-based agents}
+}
+
+@article{mem0-2025,
+  title     = {Mem0: Building Production-Ready {AI} Agents with
+               Scalable Long-Term Memory},
+  author    = {{Mem0 Team}},
+  journal   = {arXiv preprint arXiv:2504.19413},
+  year      = {2025},
+  note      = {Graph-based memory with claimed 90\%+ cost savings
+               and 26\% improvement over RAG baselines}
+}
+
+@article{packer2024memgpt,
+  title     = {{MemGPT}: Towards {LLMs} as Operating Systems},
+  author    = {Packer, Charles and others},
+  journal   = {arXiv preprint arXiv:2310.08560},
+  year      = {2024},
+  note      = {Virtual memory paging for LLM context; later
+               became Letta}
+}
+
+@article{amem2025,
+  title     = {{A-MEM}: Agentic Memory for {LLM} Agents},
+  author    = {Xu, Wujiang and others},
+  journal   = {arXiv preprint arXiv:2502.12110},
+  year      = {2025},
+  note      = {Zettelkasten-inspired agentic memory with
+               dynamic indexing}
+}
+
+@misc{zep2025,
+  title     = {Zep: Long-Term Memory for {AI} Assistants},
+  author    = {{Zep AI}},
+  year      = {2025},
+  howpublished = {\url{https://www.getzep.com}},
+  note      = {Commercial memory layer with knowledge graphs
+               and temporal awareness}
+}
+
+% ===== Token Efficiency and Prompt Economics =====
+
+@article{lumer2026caching,
+  title     = {Prompt Caching Analysis for Large Language Models:
+               Cost and Latency Implications},
+  author    = {Lumer, Erik and others},
+  journal   = {arXiv preprint},
+  year      = {2026},
+  note      = {Measured prompt caching impact on cost and latency
+               at infrastructure level}
+}
+
+@article{han2025tale,
+  title     = {{TALE}: Token-Budget-Aware {LLM} Reasoning},
+  author    = {Han, Jingyu and others},
+  journal   = {arXiv preprint arXiv:2502.07404},
+  year      = {2025},
+  note      = {Budget-constrained reasoning that trades token
+               spend against quality}
+}
+
+@misc{anthropic2024caching,
+  title     = {Prompt Caching with {Claude}},
+  author    = {{Anthropic}},
+  year      = {2024},
+  howpublished = {\url{https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching}},
+  note      = {Cache creation, read, and pricing tiers for
+               Claude API}
+}
+
+% ===== Human-AI Complementarity and Collaboration =====
+
+@article{hemmer2024complementarity,
+  title     = {Complementary Team Performance: A Framework for
+               Human-{AI} Collaboration},
+  author    = {Hemmer, Patrick and others},
+  journal   = {ACM Computing Surveys},
+  year      = {2024},
+  note      = {Formalizes complementarity potential (CP) and
+               complementarity effect (CE) for human-AI teams}
+}
+
+@article{vaccaro2024nature,
+  title     = {When Combinations of Humans and {AI} Are Useful:
+               A Systematic Review and Meta-Analysis},
+  author    = {Vaccaro, Michelle and others},
+  journal   = {Nature Human Behaviour},
+  year      = {2024},
+  note      = {Combos often underperform the best individual;
+               conditions for synergy remain open}
+}
+
+@article{kim2025humanai,
+  title     = {Toward a Theory of Human-{AI} Complementarity},
+  author    = {Kim, Juho and others},
+  journal   = {arXiv preprint},
+  year      = {2025},
+  note      = {Task decomposition and delegation frameworks
+               for complementary performance}
+}
+
+% ===== Benchmarks and Evaluation =====
+
+@article{jimenez2024swebench,
+  title     = {{SWE-bench}: Can Language Models Resolve
+               Real-World {GitHub} Issues?},
+  author    = {Jimenez, Carlos E. and others},
+  journal   = {arXiv preprint arXiv:2310.06770},
+  year      = {2024},
+  note      = {Benchmark for autonomous code repair; measures
+               task completion, not collaboration process}
+}
+
+@misc{anthropic2025claudecode,
+  title     = {Claude Code: Best Practices for Agentic Coding},
+  author    = {{Anthropic}},
+  year      = {2025},
+  howpublished = {\url{https://docs.anthropic.com/en/docs/claude-code}},
+  note      = {Reference for the agentic coding environment
+               in which smrti operates}
+}
+
+% ===== Philosophical Grounding =====
+
+@book{deutsch1969advaita,
+  title     = {Advaita Ved\=anta: A Philosophical Reconstruction},
+  author    = {Deutsch, Eliot},
+  year      = {1969},
+  publisher = {University of Hawaii Press},
+  note      = {S\=ak\d{s}in (witness), kart\=a (doer), kriy\=a (act)
+               --- the triad grounding the tracer vocabulary}
+}
+
+@book{mohanty2000classical,
+  title     = {Classical Indian Philosophy},
+  author    = {Mohanty, Jitendra Nath},
+  year      = {2000},
+  publisher = {Rowman \& Littlefield},
+  note      = {Pram\=a\d{n}a theory (valid means of knowledge) ---
+               epistemological basis for the measurement harness}
+}
+
+@book{hanh1998interbeing,
+  title     = {Interbeing: Fourteen Guidelines for Engaged Buddhism},
+  author    = {Hanh, Thich Nhat},
+  year      = {1998},
+  publisher = {Parallax Press},
+  note      = {Prat\={\i}tyasamutp\=ada (dependent co-arising) ---
+               the interbeing of human and AI cognition}
+}
