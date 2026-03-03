@@ -1,21 +1,23 @@
-"""Deprecated: use `from smrti import Memory` instead.
+"""smrti (advaita-smrti) — non-dual memory for structured knowledge elicitation.
 
-This shim re-exports from the new smrti package for backward compatibility.
+Usage:
+    from smrti import Memory
+
+    mem = Memory(".memory")
+    task = mem.tasks.create("My task", description="Details...")
+    mem.close()
+
+See https://github.com/aaronjohnson/advaita-smrti for full documentation.
 """
-import warnings as _warnings
 
-_warnings.warn(
-    "Importing from 'memory' is deprecated. Use 'from smrti import Memory' instead.",
-    DeprecationWarning,
-    stacklevel=2,
-)
+__version__ = "0.5.0"
 
-from smrti.memory import (  # noqa: E402, F401
+from .memory import (
     Memory,
     IndexDriftError,
     init,
 )
-from smrti.memory.models import (  # noqa: E402, F401
+from .memory.models import (
     Task,
     Decision,
     Hypothesis,
@@ -28,6 +30,7 @@ from smrti.memory.models import (  # noqa: E402, F401
 )
 
 __all__ = [
+    "__version__",
     "Memory",
     "IndexDriftError",
     "init",

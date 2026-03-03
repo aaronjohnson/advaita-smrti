@@ -18,36 +18,41 @@ collaboration, built around four typed memory stores.
 JSONL is the source of truth (git-friendly, append-only).
 SQLite is a regenerable index for fast queries.
 
+## Install
+
+```bash
+pip install advaita-smrti          # core (no dependencies)
+pip install advaita-smrti[mcp]     # with MCP server support
+```
+
 ## Quick Start
 
 ```bash
-# Clone
-git clone https://github.com/aaronjohnson/advaita-smrti.git
-cd advaita-smrti
-
-# Interactive mode
-python3 smrti.py
-
-# Or work directly in a Claude Code session (preferred)
-# Claude reads the config, presents questions, saves to memory
+cd my-project
+smrti init                  # creates .memory/, .mcp.json, .claude/commands/
+# Restart Claude Code — 21 memory tools + 6 slash commands are ready
 ```
 
-No dependencies beyond Python 3.6+ standard library.
+Or use the Python API directly:
+
+```python
+from smrti import Memory
+
+mem = Memory(".memory")
+task = mem.tasks.create("Answer question", description="...")
+mem.tasks.close(task.id)
+mem.close()
+```
 
 ## CLI
 
 ```bash
-smrti.py                    # Interactive mode
-smrti.py list               # Available configs and databases
-smrti.py status             # Progress summary
-smrti.py validate cfg.json  # Validate a config file
-
-smrti.py export markdown    # Export answers
-smrti.py export pdf         # Export to PDF (requires texinfo)
-
-smrti.py memory status      # Memory layer summary
-smrti.py memory rebuild     # Repair index from JSONL
-smrti.py memory compact     # Remove old JSONL versions
+smrti init                  # Set up memory in current project
+smrti memory status         # Memory layer summary
+smrti memory tasks          # List all tasks
+smrti memory rebuild        # Repair index from JSONL
+smrti memory compact        # Remove old JSONL versions
+smrti --version             # Print version
 ```
 
 ## Create Your Own Config
@@ -62,7 +67,7 @@ and helper text.
 [paste questions]
 ```
 
-Or use `/generate-config` in Claude Code. Validate with
+Or use `/smrti-config` in Claude Code. Validate with
 `python3 validate_config.py`.
 
 ## What Makes This Different

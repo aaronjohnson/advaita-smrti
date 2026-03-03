@@ -9,6 +9,58 @@ Commit messages follow an Alice in Wonderland theme.
 
 ---
 
+## [0.5.0] - 2026-03-02 - "The Cheshire Cat's Grin"
+
+> "We're all mad here. I'm mad. You're mad."
+> "How do you know I'm mad?" said Alice.
+> "You must be," said the Cat, "or you wouldn't have come here."
+
+The Cat's grin remains after the Cat has gone. smrti is now an installable
+package — the memory persists wherever you `pip install` it, independent
+of any particular checkout.
+
+### Added
+
+- **PyPI packaging** — `pip install advaita-smrti` (or `advaita-smrti[mcp]`)
+  - `smrti/` installable package with all memory modules
+  - `pyproject.toml` with hatchling build system
+  - Two console_scripts entry points: `smrti`, `smrti-mcp`
+  - Bundled slash commands delivered by `smrti init`
+
+- **`smrti init` command** — one-step project setup
+  - Creates `.memory/`, `.mcp.json`, `.claude/commands/`
+  - Merges into existing `.mcp.json` if present
+  - Copies 6 slash commands from package data
+
+- **`decisions.record()` convenience method** (closes #7)
+  - Record already-made decisions in one call
+  - `decision_record` MCP tool for the same workflow
+
+- **Human-readable MCP output** — all 22 tools return formatted text
+  instead of raw JSON. Cleaner in the tool result accordion and
+  easier for Claude to interpret in conversation.
+
+- **`python -m smrti`** — module execution support
+
+### Changed
+
+- **Import path** — `from smrti import Memory` (canonical)
+- **`memory/` is now a deprecation shim** — `from memory import Memory`
+  still works with a `DeprecationWarning`
+- **`mcp_server.py`** delegates to `smrti.mcp:main` with deprecation warning
+- **Test imports** updated to `from smrti import ...`
+- **CLI** — `smrti memory status|tasks|decisions|patterns|rebuild|compact`
+- **MCP server** invoked as `smrti-mcp` (installed entry point)
+- **CLAUDE.md / README.md** — updated setup instructions and import examples
+
+### Closed
+
+- #7 — Convenience method for recording already-decided decisions
+- #8 — Add search/query method to facts store (already existed)
+- #9 — CLI for quick queries without dropping to Python
+
+---
+
 ## [0.4.0] - 2026-02-19 - "The Looking-Glass Insects"
 
 > "Of course they answer to their names?" the Gnat remarked carelessly.
@@ -184,6 +236,8 @@ A major refactor introducing a memory layer inspired by [beads](https://github.c
 
 | Version | Date | Codename | Focus |
 |---------|------|----------|-------|
+| 0.5.0 | 2026-03-02 | The Cheshire Cat's Grin | PyPI packaging, `smrti init`, human-readable MCP |
+| 0.4.0 | 2026-02-19 | The Looking-Glass Insects | Index drift detection |
 | 0.3.0 | 2026-02-05 | The Queen's Garden | LaTeX export, memory-first exports, queen's garden workflow |
 | 0.2.0 | 2026-02-05 | Down the Rabbit Hole | Memory layer refactor |
 | 0.1.0 | 2026-01-27 | Initial Release | Core functionality |

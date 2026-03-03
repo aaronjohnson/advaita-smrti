@@ -12,7 +12,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from memory import Memory, Fact
+from smrti import Memory, Fact
 
 
 class TestFactOperations(unittest.TestCase):
@@ -219,7 +219,7 @@ class TestFactPersistence(unittest.TestCase):
 
     def test_facts_drift_detection(self):
         """Direct JSONL writes to facts.jsonl cause IndexDriftError."""
-        from memory import IndexDriftError
+        from smrti import IndexDriftError
 
         mem1 = Memory(self.memory_path)
         mem1.facts.create("Fact via API")

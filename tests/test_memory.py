@@ -12,8 +12,8 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from memory import Memory, IndexDriftError
-from memory.models import Task, Decision, Hypothesis
+from smrti import Memory, IndexDriftError
+from smrti.memory.models import Task, Decision, Hypothesis
 
 
 class TestMemoryInitialization(unittest.TestCase):

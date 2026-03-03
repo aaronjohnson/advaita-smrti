@@ -358,9 +358,9 @@ def cmd_list(args):
 def cmd_memory(args):
     """Memory layer operations"""
     try:
-        from memory import Memory, IndexDriftError
+        from smrti import Memory, IndexDriftError
     except ImportError:
-        print("Error: Memory layer not available")
+        print("Error: Memory layer not available. Install with: pip install advaita-smrti")
         sys.exit(1)
 
     memory_path = args.memory_path or '.memory'

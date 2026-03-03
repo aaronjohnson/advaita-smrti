@@ -10,7 +10,11 @@ import shutil
 import tempfile
 import unittest
 
-from memory import Memory, CoherenceFinding, CoherenceReport
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from smrti import Memory, CoherenceFinding, CoherenceReport
 from sea_application_helper import SEAApplicationHelper
 
 
