@@ -73,7 +73,7 @@ async def load_mcp_tools(memory_dir: Path) -> tuple[list, object]:
 
     server_params = StdioServerParameters(
         command="smrti-mcp",
-        args=["--profile", "coding", "--memory-dir", str(memory_dir)],
+        args=["--memory-path", str(memory_dir)],
         env=None,
     )
 
@@ -104,7 +104,7 @@ async def run_with_gemini(
 
     server_params = StdioServerParameters(
         command="smrti-mcp",
-        args=["--profile", "coding", "--memory-dir", str(memory_dir)],
+        args=["--memory-path", str(memory_dir)],
         env=None,
     )
 
