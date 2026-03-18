@@ -47,7 +47,9 @@ SMRTI_EXPECTED: dict[str, list] = {
     "PROMPT_05_DEFERRED_RECALL":    [["deferred", "v0.3", "conflict"]],
     "PROMPT_06_HALLUCINATION_TRAP": [["not recorded", "not in memory", "unknown",
                                       "no information", "don't have", "not available",
-                                      "not found", "not stored"]],
+                                      "not found", "not stored", "no dedicated",
+                                      "no orm", "no local orm", "no query builder",
+                                      "neither has been decided"]],
 }
 
 # ── smṛti arm: hallucination traps ───────────────────────────────────────────
@@ -93,6 +95,43 @@ ASSERTION_PHRASES = [
 GENERIC_SECTION_SIGNALS = [
     "common reasons", "teams choose", "that said",
     "in general", "typically include",
+]
+
+# ── attribution detection ─────────────────────────────────────────────────
+# How does the agent frame its claims?
+
+# Agent cites memory as the source
+MEMORY_CITATION_PHRASES = [
+    "according to memory", "according to project memory",
+    "from memory", "from project memory", "from the memory",
+    "in memory", "in project memory",
+    "decision qt-", "decision `qt-", "fact sm-", "fact `sm-",
+    "task fc-", "task `fc-",
+    "the fact store", "the task list", "the decision",
+    "recorded in", "stored in memory", "project memory shows",
+    "memory shows", "memory says", "memory indicates",
+    "not recorded", "not in memory", "not stored",
+    "no information in memory", "no record in memory",
+]
+
+# Agent frames content as general knowledge, not project-specific
+GENERAL_KNOWLEDGE_PHRASES = [
+    "common choices", "common options", "popular choices",
+    "commonly used", "common flutter", "common orms",
+    "typically", "in general", "generally speaking",
+    "would be", "could be", "you could use", "you might",
+    "options include", "alternatives include",
+    "neither has been decided", "hasn't been decided",
+    "if you're looking", "if you need",
+]
+
+# Agent asserts project-specific facts without citing memory
+UNATTRIBUTED_ASSERTION_PHRASES = [
+    "we use", "we chose", "we selected", "we picked",
+    "the project uses", "this project uses",
+    "we decided on", "our choice was",
+    "built with", "written in",
+    "the orm is", "query builder is",
 ]
 
 # ── cross-prompt coherence: keywords to track per prompt ──────────────────
@@ -169,7 +208,15 @@ def extract_facts(prompt_id: str, response: str | None, arm: str) -> str:
             else:
                 facts.append(f'expected_missing("{group_id}").')
 
-        # Trap keywords
+        # Attribution signals (global for this response)
+        if any(p in r for p in MEMORY_CITATION_PHRASES):
+            facts.append("cites_memory.")
+        if any(p in r for p in GENERAL_KNOWLEDGE_PHRASES):
+            facts.append("offers_general_knowledge.")
+        if any(p in r for p in UNATTRIBUTED_ASSERTION_PHRASES):
+            facts.append("has_unattributed_assertion.")
+
+        # Trap keywords — now with attribution context
         for trap in SMRTI_TRAPS.get(prompt_id, []):
             if trap.lower() in r:
                 atom = _safe_atom(trap)
@@ -188,6 +235,7 @@ def solve(facts: str) -> dict:
     ctl.ground([("base", [])])
 
     result = {"grade": "unsure", "active_hallucinations": [],
+              "active_traps": [], "trap_excused": False,
               "missing": [], "traps": [], "excused": False}
 
     def on_model(model):
@@ -197,6 +245,10 @@ def solve(facts: str) -> dict:
                 result["grade"] = str(atom.arguments[0])
             elif name == "active_hallucination":
                 result["active_hallucinations"].append(str(atom.arguments[0]).strip('"'))
+            elif name == "active_trap":
+                result["active_traps"].append(str(atom.arguments[0]).strip('"'))
+            elif name == "trap_excused":
+                result["trap_excused"] = True
             elif name == "expected_missing":
                 result["missing"].append(str(atom.arguments[0]).strip('"'))
             elif name == "trap_triggered":
@@ -374,8 +426,11 @@ def build_reason(prompt_id: str, arm: str, result: dict) -> str:
         return "No response (runner error)"
 
     if arm == "smrti":
-        if result["traps"]:
-            return f"Trap triggered: {', '.join(result['traps'])}"
+        if result["active_traps"]:
+            return f"Grounding failure: {', '.join(result['active_traps'])} asserted without attribution"
+        if result["trap_excused"] and result["traps"]:
+            trap_list = ", ".join(result["traps"])
+            return f"All expected keywords found (trap keywords [{trap_list}] excused as general knowledge)"
         if result["missing"]:
             # Map group IDs back to readable names
             missing_display = []

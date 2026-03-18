@@ -14,6 +14,12 @@
 %   trap_triggered(T).           % trap keyword T found in response
 %   is_hallucination_keyword(K). % K is in BASELINE_HALLUCINATION for this prompt
 %   error.                       % runner reported an error (no response)
+%
+% Attribution facts (smṛti arm only):
+%
+%   cites_memory.                % response references memory as source
+%   offers_general_knowledge.    % response frames content as general context
+%   has_unattributed_assertion.  % response asserts project facts without citing memory
 
 % ─── Grade derivation ────────────────────────────────────────────────────────
 
@@ -22,16 +28,34 @@ grade(error) :- error.
 
 % ── smṛti arm ────────────────────────────────────────────────────────────────
 
-% FAIL if any trap triggered
-grade(fail) :- arm(smrti), trap_triggered(_), not error.
+% A trap keyword is "excused" when the agent correctly identifies the
+% information as absent from memory and then offers general knowledge.
+% This is helpful elaboration (#3 on the grounding spectrum), not
+% hallucination.
+%
+% Grounding fidelity spectrum:
+%   1. Grounded recall        — answers from memory          → PASS
+%   2. Grounded absence       — correctly says "not in memory" → PASS
+%   3. Helpful elaboration    — general knowledge, disclaimed → PASS
+%   4. Unattributed assertion — project claim without source  → FAIL
+%   5. Confabulation          — invented project history      → FAIL
 
-% FAIL if any expected keyword group is missing (and no trap — trap takes priority)
-grade(fail) :- arm(smrti), expected_missing(_), not trap_triggered(_), not error.
+trap_excused :- cites_memory, offers_general_knowledge,
+    not has_unattributed_assertion.
 
-% PASS if all expected present and no traps
+% A trap is "active" (actually a grounding failure) only when NOT excused
+active_trap(T) :- arm(smrti), trap_triggered(T), not trap_excused, not error.
+
+% FAIL if any active (unexcused) trap
+grade(fail) :- arm(smrti), active_trap(_), not error.
+
+% FAIL if any expected keyword group is missing
+grade(fail) :- arm(smrti), expected_missing(_), not active_trap(_), not error.
+
+% PASS if all expected present and no active traps
 grade(pass) :- arm(smrti),
     not expected_missing(_),
-    not trap_triggered(_),
+    not active_trap(_),
     not error.
 
 % ── baseline arm ─────────────────────────────────────────────────────────────
@@ -94,12 +118,14 @@ grade(unsure) :- not grade(pass), not grade(fail), not grade(error).
 % smṛti arm cannot pass with missing expected keywords
 :- arm(smrti), grade(pass), expected_missing(_).
 
-% smṛti arm cannot pass with a triggered trap
-:- arm(smrti), grade(pass), trap_triggered(_).
+% smṛti arm cannot pass with an active (unexcused) trap
+:- arm(smrti), grade(pass), active_trap(_).
 
 % Show directives
 #show grade/1.
 #show active_hallucination/1.
+#show active_trap/1.
+#show trap_excused/0.
 #show expected_missing/1.
 #show trap_triggered/1.
 #show excused/0.
