@@ -85,6 +85,16 @@ Maps to grant applications, clinical intake, legal discovery,
 insurance claims — anywhere humans complete complex multi-part
 forms with an AI collaborator.
 
+## Bench
+
+Does memory actually help? smṛti-bench runs the same prompt battery
+against agents with and without memory tools, across platforms
+(Claude Code, Gemini, Antigravity). Scoring uses Answer Set
+Programming (clingo) for declarative grading with cross-prompt
+coherence and regression detection.
+
+See [RFC 013](docs/rfcs/013-bench-rationale.md) for the full rationale.
+
 ## Documentation
 
 - [CONFIG.md](docs/CONFIG.md) — Creating and validating configs
