@@ -3,7 +3,7 @@
 **Status:** Concept
 **Author:** Aaron Johnson
 **Created:** 2026-02-20
-**Parent:** RFC 004
+**Parent:** [RFC 004](004-smrti-rename-and-typed-memory.md)
 **Trigger:** When PyPI publishing or RFC 006 (web interface) forces it
 
 ## Purpose

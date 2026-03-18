@@ -3,7 +3,7 @@
 **Status:** Concept
 **Author:** Aaron Johnson
 **Created:** 2026-02-20
-**Parent:** RFC 004, RFC 005
+**Parent:** [RFC 004](004-smrti-rename-and-typed-memory.md), [RFC 005](005-ephemeral-store.md)
 
 ## Purpose
 

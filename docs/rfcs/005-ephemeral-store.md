@@ -3,7 +3,7 @@
 **Status:** Draft
 **Author:** Aaron Johnson
 **Created:** 2026-02-19
-**Parent:** RFC 004
+**Parent:** [RFC 004](004-smrti-rename-and-typed-memory.md)
 
 ## Purpose
 

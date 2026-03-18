@@ -3,8 +3,8 @@
 **Status:** Draft
 **Author:** Aaron Johnson + Claude
 **Created:** 2026-02-20
-**Parent:** RFC 003 (Recursive Context and Complementary Cognition)
-**References:** RFC 002, RFC 004
+**Parent:** [RFC 003](003-recursive-context-and-complementary-cognition.md)
+**References:** [RFC 002](002-memory-layer-spec.md), [RFC 004](004-smrti-rename-and-typed-memory.md)
 
 ---
 
