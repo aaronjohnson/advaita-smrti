@@ -9,7 +9,7 @@ Commit messages follow an Alice in Wonderland theme.
 
 ---
 
-## [Unreleased] - "The Jabberwock's Verdict"
+## [0.6.0] - 2026-03-18 - "The Jabberwock's Verdict"
 
 > "And hast thou slain the Jabberwock?
 > Come to my arms, my beamish boy!"
@@ -299,6 +299,7 @@ A major refactor introducing a memory layer inspired by [beads](https://github.c
 
 | Version | Date | Codename | Focus |
 |---------|------|----------|-------|
+| 0.6.0 | 2026-03-18 | The Jabberwock's Verdict | ASP scoring (integrity, coherence, regression), hardened fixture, CI |
 | 0.5.0 | 2026-03-02 | The Cheshire Cat's Grin | PyPI packaging, `smrti init`, human-readable MCP |
 | 0.4.0 | 2026-02-19 | The Looking-Glass Insects | Index drift detection |
 | 0.3.0 | 2026-02-05 | The Queen's Garden | LaTeX export, memory-first exports, queen's garden workflow |

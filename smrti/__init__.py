@@ -10,7 +10,7 @@ Usage:
 See https://github.com/aaronjohnson/advaita-smrti for full documentation.
 """
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 from .memory import (
     Memory,
