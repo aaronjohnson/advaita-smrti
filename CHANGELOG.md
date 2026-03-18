@@ -9,6 +9,69 @@ Commit messages follow an Alice in Wonderland theme.
 
 ---
 
+## [Unreleased] - "The Jabberwock's Verdict"
+
+> "And hast thou slain the Jabberwock?
+> Come to my arms, my beamish boy!"
+
+The Jabberwock spoke in nonsense — but the nonsense had structure.
+ASP (Answer Set Programming) now judges bench responses with three
+declarative rule sets, and the fixture has teeth.
+
+### Added
+
+- **Integrity constraints** in `scoring.lp` — six `:- ` rules that make
+  clingo return UNSATISFIABLE if the grading rules ever derive contradictory
+  grades. Catches scorer bugs at solve time instead of silently producing
+  wrong results.
+
+- **Cross-prompt coherence checking** (`coherence.lp`) — a second ASP pass
+  that loads all responses in a run and checks consistency across prompts:
+  selective hallucination (baseline), partial recall (smrti), P02↔P04
+  BLoC alignment, P03↔P05 deferral consistency.
+
+- **Cross-run regression detection** (`regression.lp`, `--regression` flag) —
+  compares consecutive runs of the same platform/arm and derives regression,
+  improvement, became_unsure, new_error, net_regression, and stable atoms.
+  Pairs runs by (platform, arm) and compares the two most recent.
+
+- **Auth decision** (`qt-004`) in fixture — email/password + magic link
+  over social OAuth, adding realistic noise to the decision store.
+
+- **Noise facts** in fixture — team workflow conventions, MVP timeline,
+  API rate limiting. Forces the agent to filter rather than pattern-match
+  on every fact.
+
+- **Analytics task** (`fc-007`) in fixture — open evaluation task as noise.
+
+### Changed
+
+- **Fixture facts store** — removed three facts that duplicated decision
+  content (Supabase/RLS, BLoC, offline sync deferral). Architecture answers
+  now require retrieving from the decisions store, not just `fact_search`.
+  Cross-prompt coherence checks become meaningful.
+
+- **Fixture task fc-004** — trimmed description to status only ("Deferred
+  to v0.3") without the rationale. Full answer to PROMPT_05 requires
+  cross-referencing the decision store.
+
+- **Fixture decision qt-003** — removed explicit `task_id` link to fc-004.
+  Agent must connect the offline sync decision to the task by topic.
+
+### Fixed
+
+- **smrti arm tool permissions** — `run_claude.py` now passes
+  `--allowedTools mcp__advaita-smrti__*` so MCP tools execute in headless
+  mode without interactive approval prompts.
+
+- **venv detection** — `run_local.sh` uses `.venv/bin/python` when present,
+  falls back to system `python3`.
+
+- **CI clingo dependency** — `bench.yml` now installs `clingo` so the
+  scorer works in GitHub Actions.
+
+---
+
 ## [0.5.0] - 2026-03-02 - "The Cheshire Cat's Grin"
 
 > "We're all mad here. I'm mad. You're mad."

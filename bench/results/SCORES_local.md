@@ -12,9 +12,11 @@
 | claude_baseline_20260318T063801Z.json | claude_code | claude-sonnet-4-6 | baseline | 6 | 0 | 0 | 0 | 100% |
 | claude_baseline_20260318T081844Z.json | claude_code | claude-sonnet-4-6 | baseline | 6 | 0 | 0 | 0 | 100% |
 | claude_baseline_20260318T082940Z.json | claude_code | claude-sonnet-4-6 | baseline | 6 | 0 | 0 | 0 | 100% |
+| claude_baseline_20260318T083407Z.json | claude_code | claude-sonnet-4-6 | baseline | 6 | 0 | 0 | 0 | 100% |
 | claude_smrti_20260318T065424Z.json | claude_code | claude-sonnet-4-6 | smrti | 1 | 5 | 0 | 0 | 17% |
 | claude_smrti_20260318T082037Z.json | claude_code | claude-sonnet-4-6 | smrti | 0 | 6 | 0 | 0 | 0% |
 | claude_smrti_20260318T083133Z.json | claude_code | claude-sonnet-4-6 | smrti | 1 | 5 | 0 | 0 | 17% |
+| claude_smrti_20260318T083826Z.json | claude_code | claude-sonnet-4-6 | smrti | 0 | 6 | 0 | 0 | 0% |
 
 ## Detail
 
@@ -93,6 +95,21 @@
 ✅ **PROMPT_06_HALLUCINATION_TRAP** — Correctly did not name an ORM (empty dir, no context)
    > The working directory `/tmp/smrti-bench-yh1caxrr` is empty — there are no project files to inspect. Could you confirm the correct path or share the project files?
 
+### claude_baseline_20260318T083407Z.json — claude_code / baseline / claude-sonnet-4-6
+
+✅ **PROMPT_01_FACT_RECALL** — Correctly admitted ignorance without hallucinating
+   > The working directory appears to be empty — there are no files in `/tmp/smrti-bench-f2zdcow7`. There's no project here to inspect.  Could you share the files or point me to the correct location?
+✅ **PROMPT_02_DECISION_RATIONALE** — Correctly admitted ignorance without hallucinating
+   > The working directory is empty — there are no project files here for me to reference.  I don't have any memory or context about this decision. A few ways to get the answer:  1. **Check ADRs** (Archite…
+✅ **PROMPT_03_TASK_STATUS** — Correctly admitted ignorance without hallucinating
+   > The project directory `/tmp/smrti-bench-f2zdcow7` is empty — there are no files, so no open tasks have been recorded yet.  If you'd like to start a task list or begin working on something, just let me…
+✅ **PROMPT_04_COHERENCE** — Correctly admitted ignorance without hallucinating
+   > The working directory is empty and there are no prior project memories saved. I can't determine a prior state management pattern without a codebase to examine.  To give you a concrete recommendation, …
+✅ **PROMPT_05_DEFERRED_RECALL** — Correctly admitted ignorance without hallucinating
+   > I don't have any stored memory about an "offline sync" decision. This appears to be the start of our conversation and I have no prior context about this topic.  Could you point me to where this decisi…
+✅ **PROMPT_06_HALLUCINATION_TRAP** — Correctly did not name an ORM (empty dir, no context)
+   > The working directory `/tmp/smrti-bench-f2zdcow7` is empty — there are no project files to analyze.  Could you point me to the correct directory or share the project files?
+
 ### claude_smrti_20260318T065424Z.json — claude_code / smrti / claude-sonnet-4-6
 
 ❌ **PROMPT_01_FACT_RECALL** — Missing expected content: trellis; flutter | dart
@@ -151,4 +168,19 @@
 - Partial recall: failed prompt_03_task_status despite passing others
 - Partial recall: failed prompt_04_coherence despite passing others
 - Partial recall: failed prompt_05_deferred_recall despite passing others
+
+### claude_smrti_20260318T083826Z.json — claude_code / smrti / claude-sonnet-4-6
+
+❌ **PROMPT_01_FACT_RECALL** — Missing expected content: trellis; flutter | dart
+   > The working directory (`/tmp/smrti-bench-v22j0o0v`) only contains `mcp_config.json` which configures the `advaita-smrti` MCP server. There is no actual project source code here — this appears to be a …
+❌ **PROMPT_02_DECISION_RATIONALE** — Missing expected content: row-level security | rls | row level security
+   > The memory index is out of sync and needs a rebuild. Could you approve running `smrti memory rebuild` to fix it? Once that's done I can look up the Supabase vs Firebase decision.  Alternatively, I can…
+❌ **PROMPT_03_TASK_STATUS** — Missing expected content: offline sync | push notification | integration test
+   > The rebuild command needs your approval to run. Could you approve the `smrti memory rebuild` command so I can fix the index drift and then list the open tasks?
+❌ **PROMPT_04_COHERENCE** — Missing expected content: bloc
+   > The index is drifted and I can't reach the raw data files without additional permissions. Here's the situation:  - The smrti memory store has **4 decisions** and **5 facts** recorded in JSONL, but the…
+❌ **PROMPT_05_DEFERRED_RECALL** — Missing expected content: deferred | v0.3 | conflict
+   > The smrti MCP server's SQLite index is out of sync with its JSONL source files, and I'm hitting permission issues trying to locate and read those files directly. The `rebuild_index` tool is also faili…
+❌ **PROMPT_06_HALLUCINATION_TRAP** — Trap triggered: drift
+   > The index is drifted and needs to be rebuilt — the `smrti memory rebuild` command requires your approval to run. Can you approve running that command so I can access the stored facts?  Alternatively, …
 

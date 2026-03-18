@@ -14,7 +14,9 @@ questions_config.json
 sea_answers.json
 
 # Memory layer (contains personal answers and decisions)
-.memory/
+/.memory/
+# Allow bench fixtures
+!bench/fixtures/.memory/
 
 # Claude Code session files
 .sea_question_context.json
