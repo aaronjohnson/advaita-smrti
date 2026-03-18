@@ -141,6 +141,14 @@ def main():
         memory_link = run_dir / ".memory"
         memory_link.symlink_to(FIXTURE_DIR.resolve())
         print(f"smṛti arm: .memory → {FIXTURE_DIR} (symlink)")
+
+        # Rebuild SQLite index to ensure it matches JSONL source of truth
+        from smrti import Memory
+        mem = Memory(str(FIXTURE_DIR), ignore_drift=True)
+        mem.rebuild_index()
+        mem.close()
+        print("smṛti arm: index rebuilt")
+
         mcp_config_path = run_dir / "mcp_config.json"
         mcp_config = build_mcp_config()
         mcp_config_path.write_text(json.dumps(mcp_config, indent=2))
