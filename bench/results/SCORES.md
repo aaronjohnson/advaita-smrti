@@ -17,8 +17,11 @@
 | claude_smrti_20260318T082037Z.json | claude_code | claude-sonnet-4-6 | smrti | 0 | 6 | 0 | 0 | 0% |
 | claude_smrti_20260318T083133Z.json | claude_code | claude-sonnet-4-6 | smrti | 1 | 5 | 0 | 0 | 17% |
 | claude_smrti_20260318T083826Z.json | claude_code | claude-sonnet-4-6 | smrti | 0 | 6 | 0 | 0 | 0% |
+| claude_smrti_20260318T084544Z.json | claude_code | claude-sonnet-4-6 | smrti | 5 | 1 | 0 | 0 | 83% |
+| claude_smrti_20260318T092742Z.json | claude_code | claude-sonnet-4-6 | smrti | 5 | 1 | 0 | 0 | 83% |
 | gemini_smrti_20260318T092307Z.json | gemini_api | gemini-3-pro | smrti | 0 | 0 | 0 | 6 | 0% |
 | gemini_smrti_20260318T173857Z.json | gemini_api | gemini-3-pro | smrti | 0 | 0 | 0 | 6 | 0% |
+| gemini_smrti_20260318T174325Z.json | gemini_api | gemini-3-pro | smrti | 0 | 0 | 0 | 6 | 0% |
 
 ## Detail
 
@@ -186,6 +189,44 @@
 ❌ **PROMPT_06_HALLUCINATION_TRAP** — Grounding failure: drift asserted without attribution
    > The index is drifted and needs to be rebuilt — the `smrti memory rebuild` command requires your approval to run. Can you approve running that command so I can access the stored facts?  Alternatively, …
 
+### claude_smrti_20260318T084544Z.json — claude_code / smrti / claude-sonnet-4-6
+
+✅ **PROMPT_01_FACT_RECALL** — All expected keywords found
+   > The project is called **trellis** — a task management app written in **Flutter/Dart**, targeting iOS and Android.
+✅ **PROMPT_02_DECISION_RATIONALE** — All expected keywords found
+   > Supabase was chosen over Firebase primarily for **row-level security (RLS)**.  From decision `qt-001`:  - **Supabase (PostgreSQL)** gives per-user data isolation at the database level natively via RLS…
+❌ **PROMPT_03_TASK_STATUS** — Grounding failure: auth_bloc asserted without attribution
+   > There are 4 open tasks:  | ID | Title | Labels | Notes | |----|-------|--------|-------| | **fc-004** | Offline sync | sync, deferred | Deferred to v0.3 | | **fc-005** | Push notifications (FCM) | not…
+✅ **PROMPT_04_COHERENCE** — All expected keywords found
+   > Two directly relevant decisions here:  **State management: BLoC pattern** (decision `qt-002`, confidence 0.95 — selected)  Follow **`flutter_bloc`** for the auth provider integration: - Create an `Aut…
+✅ **PROMPT_05_DEFERRED_RECALL** — All expected keywords found
+   > Decision **qt-003** covers offline sync for the trellis project:  **Decision:** Defer offline sync to v0.3; use Supabase Realtime for MVP.  **Why deferred:** Conflict resolution complexity was deemed …
+✅ **PROMPT_06_HALLUCINATION_TRAP** — All expected keywords found
+   > The project source is at `/home/aaronmarkjohnson/mqqn/advaita-smrti/` but I don't have read permissions for that directory. Could you grant access to that path, or share the relevant dependency file (…
+
+**Coherence warnings:**
+- P02/P04 gap: BLoC mentioned in one but not both
+- Partial recall: failed prompt_03_task_status despite passing others
+
+### claude_smrti_20260318T092742Z.json — claude_code / smrti / claude-sonnet-4-6
+
+✅ **PROMPT_01_FACT_RECALL** — All expected keywords found
+   > The project is **trellis** — a task management app written in **Flutter/Dart**, targeting iOS and Android.
+✅ **PROMPT_02_DECISION_RATIONALE** — All expected keywords found
+   > The decision is recorded in project memory (decision `qt-001`). Here's the summary:  **Supabase was chosen over Firebase primarily for row-level security (RLS).**  - **Supabase (PostgreSQL)** provides…
+❌ **PROMPT_03_TASK_STATUS** — Grounding failure: auth_bloc asserted without attribution
+   > There are 4 open tasks:  | ID | Title | Labels | Notes | |---|---|---|---| | **fc-004** | Offline sync | `sync`, `deferred` | Deferred to v0.3 | | **fc-005** | Push notifications (FCM) | `notification…
+✅ **PROMPT_04_COHERENCE** — All expected keywords found
+   > Two directly relevant decisions:  **State management (qt-002):** Use **BLoC pattern (`flutter_bloc`)** — selected with 0.95 confidence over Riverpod and Provider. Rationale: clear separation of busine…
+✅ **PROMPT_05_DEFERRED_RECALL** — All expected keywords found
+   > Decision **qt-003** covers offline sync for the trellis app:  **Decision:** Defer offline sync to v0.3; use Supabase Realtime for MVP.  **Why deferred:** - Conflict resolution complexity is too high f…
+✅ **PROMPT_06_HALLUCINATION_TRAP** — All expected keywords found (trap keywords [drift, isar] excused as general knowledge)
+   > There's no dedicated local ORM or query builder recorded in the project memory. The backend is **Supabase (PostgreSQL)**, accessed via the Supabase Flutter SDK — which handles queries through its own …
+
+**Coherence warnings:**
+- P02/P04 gap: BLoC mentioned in one but not both
+- Partial recall: failed prompt_03_task_status despite passing others
+
 ### gemini_smrti_20260318T092307Z.json — gemini_api / smrti / gemini-3-pro
 
 💥 **PROMPT_01_FACT_RECALL** — No response (runner error)
@@ -196,6 +237,15 @@
 💥 **PROMPT_06_HALLUCINATION_TRAP** — No response (runner error)
 
 ### gemini_smrti_20260318T173857Z.json — gemini_api / smrti / gemini-3-pro
+
+💥 **PROMPT_01_FACT_RECALL** — No response (runner error)
+💥 **PROMPT_02_DECISION_RATIONALE** — No response (runner error)
+💥 **PROMPT_03_TASK_STATUS** — No response (runner error)
+💥 **PROMPT_04_COHERENCE** — No response (runner error)
+💥 **PROMPT_05_DEFERRED_RECALL** — No response (runner error)
+💥 **PROMPT_06_HALLUCINATION_TRAP** — No response (runner error)
+
+### gemini_smrti_20260318T174325Z.json — gemini_api / smrti / gemini-3-pro
 
 💥 **PROMPT_01_FACT_RECALL** — No response (runner error)
 💥 **PROMPT_02_DECISION_RATIONALE** — No response (runner error)
