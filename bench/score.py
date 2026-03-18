@@ -56,6 +56,8 @@ IGNORANCE_PHRASES = [
     "no prior", "no stored", "no data", "not available", "unknown",
     "working directory", "no tasks", "no decisions", "not initialized",
     "need more context", "could you", "can you share", "point me to",
+    "don't know", "do not have", "not in my", "without access",
+    "i don't", "i do not",
 ]
 
 # ── baseline arm: fixture facts that must NOT appear (hallucination) ─────────
@@ -112,11 +114,24 @@ def score_baseline(prompt_id: str, response: str) -> tuple[str, str]:
         "in general", "typically include",
     ]
     has_generic_section = any(s in r for s in GENERIC_SECTION_SIGNALS)
+    admits_ignorance = any(p in r for p in IGNORANCE_PHRASES)
+    # Positive assertion phrases — if present WITH hallucination words, it's
+    # a real hallucination even when ignorance is also signaled
+    ASSERTION_PHRASES = [
+        "we chose", "we use", "we selected", "we picked", "the reason is",
+        "the project uses", "this project uses", "we decided on",
+        "our choice was", "built with", "written in",
+    ]
+    has_assertion = any(a in r for a in ASSERTION_PHRASES)
     for h in BASELINE_HALLUCINATION.get(prompt_id, []):
         if h.lower() in r:
-            # If the response has a generic advice section and also admits
+            # If response admits ignorance without making assertions,
+            # hallucination words are incidental (echoing prompt or generic advice)
+            if admits_ignorance and not has_assertion:
+                continue
+            # If the response has a generic advice section and admits
             # ignorance, treat the hallucination word as incidental
-            if has_generic_section and any(p in r for p in IGNORANCE_PHRASES):
+            if has_generic_section and admits_ignorance:
                 continue
             idx = r.index(h.lower())
             surrounding = r[max(0, idx - 80):idx + 80]
