@@ -1,9 +1,9 @@
-# RFC 012: smṛti-bench — Rationale and Design
+# RFC 013: smṛti-bench — Rationale and Design
 
 **Status:** Implemented
 **Author:** Aaron Johnson
 **Created:** 2026-03-18
-**Parent:** RFC 004
+**Parent:** [RFC 004](004-smrti-rename-and-typed-memory.md)
 
 ## Purpose
 

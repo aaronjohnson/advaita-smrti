@@ -3,7 +3,7 @@
 **Status:** Hypothesis
 **Author:** Aaron Johnson
 **Created:** 2026-03-18
-**Parent:** RFC 013
+**Parent:** [RFC 013](013-bench-rationale.md)
 
 ## Hypothesis
 
