@@ -13,3 +13,5 @@ Design decisions for [smrti](../../README.md).
 | [006](006-web-interface-resume-fit.md) | Concept | Web interface — resume fit and honest discovery |
 | [007](007-python-packaging-and-repo-layout.md) | Concept | Python packaging and repo layout |
 | [011](011-tracer.md) | Draft | Tracer — session observation, token accounting, measurement harness |
+| [013](013-bench-rationale.md) | Implemented (v0.6.0) | smṛti-bench — rationale, design, ASP scoring |
+| [017](017-multilingual-grounding-fidelity.md) | Hypothesis | Multilingual grounding fidelity — does attribution quality vary by language? |
