@@ -77,6 +77,8 @@ def run_claude_headless(
     cmd = ["claude", "--print", "--model", MODEL]
     if mcp_config:
         cmd += ["--mcp-config", str(mcp_config)]
+        # Allow all smrti MCP tools in headless mode (no interactive approval)
+        cmd += ["--allowedTools", "mcp__advaita-smrti__*"]
     cmd += ["-p", prompt]
 
     result = subprocess.run(

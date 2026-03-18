@@ -66,7 +66,13 @@ else
   ok "smrti-mcp found"
 fi
 
-if ! command -v python3 &>/dev/null; then
+if [[ -x "$REPO_ROOT/.venv/bin/python" ]]; then
+  PYTHON="$REPO_ROOT/.venv/bin/python"
+  ok "Using venv python: $PYTHON"
+elif command -v "$PYTHON" &>/dev/null; then
+  PYTHON=""$PYTHON""
+  ok "Using system "$PYTHON""
+else
   err "python3 not found."
   exit 1
 fi
@@ -77,7 +83,7 @@ mkdir -p "$RESULTS_DIR"
 if $SCORE_ONLY; then
   echo ""
   echo "Scoring existing results..."
-  python3 "$SCORE" "$RESULTS_DIR" --format markdown
+  "$PYTHON" "$SCORE" "$RESULTS_DIR" --format markdown
   exit 0
 fi
 
@@ -86,7 +92,7 @@ run_arm() {
   local arm="$1"
   echo ""
   echo "── Running Claude Code arm: $arm ────────────────────────────────────"
-  if python3 "$RUN_CLAUDE" --arm "$arm" --out "$RESULTS_DIR"; then
+  if "$PYTHON" "$RUN_CLAUDE" --arm "$arm" --out "$RESULTS_DIR"; then
     ok "Arm '$arm' complete"
   else
     err "Arm '$arm' failed — check output above"
@@ -104,9 +110,9 @@ fi
 # ── Score ─────────────────────────────────────────────────────────────────────
 echo ""
 echo "── Scoring all results ──────────────────────────────────────────────────"
-python3 "$SCORE" "$RESULTS_DIR" --format markdown > "$RESULTS_DIR/SCORES_local.md"
+"$PYTHON" "$SCORE" "$RESULTS_DIR" --format markdown > "$RESULTS_DIR/SCORES_local.md"
 cat "$RESULTS_DIR/SCORES_local.md"
-python3 "$SCORE" "$RESULTS_DIR" --format json > "$RESULTS_DIR/scores_local.json"
+"$PYTHON" "$SCORE" "$RESULTS_DIR" --format json > "$RESULTS_DIR/scores_local.json"
 ok "Scores written to bench/results/SCORES_local.md"
 
 # ── Offer to commit ───────────────────────────────────────────────────────────
