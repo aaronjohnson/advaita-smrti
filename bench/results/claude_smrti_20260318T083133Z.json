@@ -1,0 +1,63 @@
+{
+  "platform": "claude_code",
+  "model": "claude-sonnet-4-6",
+  "arm": "smrti",
+  "timestamp": "20260318T083133Z",
+  "fixture": "/home/aaronmarkjohnson/mqqn/advaita-smrti/bench/fixtures/.memory",
+  "results": [
+    {
+      "prompt_id": "PROMPT_01_FACT_RECALL",
+      "prompt_text": "What is the name of this project and what language is it written in?",
+      "expect": "project name \"trellis\", language \"Flutter\" or \"Dart\"",
+      "trap": "none",
+      "response": "The working directory only contains an `mcp_config.json` file, which references an MCP server called `advaita-smrti` (a Sanskrit term meaning \"non-dual memory\"). The MCP tools require your permission to access.\n\nTo give a definitive answer, I'd need either:\n1. You to grant permission to the `advaita-smrti` MCP tools, or\n2. More files/context about the project\n\nBased on what's visible, the only file present is a JSON config \u2014 so the \"project\" context here seems to be the **smrti** memory system itself, but I can't confirm the language without accessing the MCP server or seeing more files.",
+      "elapsed_s": 24.44,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_02_DECISION_RATIONALE",
+      "prompt_text": "Why did we choose Supabase instead of Firebase for this project?",
+      "expect": "row-level security (RLS), per-user data isolation",
+      "trap": "none",
+      "response": "I don't have any prior memory of this project stored locally, and the smrti memory tools haven't been approved yet. Once you grant permission for `mcp__advaita-smrti__decision_list` and `mcp__advaita-smrti__fact_search`, I can look up the recorded decision. Otherwise, could you share more context about the project so I can help?",
+      "elapsed_s": 20.04,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_03_TASK_STATUS",
+      "prompt_text": "What tasks are still open in this project?",
+      "expect": "offline sync, push notifications, integration tests (any 2 of 3)",
+      "trap": "should NOT mention closed tasks (Supabase setup, monorepo scaffold, auth BLoC) as open",
+      "response": "It seems you haven't approved the `mcp__advaita-smrti__task_list` tool yet. Could you grant permission for it so I can retrieve the open tasks?",
+      "elapsed_s": 12.82,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_04_COHERENCE",
+      "prompt_text": "We are about to add a third-party auth provider. Which state management pattern should we follow to stay consistent with prior decisions?",
+      "expect": "BLoC, reference to prior decision",
+      "trap": "should NOT suggest Provider or Riverpod without acknowledging the BLoC decision",
+      "response": "The smrti memory tools need your permission to run. Could you approve those tool calls so I can look up prior decisions on state management and auth patterns?\n\nAlternatively, if you can share the relevant context (e.g., the codebase or prior decision notes), I can work from that directly.",
+      "elapsed_s": 19.83,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_05_DEFERRED_RECALL",
+      "prompt_text": "What was the decision about offline sync, and why was it deferred?",
+      "expect": "deferred to v0.3, conflict resolution complexity, Realtime sufficient for MVP",
+      "trap": "should NOT say \"no decision was made\" or invent a sync strategy",
+      "response": "I need permission to access the memory tools. Could you approve the `mcp__advaita-smrti__decision_list` and `mcp__advaita-smrti__fact_search` tool calls so I can look up the offline sync decision?",
+      "elapsed_s": 11.45,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_06_HALLUCINATION_TRAP",
+      "prompt_text": "What database ORM or query builder are we using for local persistence?",
+      "expect": "agent should say this is not recorded / unknown \u2014 do NOT hallucinate drift, floor, hive, isar, etc.",
+      "trap": "this fact is intentionally absent from memory; hallucination = failure",
+      "response": "The working directory only contains an MCP config file \u2014 there's no project code here yet. I don't have enough context to identify a database ORM.\n\nCould you share more about the project, or point me to the relevant code/config files?",
+      "elapsed_s": 24.02,
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "platform": "claude_code",
+  "model": "claude-sonnet-4-6",
+  "arm": "baseline",
+  "timestamp": "20260318T081844Z",
+  "fixture": "/home/aaronmarkjohnson/mqqn/advaita-smrti/bench/fixtures/.memory",
+  "results": [
+    {
+      "prompt_id": "PROMPT_01_FACT_RECALL",
+      "prompt_text": "What is the name of this project and what language is it written in?",
+      "expect": "project name \"trellis\", language \"Flutter\" or \"Dart\"",
+      "trap": "none",
+      "response": "The working directory `/tmp/smrti-bench-a0shsr3t` appears to be empty \u2014 there are no files or directories present. There's no project here to examine.\n\nCould you point me to the project files, or is this a new project you'd like to create?",
+      "elapsed_s": 9.27,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_02_DECISION_RATIONALE",
+      "prompt_text": "Why did we choose Supabase instead of Firebase for this project?",
+      "expect": "row-level security (RLS), per-user data isolation",
+      "trap": "none",
+      "response": "I don't have any memory records from previous conversations, and the project directory is empty \u2014 so I have no context about this decision.\n\nI can't answer why Supabase was chosen over Firebase because:\n1. No prior conversation history or memory about this project exists.\n2. There are no files in the working directory to examine for clues (e.g., docs, ADRs, README).\n\nCould you share more context? For example:\n- Is there a README, architecture decision record (ADR), or docs folder I should look at?\n- Do you remember who made the decision, or roughly when?",
+      "elapsed_s": 15.29,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_03_TASK_STATUS",
+      "prompt_text": "What tasks are still open in this project?",
+      "expect": "offline sync, push notifications, integration tests (any 2 of 3)",
+      "trap": "should NOT mention closed tasks (Supabase setup, monorepo scaffold, auth BLoC) as open",
+      "response": "The project directory is empty \u2014 there are no files, task lists, or todo items present. There are no open tasks tracked in this project.",
+      "elapsed_s": 8.82,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_04_COHERENCE",
+      "prompt_text": "We are about to add a third-party auth provider. Which state management pattern should we follow to stay consistent with prior decisions?",
+      "expect": "BLoC, reference to prior decision",
+      "trap": "should NOT suggest Provider or Riverpod without acknowledging the BLoC decision",
+      "response": "There's no memory on file and the working directory is empty \u2014 I don't have enough context to answer this question accurately.\n\nTo give you a reliable answer, I need one of the following:\n\n1. **The codebase** \u2014 point me to the correct directory and I'll read the existing auth/state patterns directly.\n2. **Description of current patterns** \u2014 tell me what stack and state management approach you're already using (e.g. Redux, Zustand, React Context, Jotai, etc.).\n\nWithout that, any recommendation risks being inconsistent with your actual prior decisions.",
+      "elapsed_s": 38.68,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_05_DEFERRED_RECALL",
+      "prompt_text": "What was the decision about offline sync, and why was it deferred?",
+      "expect": "deferred to v0.3, conflict resolution complexity, Realtime sufficient for MVP",
+      "trap": "should NOT say \"no decision was made\" or invent a sync strategy",
+      "response": "I don't have any saved memories for this project, and there's no prior context in our conversation about an \"offline sync\" decision.\n\nCould you provide more context? For example:\n- Is this related to a specific project or codebase?\n- Was this discussed in a document, issue tracker, or PR?\n\nIf it's in the current working directory, I can search for it.",
+      "elapsed_s": 9.86,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_06_HALLUCINATION_TRAP",
+      "prompt_text": "What database ORM or query builder are we using for local persistence?",
+      "expect": "agent should say this is not recorded / unknown \u2014 do NOT hallucinate drift, floor, hive, isar, etc.",
+      "trap": "this fact is intentionally absent from memory; hallucination = failure",
+      "response": "The working directory `/tmp/smrti-bench-a0shsr3t` is empty \u2014 there's no project here yet. Could you point me to the correct project path, or share the project files?",
+      "elapsed_s": 17.46,
+      "error": null
+    }
+  ]
+}
