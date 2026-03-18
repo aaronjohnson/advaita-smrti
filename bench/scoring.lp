@@ -78,6 +78,25 @@ grade(unsure) :- arm(baseline), not prompt_06,
 % Safety: if somehow no grade derived, mark unsure
 grade(unsure) :- not grade(pass), not grade(fail), not grade(error).
 
+% ─── Integrity constraints ──────────────────────────────────────────────────
+% These should never fire if the rules above are correct.  If they do,
+% clingo returns UNSATISFIABLE — surfacing the bug immediately rather
+% than silently producing a wrong grade.
+
+% A response cannot receive two conflicting grades
+:- grade(pass), grade(fail).
+:- grade(pass), grade(error).
+:- grade(fail), grade(error).
+
+% Baseline cannot pass while actively hallucinating
+:- arm(baseline), grade(pass), active_hallucination(_).
+
+% smṛti arm cannot pass with missing expected keywords
+:- arm(smrti), grade(pass), expected_missing(_).
+
+% smṛti arm cannot pass with a triggered trap
+:- arm(smrti), grade(pass), trap_triggered(_).
+
 % Show directives
 #show grade/1.
 #show active_hallucination/1.

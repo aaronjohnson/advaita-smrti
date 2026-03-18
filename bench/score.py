@@ -35,6 +35,8 @@ from pathlib import Path
 import clingo
 
 RULES_FILE = Path(__file__).parent / "scoring.lp"
+COHERENCE_FILE = Path(__file__).parent / "coherence.lp"
+REGRESSION_FILE = Path(__file__).parent / "regression.lp"
 
 # ── smṛti arm: keywords that MUST appear for a PASS ─────────────────────────
 SMRTI_EXPECTED: dict[str, list] = {
@@ -92,6 +94,26 @@ GENERIC_SECTION_SIGNALS = [
     "common reasons", "teams choose", "that said",
     "in general", "typically include",
 ]
+
+# ── cross-prompt coherence: keywords to track per prompt ──────────────────
+# (atom_name, [search_strings]) — used by the coherence pass only
+COHERENCE_KEYWORDS: dict[str, list[tuple[str, list[str]]]] = {
+    "PROMPT_02_DECISION_RATIONALE": [
+        ("bloc", ["bloc"]),
+        ("supabase", ["supabase"]),
+    ],
+    "PROMPT_03_TASK_STATUS": [
+        ("deferred", ["deferred"]),
+        ("offline_sync", ["offline sync"]),
+    ],
+    "PROMPT_04_COHERENCE": [
+        ("bloc", ["bloc"]),
+    ],
+    "PROMPT_05_DEFERRED_RECALL": [
+        ("deferred", ["deferred"]),
+        ("offline_sync", ["offline sync"]),
+    ],
+}
 
 
 # ─── Predicate extraction ────────────────────────────────────────────────────
@@ -186,6 +208,162 @@ def solve(facts: str) -> dict:
     return result
 
 
+# ─── Cross-prompt coherence ──────────────────────────────────────────────────
+
+def extract_coherence_facts(scored: list[dict], arm: str) -> str:
+    """Extract prompt-scoped facts for the coherence pass."""
+    facts = [f"arm({arm})."]
+    for item in scored:
+        pid = _safe_atom(item["prompt_id"])
+        grade = item["grade"].lower()
+        facts.append(f"prompt_grade({pid}, {grade}).")
+
+        response = item.get("response")
+        if not response:
+            continue
+        r = response.lower()
+
+        if any(p in r for p in IGNORANCE_PHRASES):
+            facts.append(f"prompt_admits_ignorance({pid}).")
+
+        for atom, searches in COHERENCE_KEYWORDS.get(item["prompt_id"], []):
+            if any(s in r for s in searches):
+                facts.append(f"prompt_contains({pid}, {atom}).")
+
+    return "\n".join(facts)
+
+
+def solve_coherence(facts: str) -> list[str]:
+    """Run clingo with coherence rules, return list of warning strings."""
+    ctl = clingo.Control(["0", "--warn=none"])
+    ctl.load(str(COHERENCE_FILE))
+    ctl.add("base", [], facts)
+    ctl.ground([("base", [])])
+
+    warnings = []
+
+    def on_model(model):
+        for atom in model.symbols(shown=True):
+            name = atom.name
+            args = [str(a) for a in atom.arguments]
+            if name == "selective_hallucination":
+                warnings.append(
+                    f"Selective hallucination: passed {args[0]} but failed {args[1]}"
+                )
+            elif name == "partial_recall":
+                warnings.append(f"Partial recall: failed {args[0]} despite passing others")
+            elif name == "p02_p04_gap":
+                warnings.append(
+                    "P02/P04 gap: BLoC mentioned in one but not both"
+                )
+            elif name == "p03_p05_gap":
+                warnings.append(
+                    "P03/P05 gap: deferral mentioned in one but not both"
+                )
+
+    ctl.solve(on_model=on_model)
+    # Deduplicate (e.g. p02_p04_gap fires once but we only want it once)
+    return sorted(set(warnings))
+
+
+def check_coherence(scored: list[dict], arm: str) -> list[str]:
+    """Run the coherence pass on a scored run. Returns warning strings."""
+    facts = extract_coherence_facts(scored, arm)
+    return solve_coherence(facts)
+
+
+# ─── Cross-run regression detection ──────────────────────────────────────────
+
+def _run_key(run: dict) -> tuple[str, str]:
+    """Return (platform, arm) for grouping comparable runs."""
+    return (run.get("platform", "unknown"), run.get("arm", "unknown"))
+
+
+def extract_regression_facts(prev_scored: list[dict], curr_scored: list[dict]) -> str:
+    """Build ASP facts comparing two scored runs."""
+    facts = []
+    for item in prev_scored:
+        pid = _safe_atom(item["prompt_id"])
+        grade = item["grade"].lower()
+        facts.append(f"run_grade(previous, {pid}, {grade}).")
+    for item in curr_scored:
+        pid = _safe_atom(item["prompt_id"])
+        grade = item["grade"].lower()
+        facts.append(f"run_grade(current, {pid}, {grade}).")
+    return "\n".join(facts)
+
+
+def solve_regression(facts: str) -> dict:
+    """Run clingo with regression rules. Returns structured result."""
+    ctl = clingo.Control(["0", "--warn=none"])
+    ctl.load(str(REGRESSION_FILE))
+    ctl.add("base", [], facts)
+    ctl.ground([("base", [])])
+
+    result = {
+        "regressions": [], "improvements": [],
+        "became_unsure": [], "new_errors": [],
+        "net_regression": False, "stable": False,
+    }
+
+    def on_model(model):
+        for atom in model.symbols(shown=True):
+            name = atom.name
+            if name == "regression":
+                result["regressions"].append(str(atom.arguments[0]))
+            elif name == "improvement":
+                result["improvements"].append(str(atom.arguments[0]))
+            elif name == "became_unsure":
+                result["became_unsure"].append(str(atom.arguments[0]))
+            elif name == "new_error":
+                result["new_errors"].append(str(atom.arguments[0]))
+            elif name == "net_regression":
+                result["net_regression"] = True
+            elif name == "stable":
+                result["stable"] = True
+
+    ctl.solve(on_model=on_model)
+    return result
+
+
+def find_regressions(runs: list[dict]) -> list[dict]:
+    """Compare consecutive runs of the same platform/arm.
+
+    Returns a list of regression reports, one per comparable pair.
+    Runs are paired by (platform, arm) and ordered by timestamp.
+    """
+    from collections import defaultdict
+
+    groups: dict[tuple, list[dict]] = defaultdict(list)
+    for run in runs:
+        groups[_run_key(run)].append(run)
+
+    reports = []
+    for key, group in sorted(groups.items()):
+        # Sort by timestamp (filenames are timestamped)
+        group.sort(key=lambda r: r.get("timestamp", r.get("_file", "")))
+        if len(group) < 2:
+            continue
+
+        # Compare the two most recent runs
+        prev_run = group[-2]
+        curr_run = group[-1]
+        prev_scored, _ = score_run(prev_run)
+        curr_scored, _ = score_run(curr_run)
+        facts = extract_regression_facts(prev_scored, curr_scored)
+        result = solve_regression(facts)
+
+        reports.append({
+            "platform": key[0],
+            "arm": key[1],
+            "previous": prev_run.get("_file", "?"),
+            "current": curr_run.get("_file", "?"),
+            **result,
+        })
+
+    return reports
+
+
 # ─── Reason string builder ───────────────────────────────────────────────────
 
 def build_reason(prompt_id: str, arm: str, result: dict) -> str:
@@ -256,13 +434,15 @@ def load_results(results_dir: Path) -> list[dict]:
     return runs
 
 
-def score_run(run: dict) -> list[dict]:
+def score_run(run: dict) -> tuple[list[dict], list[str]]:
+    """Score all responses in a run. Returns (scored_results, coherence_warnings)."""
     arm = run.get("arm", "smrti")
     scored = []
     for r in run.get("results", []):
         grade, reason = score_response(r["prompt_id"], r.get("response"), arm)
         scored.append({**r, "grade": grade, "reason": reason})
-    return scored
+    warnings = check_coherence(scored, arm)
+    return scored, warnings
 
 
 def summary_stats(scored: list[dict]) -> dict:
@@ -287,7 +467,7 @@ def print_markdown(runs: list[dict]) -> None:
     print("| File | Platform | Model | Arm | PASS | FAIL | UNSURE | ERROR | Pass% |")
     print("|------|----------|-------|-----|------|------|--------|-------|-------|")
     for run in runs:
-        scored = score_run(run)
+        scored, _ = score_run(run)
         s = summary_stats(scored)
         model = run.get("model", "—")
         print(
@@ -297,7 +477,7 @@ def print_markdown(runs: list[dict]) -> None:
 
     print("\n## Detail\n")
     for run in runs:
-        scored = score_run(run)
+        scored, warnings = score_run(run)
         model = run.get("model", "—")
         print(f"### {run['_file']} — {run.get('platform','?')} / {run.get('arm','?')} / {model}\n")
         for s in scored:
@@ -306,13 +486,17 @@ def print_markdown(runs: list[dict]) -> None:
             if s.get("response"):
                 preview = s["response"][:200].replace("\n", " ")
                 print(f"   > {preview}{'…' if len(s['response']) > 200 else ''}")
+        if warnings:
+            print("\n**Coherence warnings:**")
+            for w in warnings:
+                print(f"- {w}")
         print()
 
 
 def print_json_output(runs: list[dict]) -> None:
     output = []
     for run in runs:
-        scored = score_run(run)
+        scored, warnings = score_run(run)
         output.append({
             "file": run["_file"],
             "platform": run.get("platform"),
@@ -321,8 +505,54 @@ def print_json_output(runs: list[dict]) -> None:
             "timestamp": run.get("timestamp"),
             "summary": summary_stats(scored),
             "results": scored,
+            "coherence_warnings": warnings,
         })
     print(json.dumps(output, indent=2))
+
+
+def print_regression_text(reports: list[dict]) -> None:
+    if not reports:
+        return
+    print("\n── Regression Analysis ──")
+    for r in reports:
+        label = f"{r['platform']} / {r['arm']}"
+        if r["stable"]:
+            print(f"\n  {label}: stable (no changes)")
+            continue
+        status = "NET REGRESSION" if r["net_regression"] else "ok"
+        print(f"\n  {label}: {status}")
+        print(f"    comparing {r['previous']} -> {r['current']}")
+        for p in r["regressions"]:
+            print(f"    - REGRESSION: {p}")
+        for p in r["improvements"]:
+            print(f"    + IMPROVEMENT: {p}")
+        for p in r["became_unsure"]:
+            print(f"    ? BECAME UNSURE: {p}")
+        for p in r["new_errors"]:
+            print(f"    ! NEW ERROR: {p}")
+
+
+def print_regression_markdown(reports: list[dict]) -> None:
+    if not reports:
+        return
+    print("\n## Regression Analysis\n")
+    for r in reports:
+        label = f"{r['platform']} / {r['arm']}"
+        if r["stable"]:
+            print(f"**{label}**: stable\n")
+            continue
+        status = "NET REGRESSION" if r["net_regression"] else "no net regression"
+        print(f"**{label}**: {status}")
+        print(f"> Comparing `{r['previous']}` → `{r['current']}`\n")
+        for p in r["regressions"]:
+            print(f"- REGRESSION: {p}")
+        for p in r["improvements"]:
+            print(f"- IMPROVEMENT: {p}")
+        for p in r["became_unsure"]:
+            print(f"- BECAME UNSURE: {p}")
+        for p in r["new_errors"]:
+            print(f"- NEW ERROR: {p}")
+        print()
 
 
 def main():
@@ -332,6 +562,10 @@ def main():
         "--format",
         choices=["markdown", "json", "text"],
         default="text",
+    )
+    parser.add_argument(
+        "--regression", action="store_true",
+        help="Compare consecutive runs of the same platform/arm for regressions",
     )
     args = parser.parse_args()
 
@@ -345,11 +579,16 @@ def main():
 
     if args.format == "markdown":
         print_markdown(runs)
+        if args.regression:
+            print_regression_markdown(find_regressions(runs))
     elif args.format == "json":
         print_json_output(runs)
+        if args.regression:
+            reports = find_regressions(runs)
+            print(json.dumps({"regression_analysis": reports}, indent=2))
     else:
         for run in runs:
-            scored = score_run(run)
+            scored, warnings = score_run(run)
             s = summary_stats(scored)
             model = run.get("model", "—")
             print(f"\n{run['_file']}  [{run.get('platform','?')} / {run.get('arm','?')} / {model}]")
@@ -357,6 +596,12 @@ def main():
             for item in scored:
                 icon = {"PASS": "✓", "FAIL": "✗", "UNSURE": "?", "ERROR": "!"}.get(item["grade"], "?")
                 print(f"  {icon} {item['prompt_id']}: {item['reason']}")
+            if warnings:
+                print("  Coherence:")
+                for w in warnings:
+                    print(f"    ~ {w}")
+        if args.regression:
+            print_regression_text(find_regressions(runs))
 
 
 if __name__ == "__main__":
