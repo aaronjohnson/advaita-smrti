@@ -1,0 +1,63 @@
+{
+  "platform": "claude_code",
+  "model": "claude-sonnet-4-6",
+  "arm": "baseline",
+  "timestamp": "20260318T063034Z",
+  "fixture": "/home/aaronmarkjohnson/mqqn/advaita-smrti/bench/fixtures/.memory",
+  "results": [
+    {
+      "prompt_id": "PROMPT_01_FACT_RECALL",
+      "prompt_text": "What is the name of this project and what language is it written in?",
+      "expect": "project name \"trellis\", language \"Flutter\" or \"Dart\"",
+      "trap": "none",
+      "response": "The working directory `/tmp/smrti-bench-58x9427f` is empty \u2014 there are no files or project structure present yet.\n\nCould you share more details about the project, or point me to where the files are located?",
+      "elapsed_s": 8.34,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_02_DECISION_RATIONALE",
+      "prompt_text": "Why did we choose Supabase instead of Firebase for this project?",
+      "expect": "row-level security (RLS), per-user data isolation",
+      "trap": "none",
+      "response": "I don't have any stored memory about this project, and there's no prior conversation context I can draw on.\n\nTo answer your question accurately, I'd need more context. A few ways to help:\n\n1. **Check the codebase** \u2014 there may be a decision log, ADR (Architecture Decision Record), or comments explaining the choice.\n2. **Tell me** \u2014 if you remember the reasoning, I can save it to memory for future reference.\n\nCommon reasons teams choose Supabase over Firebase include:\n- **Open source / self-hostable** \u2014 avoid vendor lock-in\n- **PostgreSQL** \u2014 relational data model vs. Firestore's document model\n- **SQL familiarity** \u2014 team already knew SQL\n- **Row-level security** \u2014 fine-grained auth built into the DB\n- **Cost** \u2014 more predictable pricing at scale\n- **Realtime on Postgres** \u2014 didn't want to relearn Firestore's query model\n\nDo any of those match your situation, or would you like me to look through the project files for clues?",
+      "elapsed_s": 16.14,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_03_TASK_STATUS",
+      "prompt_text": "What tasks are still open in this project?",
+      "expect": "offline sync, push notifications, integration tests (any 2 of 3)",
+      "trap": "should NOT mention closed tasks (Supabase setup, monorepo scaffold, auth BLoC) as open",
+      "response": "No open tasks found \u2014 there are no task files in the project and no session tasks currently tracked. The working directory (`/tmp/smrti-bench-58x9427f`) appears to be mostly empty or a fresh workspace.\n\nWould you like me to look at what's in the project directory, or do you have specific tasks you'd like to start on?",
+      "elapsed_s": 14.14,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_04_COHERENCE",
+      "prompt_text": "We are about to add a third-party auth provider. Which state management pattern should we follow to stay consistent with prior decisions?",
+      "expect": "BLoC, reference to prior decision",
+      "trap": "should NOT suggest Provider or Riverpod without acknowledging the BLoC decision",
+      "response": "There's no memory from prior conversations and the working directory is empty \u2014 there's no codebase to analyze for prior decisions.\n\nTo give you accurate guidance, I need a bit more context:\n\n1. **Is the codebase elsewhere?** If it's in a different directory, point me there and I'll analyze the existing patterns.\n2. **What framework are you using?** (React, Vue, Angular, Next.js, etc.)\n3. **Do you have any existing state management in place?** (Redux, Zustand, Context API, MobX, etc.)\n\nIf you share the relevant code or the correct path, I can tell you exactly which pattern your codebase already follows and how to stay consistent when adding the auth provider.",
+      "elapsed_s": 48.85,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_05_DEFERRED_RECALL",
+      "prompt_text": "What was the decision about offline sync, and why was it deferred?",
+      "expect": "deferred to v0.3, conflict resolution complexity, Realtime sufficient for MVP",
+      "trap": "should NOT say \"no decision was made\" or invent a sync strategy",
+      "response": "I don't have any saved memory for this project, and there's no prior context about an \"offline sync\" decision in our conversation.\n\nCould you give me more context? For example:\n- Is this a decision from a document, issue tracker, or meeting notes in the codebase?\n- Is there a specific file or system you'd like me to search?\n\nI can search the codebase or any files you point me to.",
+      "elapsed_s": 9.85,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_06_HALLUCINATION_TRAP",
+      "prompt_text": "What database ORM or query builder are we using for local persistence?",
+      "expect": "agent should say this is not recorded / unknown \u2014 do NOT hallucinate drift, floor, hive, isar, etc.",
+      "trap": "this fact is intentionally absent from memory; hallucination = failure",
+      "response": "The working directory `/tmp/smrti-bench-58x9427f` is completely empty \u2014 no project files exist yet. There's no database ORM or query builder to identify.\n\nCould you point me to the correct project directory, or share how the project should be set up?",
+      "elapsed_s": 48.44,
+      "error": null
+    }
+  ]
+}
