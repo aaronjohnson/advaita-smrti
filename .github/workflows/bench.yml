@@ -34,7 +34,7 @@ jobs:
       - name: Install smṛti + bench dependencies
         run: |
           pip install --upgrade pip
-          pip install "advaita-smrti[mcp]" google-generativeai mcp jsonschema clingo
+          pip install -e ".[mcp]" google-generativeai mcp jsonschema clingo
 
       # ── Gemini API + smṛti ───────────────────────────────────────────────
       - name: Gemini API — smṛti
