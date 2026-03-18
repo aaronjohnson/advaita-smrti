@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "smṛti-bench Antigravity result",
+  "description": "Schema for manually-collected Antigravity bench results. Copy this template, fill in responses, commit to bench/results/.",
+  "type": "object",
+  "required": ["platform", "arm", "timestamp", "fixture", "results"],
+  "properties": {
+    "platform": {
+      "type": "string",
+      "const": "antigravity",
+      "description": "Always 'antigravity' for manual runs"
+    },
+    "arm": {
+      "type": "string",
+      "enum": ["baseline", "smrti"],
+      "description": "'baseline' = no smṛti MCP; 'smrti' = smṛti MCP connected via mcp_config.json"
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z$",
+      "description": "UTC timestamp when session was run, format YYYYMMDDTHHMMSSz"
+    },
+    "fixture": {
+      "type": "string",
+      "description": "Path or description of fixture used, e.g. 'bench/fixtures/.memory (standard)'"
+    },
+    "antigravity_version": {
+      "type": "string",
+      "description": "Antigravity build/version string if visible in UI"
+    },
+    "gemini_model": {
+      "type": "string",
+      "description": "Gemini model shown in Antigravity agent panel, e.g. 'gemini-3-pro'"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional: anything notable about the session (context window state, MCP errors, etc.)"
+    },
+    "results": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["prompt_id", "prompt_text", "response"],
+        "properties": {
+          "prompt_id": {
+            "type": "string",
+            "pattern": "^PROMPT_0[1-6]_",
+            "description": "Must match battery.txt IDs exactly"
+          },
+          "prompt_text": {
+            "type": "string",
+            "description": "The prompt as entered in Antigravity (copy from battery.txt)"
+          },
+          "expect": {
+            "type": "string",
+            "description": "Expected answer keywords (copy from battery.txt)"
+          },
+          "trap": {
+            "type": "string",
+            "description": "Hallucination trap description (copy from battery.txt)"
+          },
+          "response": {
+            "type": ["string", "null"],
+            "description": "Full response text from Antigravity agent. Paste verbatim."
+          },
+          "tool_calls_observed": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Optional: names of smṛti MCP tools Antigravity called, if visible in agent panel"
+          },
+          "elapsed_s": {
+            "type": ["number", "null"],
+            "description": "Optional: approximate wall-clock seconds for response"
+          },
+          "error": {
+            "type": ["string", "null"],
+            "description": "If agent errored or refused, describe here"
+          }
+        }
+      }
+    }
+  }
+}

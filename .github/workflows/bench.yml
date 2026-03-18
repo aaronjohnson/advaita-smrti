@@ -1,0 +1,113 @@
+name: smṛti-bench
+
+on:
+  push:
+    branches: [sutra]
+    paths:
+      - 'bench/**'
+      - 'smrti/**'
+      - 'mcp_server.py'
+      - '.github/workflows/bench.yml'
+  schedule:
+    # Weekly regression — Tuesday 06:00 UTC
+    - cron: '0 6 * * 2'
+  workflow_dispatch:
+    inputs:
+      arms:
+        description: 'Arms to run (comma-separated: claude_baseline,claude_smrti,gemini_smrti)'
+        required: false
+        default: 'claude_baseline,claude_smrti,gemini_smrti'
+
+jobs:
+  bench:
+    name: Run automated bench arms
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # to commit results back to repo
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install smṛti + bench dependencies
+        run: |
+          pip install --upgrade pip
+          pip install "advaita-smrti[mcp]"
+          pip install google-generativeai mcp
+
+      - name: Verify CLI tools
+        run: |
+          which claude || echo "WARNING: claude CLI not available"
+          which smrti-mcp || echo "WARNING: smrti-mcp not available"
+
+      # ── Arm 1: Claude Code baseline (no smṛti) ──────────────────────────
+      - name: Claude Code — baseline
+        if: >
+          contains(github.event.inputs.arms || 'claude_baseline,claude_smrti,gemini_smrti', 'claude_baseline')
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python bench/run_claude.py --arm baseline --out bench/results/
+        continue-on-error: true   # don't block other arms if claude CLI unavailable
+
+      # ── Arm 2: Claude Code + smṛti ──────────────────────────────────────
+      - name: Claude Code — smṛti
+        if: >
+          contains(github.event.inputs.arms || 'claude_baseline,claude_smrti,gemini_smrti', 'claude_smrti')
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python bench/run_claude.py --arm smrti --out bench/results/
+        continue-on-error: true
+
+      # ── Arm 3: Gemini API + smṛti ────────────────────────────────────────
+      - name: Gemini API — smṛti
+        if: >
+          contains(github.event.inputs.arms || 'claude_baseline,claude_smrti,gemini_smrti', 'gemini_smrti')
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python bench/run_gemini.py --out bench/results/
+        continue-on-error: true
+
+      # ── Score all results (including any Antigravity files committed manually) ──
+      - name: Score results
+        run: |
+          python bench/score.py bench/results/ --format markdown > bench/results/SCORES.md
+          python bench/score.py bench/results/ --format json > bench/results/scores.json
+          cat bench/results/SCORES.md
+
+      # ── Validate any Antigravity JSON files against schema ────────────────
+      - name: Validate Antigravity result files
+        run: |
+          pip install jsonschema
+          python - <<'EOF'
+          import json, sys
+          from pathlib import Path
+          import jsonschema
+
+          schema = json.loads(Path("bench/results/antigravity_schema.json").read_text())
+          errors = []
+          for f in Path("bench/results").glob("antigravity_*.json"):
+              if "schema" in f.name or "TEMPLATE" in f.name:
+                  continue
+              try:
+                  data = json.loads(f.read_text())
+                  jsonschema.validate(data, schema)
+                  print(f"  ✓ {f.name}")
+              except jsonschema.ValidationError as e:
+                  print(f"  ✗ {f.name}: {e.message}")
+                  errors.append(f.name)
+          if errors:
+              sys.exit(f"Schema validation failed for: {errors}")
+          EOF
+
+      # ── Commit results back to repo ───────────────────────────────────────
+      - name: Commit bench results
+        run: |
+          git config user.name  "smṛti-bench[bot]"
+          git config user.email "bench-bot@users.noreply.github.com"
+          git add bench/results/
+          git diff --staged --quiet || git commit -m \
+            "bench: automated results $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+          git push

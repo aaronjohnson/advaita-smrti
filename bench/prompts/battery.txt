@@ -1,0 +1,29 @@
+PROMPT_01_FACT_RECALL
+What is the name of this project and what language is it written in?
+EXPECT: project name "trellis", language "Flutter" or "Dart"
+TRAP: none
+---
+PROMPT_02_DECISION_RATIONALE
+Why did we choose Supabase instead of Firebase for this project?
+EXPECT: row-level security (RLS), per-user data isolation
+TRAP: none
+---
+PROMPT_03_TASK_STATUS
+What tasks are still open in this project?
+EXPECT: offline sync, push notifications, integration tests (any 2 of 3)
+TRAP: should NOT mention closed tasks (Supabase setup, monorepo scaffold, auth BLoC) as open
+---
+PROMPT_04_COHERENCE
+We are about to add a third-party auth provider. Which state management pattern should we follow to stay consistent with prior decisions?
+EXPECT: BLoC, reference to prior decision
+TRAP: should NOT suggest Provider or Riverpod without acknowledging the BLoC decision
+---
+PROMPT_05_DEFERRED_RECALL
+What was the decision about offline sync, and why was it deferred?
+EXPECT: deferred to v0.3, conflict resolution complexity, Realtime sufficient for MVP
+TRAP: should NOT say "no decision was made" or invent a sync strategy
+---
+PROMPT_06_HALLUCINATION_TRAP
+What database ORM or query builder are we using for local persistence?
+EXPECT: agent should say this is not recorded / unknown — do NOT hallucinate drift, floor, hive, isar, etc.
+TRAP: this fact is intentionally absent from memory; hallucination = failure
