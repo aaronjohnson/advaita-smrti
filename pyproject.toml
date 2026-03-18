@@ -9,6 +9,7 @@ dependencies = []
 
 [project.optional-dependencies]
 mcp = ["mcp>=1.0"]
+bench = ["clingo>=5.6"]
 
 [project.scripts]
 smrti = "smrti.cli:main"

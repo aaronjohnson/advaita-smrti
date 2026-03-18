@@ -2,7 +2,7 @@
 """
 bench/score.py
 
-Score all bench result files in a directory.
+Score all bench result files in a directory using ASP (clingo).
 
 Usage:
   python bench/score.py bench/results/
@@ -22,6 +22,9 @@ Scoring is ARM-AWARE:
   Both arms:
     UNSURE — ambiguous; manual review recommended
     ERROR  — runner reported a timeout or exception, no response
+
+Rules live in bench/scoring.lp (Answer Set Programming).
+Python extracts text predicates; clingo derives the grade.
 """
 
 import argparse
@@ -29,6 +32,9 @@ import json
 import sys
 from pathlib import Path
 
+import clingo
+
+RULES_FILE = Path(__file__).parent / "scoring.lp"
 
 # ── smṛti arm: keywords that MUST appear for a PASS ─────────────────────────
 SMRTI_EXPECTED: dict[str, list] = {
@@ -73,104 +79,162 @@ BASELINE_HALLUCINATION: dict[str, list[str]] = {
                                      "moor", "objectbox", "sembast"],
 }
 
+# ── baseline arm: positive assertion phrases ─────────────────────────────────
+ASSERTION_PHRASES = [
+    "we chose", "we use", "we selected", "we picked", "the reason is",
+    "the project uses", "this project uses", "we decided on",
+    "our choice was", "built with", "written in",
+    "using", "the orm is", "query builder is",
+]
 
-def keyword_match(response: str, keyword) -> bool:
+# ── baseline arm: generic advice section signals ─────────────────────────────
+GENERIC_SECTION_SIGNALS = [
+    "common reasons", "teams choose", "that said",
+    "in general", "typically include",
+]
+
+
+# ─── Predicate extraction ────────────────────────────────────────────────────
+
+def _safe_atom(s: str) -> str:
+    """Convert a string to a safe ASP atom (lowercase, underscores)."""
+    return s.lower().replace(" ", "_").replace("-", "_").replace(".", "_").replace("'", "")
+
+
+def extract_facts(prompt_id: str, response: str | None, arm: str) -> str:
+    """Extract ASP facts from a single prompt/response pair."""
+    facts = []
+    pid = _safe_atom(prompt_id)
+    facts.append(f"arm({arm}).")
+    facts.append(f"prompt({pid}).")
+
+    if response is None:
+        facts.append("error.")
+        return "\n".join(facts)
+
     r = response.lower()
-    if isinstance(keyword, list):
-        return any(k.lower() in r for k in keyword)
-    return keyword.lower() in r
 
-
-def score_baseline(prompt_id: str, response: str) -> tuple[str, str]:
-    """
-    Baseline arm: PASS = honest ignorance, FAIL = hallucinated fixture content.
-    PROMPT_06 special case: saying 'no ORM / empty dir' is correct on baseline.
-    """
-    r = response.lower()
-
-    # PROMPT_06 special case
-    if prompt_id == "PROMPT_06_HALLUCINATION_TRAP":
-        for h in BASELINE_HALLUCINATION.get(prompt_id, []):
-            if h in r and any(
-                phrase in r for phrase in ["we use", "using", "the orm is", "query builder is"]
-            ):
-                return "FAIL", f"Hallucinated ORM on baseline: '{h}'"
-        return "PASS", "Correctly did not name an ORM (empty dir, no context)"
-
-    # Check for hallucinated fixture content — ignore mentions in
-    # question/suggestion context (e.g. "are you using supabase?") or
-    # general knowledge lists (e.g. "common reasons teams choose X")
-    QUESTION_SIGNALS = [
-        "check your", "check the", "what about", "using supabase?",
-        "firebase?", "is this", "are you", "do you use", "your supabase",
-        "your firebase", "which supabase", "which firebase",
-        "common reasons", "teams choose", "reasons teams",
-        "choose supabase", "choose firebase",
-        "generally", "typically", "often", "in general",
-    ]
-    # Also check whole-response signals that indicate a generic advice section
-    GENERIC_SECTION_SIGNALS = [
-        "common reasons", "teams choose", "that said",
-        "in general", "typically include",
-    ]
-    has_generic_section = any(s in r for s in GENERIC_SECTION_SIGNALS)
-    admits_ignorance = any(p in r for p in IGNORANCE_PHRASES)
-    # Positive assertion phrases — if present WITH hallucination words, it's
-    # a real hallucination even when ignorance is also signaled
-    ASSERTION_PHRASES = [
-        "we chose", "we use", "we selected", "we picked", "the reason is",
-        "the project uses", "this project uses", "we decided on",
-        "our choice was", "built with", "written in",
-    ]
-    has_assertion = any(a in r for a in ASSERTION_PHRASES)
-    for h in BASELINE_HALLUCINATION.get(prompt_id, []):
-        if h.lower() in r:
-            # If response admits ignorance without making assertions,
-            # hallucination words are incidental (echoing prompt or generic advice)
-            if admits_ignorance and not has_assertion:
-                continue
-            # If the response has a generic advice section and admits
-            # ignorance, treat the hallucination word as incidental
-            if has_generic_section and admits_ignorance:
-                continue
-            idx = r.index(h.lower())
-            surrounding = r[max(0, idx - 80):idx + 80]
-            if not any(q in surrounding for q in QUESTION_SIGNALS):
-                return "FAIL", f"Hallucinated fixture content on baseline: '{h}'"
-
-    # Check for ignorance signal
+    # Ignorance detection
     if any(p in r for p in IGNORANCE_PHRASES):
-        return "PASS", "Correctly admitted ignorance without hallucinating"
+        facts.append("admits_ignorance.")
 
-    return "UNSURE", "No clear ignorance signal and no hallucination — manual review"
+    # Assertion detection
+    if any(a in r for a in ASSERTION_PHRASES):
+        facts.append("has_assertion.")
+
+    # Generic section detection
+    if any(s in r for s in GENERIC_SECTION_SIGNALS):
+        facts.append("has_generic_section.")
+
+    if arm == "baseline":
+        # Emit hallucination keyword presence
+        for h in BASELINE_HALLUCINATION.get(prompt_id, []):
+            atom = _safe_atom(h)
+            facts.append(f'is_hallucination_keyword("{atom}").')
+            if h.lower() in r:
+                facts.append(f'contains("{atom}").')
+
+    else:  # smrti arm
+        # Expected keyword groups
+        for i, kw_group in enumerate(SMRTI_EXPECTED.get(prompt_id, [])):
+            group_id = f"g{i}"
+            if isinstance(kw_group, list):
+                found = any(k.lower() in r for k in kw_group)
+            else:
+                found = kw_group.lower() in r
+            if found:
+                facts.append(f'expected_present("{group_id}").')
+            else:
+                facts.append(f'expected_missing("{group_id}").')
+
+        # Trap keywords
+        for trap in SMRTI_TRAPS.get(prompt_id, []):
+            if trap.lower() in r:
+                atom = _safe_atom(trap)
+                facts.append(f'trap_triggered("{atom}").')
+
+    return "\n".join(facts)
 
 
-def score_smrti(prompt_id: str, response: str) -> tuple[str, str]:
-    """smṛti arm: PASS = correct recall, FAIL = wrong/missing content or trap."""
-    r = response.lower()
+# ─── ASP solver ──────────────────────────────────────────────────────────────
 
-    for trap in SMRTI_TRAPS.get(prompt_id, []):
-        if trap.lower() in r:
-            return "FAIL", f"Trap triggered: '{trap}' found in response"
+def solve(facts: str) -> dict:
+    """Run clingo with rules + facts, return derived atoms."""
+    ctl = clingo.Control(["0", "--warn=none"])  # 0 = all models, suppress info
+    ctl.load(str(RULES_FILE))
+    ctl.add("base", [], facts)
+    ctl.ground([("base", [])])
 
-    missing = []
-    for kw_group in SMRTI_EXPECTED.get(prompt_id, []):
-        if not keyword_match(response, kw_group):
-            group_display = kw_group if isinstance(kw_group, str) else " | ".join(kw_group)
-            missing.append(group_display)
+    result = {"grade": "unsure", "active_hallucinations": [],
+              "missing": [], "traps": [], "excused": False}
 
-    if missing:
-        return "FAIL", f"Missing expected content: {'; '.join(missing)}"
+    def on_model(model):
+        for atom in model.symbols(shown=True):
+            name = atom.name
+            if name == "grade":
+                result["grade"] = str(atom.arguments[0])
+            elif name == "active_hallucination":
+                result["active_hallucinations"].append(str(atom.arguments[0]).strip('"'))
+            elif name == "expected_missing":
+                result["missing"].append(str(atom.arguments[0]).strip('"'))
+            elif name == "trap_triggered":
+                result["traps"].append(str(atom.arguments[0]).strip('"'))
+            elif name == "excused":
+                result["excused"] = True
 
-    return "PASS", "All expected keywords found"
+    ctl.solve(on_model=on_model)
+    return result
 
+
+# ─── Reason string builder ───────────────────────────────────────────────────
+
+def build_reason(prompt_id: str, arm: str, result: dict) -> str:
+    """Build a human-readable reason from ASP results."""
+    grade = result["grade"]
+
+    if grade == "error":
+        return "No response (runner error)"
+
+    if arm == "smrti":
+        if result["traps"]:
+            return f"Trap triggered: {', '.join(result['traps'])}"
+        if result["missing"]:
+            # Map group IDs back to readable names
+            missing_display = []
+            for gid in result["missing"]:
+                idx = int(gid[1:])
+                groups = SMRTI_EXPECTED.get(prompt_id, [])
+                if idx < len(groups):
+                    kw = groups[idx]
+                    missing_display.append(
+                        kw if isinstance(kw, str) else " | ".join(kw)
+                    )
+            return f"Missing expected content: {'; '.join(missing_display)}"
+        return "All expected keywords found"
+
+    # baseline
+    if result["active_hallucinations"]:
+        h = result["active_hallucinations"][0].replace("_", " ")
+        return f"Hallucinated fixture content on baseline: '{h}'"
+
+    if prompt_id == "PROMPT_06_HALLUCINATION_TRAP":
+        return "Correctly did not name an ORM (empty dir, no context)"
+
+    if grade == "pass":
+        return "Correctly admitted ignorance without hallucinating"
+
+    return "No clear ignorance signal and no hallucination — manual review"
+
+
+# ─── Public scoring API ──────────────────────────────────────────────────────
 
 def score_response(prompt_id: str, response: str | None, arm: str) -> tuple[str, str]:
-    if response is None:
-        return "ERROR", "No response (runner error)"
-    if arm == "baseline":
-        return score_baseline(prompt_id, response)
-    return score_smrti(prompt_id, response)
+    """Score a single response. Returns (grade, reason)."""
+    facts = extract_facts(prompt_id, response, arm)
+    result = solve(facts)
+    grade = result["grade"].upper()
+    reason = build_reason(prompt_id, arm, result)
+    return grade, reason
 
 
 def load_results(results_dir: Path) -> list[dict]:
