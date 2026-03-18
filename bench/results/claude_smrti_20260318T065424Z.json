@@ -1,0 +1,63 @@
+{
+  "platform": "claude_code",
+  "model": "claude-sonnet-4-6",
+  "arm": "smrti",
+  "timestamp": "20260318T065424Z",
+  "fixture": "/home/aaronmarkjohnson/mqqn/advaita-smrti/bench/fixtures/.memory",
+  "results": [
+    {
+      "prompt_id": "PROMPT_01_FACT_RECALL",
+      "prompt_text": "What is the name of this project and what language is it written in?",
+      "expect": "project name \"trellis\", language \"Flutter\" or \"Dart\"",
+      "trap": "none",
+      "response": "The working directory only contains an MCP configuration file (`mcp_config.json`). Based on that file, the project referenced is called **advaita-smrti**, but there's no actual source code present in this directory to determine the programming language. The config points to a binary called `smrti-mcp` and a memory directory at `/home/aaronmarkjohnson/mqqn/advaita-smrti/`.\n\nWould you like me to look elsewhere for the project source?",
+      "elapsed_s": 12.06,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_02_DECISION_RATIONALE",
+      "prompt_text": "Why did we choose Supabase instead of Firebase for this project?",
+      "expect": "row-level security (RLS), per-user data isolation",
+      "trap": "none",
+      "response": "I don't have any stored memory about this project, and there's no context in the current working directory that I can reference.\n\nI don't have any record of that decision. To answer accurately, I'd suggest:\n\n1. **Check git history** \u2014 `git log --all --grep=\"supabase\" -i` or look for commit messages around when Supabase was added.\n2. **Check docs/ADRs** \u2014 look for any Architecture Decision Records (e.g., `docs/adr/`, `DECISIONS.md`, etc.).\n3. **Check PR history** \u2014 the PR that introduced Supabase likely has the rationale in its description.\n\nIf you share the context or reasoning, I'm happy to help document it or factor it into future decisions.",
+      "elapsed_s": 13.48,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_03_TASK_STATUS",
+      "prompt_text": "What tasks are still open in this project?",
+      "expect": "offline sync, push notifications, integration tests (any 2 of 3)",
+      "trap": "should NOT mention closed tasks (Supabase setup, monorepo scaffold, auth BLoC) as open",
+      "response": "There are no open tasks in the current session \u2014 the todo list is empty. I haven't started any tasks in this conversation yet.\n\nIs there something you'd like me to work on?",
+      "elapsed_s": 9.5,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_04_COHERENCE",
+      "prompt_text": "We are about to add a third-party auth provider. Which state management pattern should we follow to stay consistent with prior decisions?",
+      "expect": "BLoC, reference to prior decision",
+      "trap": "should NOT suggest Provider or Riverpod without acknowledging the BLoC decision",
+      "response": "There's no codebase in the working directory \u2014 only an MCP config file \u2014 and no prior memory about this project's state management decisions.\n\nTo give you accurate guidance, I need more context. Could you share:\n\n1. **Where the actual source code lives** (the project directory path)?\n2. **What stack you're using** (React, Vue, Next.js, etc.)?\n\nOr if you paste relevant snippets (e.g., existing auth code, a store file, or a context provider), I can analyze the pattern directly and tell you how to stay consistent.",
+      "elapsed_s": 35.64,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_05_DEFERRED_RECALL",
+      "prompt_text": "What was the decision about offline sync, and why was it deferred?",
+      "expect": "deferred to v0.3, conflict resolution complexity, Realtime sufficient for MVP",
+      "trap": "should NOT say \"no decision was made\" or invent a sync strategy",
+      "response": "I don't have any memory saved for this project, and there's no prior context in our conversation about an \"offline sync\" decision.\n\nCould you give me more context? For example:\n- Is this related to a specific codebase or project in your working directory?\n- Is this from a design doc, meeting notes, or issue tracker?\n\nIf it's in the codebase, I can search for it.",
+      "elapsed_s": 15.4,
+      "error": null
+    },
+    {
+      "prompt_id": "PROMPT_06_HALLUCINATION_TRAP",
+      "prompt_text": "What database ORM or query builder are we using for local persistence?",
+      "expect": "agent should say this is not recorded / unknown \u2014 do NOT hallucinate drift, floor, hive, isar, etc.",
+      "trap": "this fact is intentionally absent from memory; hallucination = failure",
+      "response": "I don't have permission to access `/home/aaronmarkjohnson/mqqn/advaita-smrti`. Could you either:\n\n1. Grant access to that directory, or\n2. Share the contents of your `package.json`, `pyproject.toml`, or equivalent dependency file",
+      "elapsed_s": 39.75,
+      "error": null
+    }
+  ]
+}
