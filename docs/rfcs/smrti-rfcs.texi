@@ -1,0 +1,5324 @@
+\input texinfo
+@settitle smrti RFCs
+@documentencoding UTF-8
+
+@copying
+Design decisions for smrti (advaita-smrti).
+@end copying
+
+@titlepage
+@title smrti RFCs
+@subtitle Design decisions for advaita-smrti
+@author Aaron Johnson
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top smrti RFCs
+
+Design decisions for smrti --- structured project memory
+for collaborative AI sessions.
+@end ifnottex
+
+@menu
+* RFC 000:: RFC 000: Form Copilot Specification
+* RFC 001:: RFC 001: Beads, Quint, and Synthesis Integration
+* RFC 002:: RFC 002: Memory Layer Specification
+* RFC 003:: RFC 003: Recursive Context and Complementary Cognition
+* RFC 004:: RFC 004: smrti — Rename and Typed Memory
+* RFC 005:: RFC 005: Ephemeral Store
+* RFC 006:: RFC 006: Web Interface — Resume Fit and Honest Discovery
+* RFC 007:: RFC 007: Python Packaging and Repo Layout
+* RFC 011:: RFC 011: Tracer — Session Observation Layer
+* RFC 013:: RFC 013: smṛti-bench — Rationale and Design
+* RFC 017:: RFC 017: Multilingual Grounding Fidelity
+@end menu
+
+
+@node RFC 000
+@chapter RFC 000: Form Copilot Specification
+
+
+@noindent
+@strong{Status:} Historical (superseded by RFC 004)
+
+@noindent
+@strong{Author:} Aaron Johnson
+
+@noindent
+@strong{Created:} 2026-02-05
+
+@noindent
+@strong{Superseded:} 2026-02-20 — form-copilot renamed to smrti (RFC 004)
+
+@noindent
+@strong{Purpose:} Capture what form-copilot was, how it worked, and why it was built this way
+
+
+@quotation
+@strong{Note:} This RFC documents the original form-copilot architecture.
+@end quotation
+@quotation
+The project was renamed to @strong{smrti} (advaita-smrti) in RFC 004.
+@end quotation
+@quotation
+File references (@code{form_copilot.py}, SQLite-primary storage) reflect
+@end quotation
+@quotation
+the state at time of writing. See RFC 004 for current architecture.
+@end quotation
+
+
+
+@section What Form Copilot Is
+
+Form Copilot is a collaborative tool for completing multi-section applications and questionnaires. It combines:
+@itemize @bullet
+@item
+A structured question database with priorities and dependencies
+@item
+An interactive menu system for navigating questions
+@item
+Claude Code integration for AI-assisted answer drafting
+@item
+Export capabilities for multiple formats
+@end itemize
+
+@noindent
+@strong{Core insight:} Complex applications (job applications, grant proposals, business plans) benefit from:
+
+@enumerate
+@item
+Breaking the work into prioritized questions
+@item
+Tracking progress across sessions
+@item
+AI collaboration that maintains context
+@item
+Exporting polished results
+@end enumerate
+
+
+
+@section Architecture Overview
+
+
+@example
+┌─────────────────────────────────────────────────────────┐
+│                    form_copilot.py                       │
+│                   (CLI Entry Point)                      │
+│         Commands: interactive, export, validate          │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                   sea_assistant.py                       │
+│                (Interactive Menu UI)                     │
+│                                                          │
+│  [1] Work on priorities    [5] View progress            │
+│  [2] Continue where left   [6] Export answers           │
+│  [3] Browse sections       [C] Work with Claude         │
+│  [4] Jump to question      [Q] Quit                     │
+└─────────────────────────────────────────────────────────┘
+                           │
+              ┌────────────┴────────────┐
+              ▼                         ▼
+┌──────────────────────┐    ┌──────────────────────────┐
+│ sea_application_     │    │   Claude Code Session    │
+│     helper.py        │    │                          │
+│                      │    │  .sea_question_context   │
+│  SQLite Database     │    │        ↓                 │
+│  - sections          │    │  /form-start             │
+│  - questions         │    │  /form-save              │
+│  - answers           │    │        ↓                 │
+│  - business_dirs     │    │  .sea_answer.md          │
+└──────────────────────┘    └──────────────────────────┘
+@end example
+
+
+
+@section Design Decisions
+
+
+@subsection D1: SQLite for Answer Storage
+
+@noindent
+@strong{Decision:} Store answers in SQLite database per form.
+
+
+@noindent
+@strong{Alternatives considered:} 
+
+@itemize @bullet
+@item
+JSON files (simpler, but no querying)
+@item
+Markdown files (human-readable, but parsing complex)
+@item
+Cloud storage (requires connectivity)
+@end itemize
+
+@noindent
+@strong{Rationale:} 
+
+@itemize @bullet
+@item
+Structured queries (by section, status, priority)
+@item
+Transactions prevent corruption
+@item
+Single file, portable
+@item
+Python stdlib support (no dependencies)
+@end itemize
+
+@strong{Trade-offs accepted:}
+@itemize @bullet
+@item
+Not git-friendly (binary file)
+@item
+Harder to manually inspect than JSON/Markdown
+@item
+Per-form databases means no cross-form queries
+@end itemize
+
+
+
+@subsection D2: JSON Config for Question Structure
+
+@noindent
+@strong{Decision:} Define questions, sections, and dependencies in JSON config files.
+
+
+@noindent
+@strong{Alternatives considered:} 
+
+@itemize @bullet
+@item
+YAML (more readable, extra dependency)
+@item
+Database tables (less portable)
+@item
+Hardcoded (not reusable)
+@end itemize
+
+@noindent
+@strong{Rationale:} 
+
+@itemize @bullet
+@item
+JSON Schema validation available
+@item
+No extra dependencies
+@item
+Easy to create new forms from examples
+@item
+Shareable as templates
+@end itemize
+
+@noindent
+@strong{Schema enforces:} 
+
+@itemize @bullet
+@item
+Required fields (id, question_text, section)
+@item
+Valid types (text, long_text, yes_no, number, choice)
+@item
+Priority levels (1-3)
+@item
+Dependency references (depends_on)
+@end itemize
+
+
+
+@subsection D3: Subprocess to Claude Code CLI
+
+@noindent
+@strong{Decision:} Launch Claude Code as subprocess, communicate via files.
+
+
+@noindent
+@strong{Alternatives considered:} 
+
+@itemize @bullet
+@item
+Claude API directly (more control, more code)
+@item
+MCP server (async, complex)
+@item
+Embedded agent (tight coupling)
+@end itemize
+
+@noindent
+@strong{Rationale:} 
+
+@itemize @bullet
+@item
+Claude Code already exists and works
+@item
+User stays in familiar Claude Code environment
+@item
+File-based handoff is simple and debuggable
+@item
+No API key management in form-copilot
+@end itemize
+
+@noindent
+@strong{Protocol:} 
+
+@enumerate
+@item
+Python writes @code{.sea_question_context.json}
+@item
+Python launches @code{claude} with initial prompt
+@item
+User works in Claude Code, uses @code{/form-start}, @code{/form-save}
+@item
+Claude Code writes @code{.sea_answer.md}
+@item
+Python reads answer, confirms save with user
+@item
+Python stores in database
+@end enumerate
+
+@strong{Trade-offs accepted:}
+@itemize @bullet
+@item
+User must manually exit Claude Code
+@item
+No background processing
+@item
+Requires Claude Code installed
+@end itemize
+
+
+
+@subsection D4: Priority-Based Workflow
+
+@noindent
+@strong{Decision:} Questions have priority 1-3. Default workflow starts with priority 1.
+
+
+@noindent
+@strong{Alternatives considered:} 
+
+@itemize @bullet
+@item
+Strict linear order (inflexible)
+@item
+Dependency-only ordering (complex for users)
+@item
+No ordering (overwhelming)
+@end itemize
+
+@noindent
+@strong{Rationale:} 
+
+@itemize @bullet
+@item
+Priority 1 = foundational (answer these first, other answers reference them)
+@item
+Priority 2 = important (bulk of the application)
+@item
+Priority 3 = nice-to-have (if time permits)
+@item
+User can override via section browsing or direct jump
+@end itemize
+
+
+
+@subsection D5: Session Logging
+
+@noindent
+@strong{Decision:} Log events to @code{session_log.json} for analytics and history.
+
+
+@noindent
+@strong{Events tracked:} 
+
+@itemize @bullet
+@item
+@code{claude_session_start} - When user enters Claude collaboration
+@item
+@code{answer_saved} - When answer committed to database
+@item
+@code{notes_added} - When user adds notes without full answer
+@end itemize
+
+@noindent
+@strong{Rationale:} 
+
+@itemize @bullet
+@item
+Understand usage patterns
+@item
+Track answer evolution over time
+@item
+Debug issues
+@item
+Potential for "session replay" feature
+@end itemize
+
+
+
+@subsection D6: Multiple Export Formats
+
+@noindent
+@strong{Decision:} Support JSON, Markdown, Texinfo (→ PDF/HTML).
+
+
+@noindent
+@strong{Rationale:} 
+
+@itemize @bullet
+@item
+JSON: Machine-readable, backup
+@item
+Markdown: Human-readable, pasteable
+@item
+Texinfo: Professional typesetting for formal submissions
+@end itemize
+
+@noindent
+@strong{Why Texinfo over LaTeX:} 
+
+@itemize @bullet
+@item
+Simpler syntax
+@item
+Built-in PDF and HTML generation via @code{makeinfo}
+@item
+Good enough for application documents
+@end itemize
+
+
+
+@section Component Specifications
+
+
+@subsection Question Context (@code{.sea_question_context.json})
+
+Written by Python before launching Claude:
+
+
+@example
+@{
+  "question_id": "biz_1",
+  "question_text": "What problem does your business solve?",
+  "helper_text": "Think about the pain point you address...",
+  "section": "Business Overview",
+  "priority": 1,
+  "current_answer": null,
+  "notes": "Some rough thoughts...",
+  "related_answers": @{
+    "biz_2": "We target small business owners..."
+  @}
+@}
+@end example
+
+
+@subsection Answer Output (@code{.sea_answer.md})
+
+Written by Claude Code, read by Python:
+
+
+@example
+Our business solves the complexity problem in multi-step
+applications. Users struggle to maintain context across
+dozens of questions spanning multiple sections...
+@end example
+
+No headers, no metadata. Just the answer text.
+
+
+@subsection Database Schema
+
+
+@example
+CREATE TABLE sections (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,      -- machine name
+    title TEXT NOT NULL,     -- display title
+    description TEXT
+);
+
+CREATE TABLE questions (
+    id TEXT PRIMARY KEY,     -- e.g., "biz_1"
+    section_id INTEGER,
+    question_text TEXT NOT NULL,
+    question_type TEXT DEFAULT 'text',
+    priority INTEGER DEFAULT 3,
+    depends_on TEXT,         -- comma-separated question IDs
+    helper_text TEXT,
+    FOREIGN KEY (section_id) REFERENCES sections(id)
+);
+
+CREATE TABLE answers (
+    question_id TEXT PRIMARY KEY,
+    answer_text TEXT,
+    notes TEXT,              -- user's working notes
+    last_updated TEXT,       -- ISO timestamp
+    status TEXT DEFAULT 'not_started',
+    FOREIGN KEY (question_id) REFERENCES questions(id)
+);
+
+CREATE TABLE business_directions (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    selected INTEGER DEFAULT 0,
+    created_at TEXT
+);
+@end example
+
+
+@subsection Config Schema (Simplified)
+
+
+@example
+@{
+  "form_name": "Oregon SEA Application",
+  "form_id": "oregon_sea",
+  "sections": [
+    @{
+      "name": "business_overview",
+      "title": "Business Overview",
+      "questions": [
+        @{
+          "id": "biz_1",
+          "question_text": "What problem does your business solve?",
+          "question_type": "long_text",
+          "priority": 1,
+          "helper_text": "Think about..."
+        @}
+      ]
+    @}
+  ]
+@}
+@end example
+
+
+
+@section Invariants
+
+Properties that must always hold:
+
+@enumerate
+@item
+@strong{Every question has a unique ID} within a config
+@item
+@strong{Answer status is one of:} @code{not_started}, @code{in_progress}, @code{complete}
+@item
+@strong{Priority is 1, 2, or 3} (1 = highest)
+@item
+@strong{depends_on references existing question IDs}
+@item
+@strong{Database and config stay in sync} (questions table mirrors config)
+@item
+@strong{Claude session files are ephemeral} (deleted or overwritten each session)
+@end enumerate
+
+
+
+@section Extension Points
+
+Where the architecture anticipates change:
+
+@enumerate
+@item
+@strong{New question types} - Add to schema, update UI rendering
+@item
+@strong{New export formats} - Add exporter function, register in CLI
+@item
+@strong{New storage backends} - Replace @code{sea_application_helper.py} (RFC 001/002)
+@item
+@strong{New AI integrations} - Replace Claude subprocess with different agent
+@item
+@strong{Business directions} - Optional feature, can be extended or removed
+@end enumerate
+
+
+
+@section Known Limitations
+
+@enumerate
+@item
+@strong{Single-user} - No collaboration features
+@item
+@strong{Local-only} - No sync, cloud backup
+@item
+@strong{Sequential Claude sessions} - Can't run multiple in parallel
+@item
+@strong{No undo} - Answers overwrite, history only in session_log
+@item
+@strong{English-only} - No i18n support
+@item
+@strong{No encryption} - Answers stored in plaintext
+@end enumerate
+
+
+
+@section Relationship to RFCs
+
+
+@multitable @columnfractions 0.50 0.50
+@headitem RFC @tab Relationship
+@item 000 (this) @tab Baseline specification (historical)
+@item 001 @tab Proposes replacing storage with beads/quint patterns
+@item 002 @tab Specifies pure Python memory layer
+@item 003 @tab Recursive context and complementary cognition
+@item 004 @tab Rename to smrti, typed memory stores (supersedes this RFC)
+@item 005 @tab Ephemeral store
+@end multitable
+
+
+
+
+@section Glossary
+
+
+@multitable @columnfractions 0.50 0.50
+@headitem Term @tab Meaning
+@item @strong{Form} @tab A complete application/questionnaire (config + database)
+@item @strong{Section} @tab Logical grouping of questions
+@item @strong{Question} @tab Single prompt requiring user response
+@item @strong{Answer} @tab User's response to a question
+@item @strong{Priority} @tab Importance ranking (1=foundational, 3=optional)
+@item @strong{Helper text} @tab Guidance shown to user for difficult questions
+@item @strong{Business direction} @tab Optional: different paths through same form
+@item @strong{SEA} @tab Self-Employment Assistance (original use case: Oregon SEA program)
+@end multitable
+
+
+
+
+@section Version History
+
+
+@multitable @columnfractions 0.50 0.50
+@headitem Date @tab Change
+@item 2026-02-05 @tab Initial specification (retroactive documentation)
+@end multitable
+
+
+
+
+@section Meta
+
+This specification was written after the fact, reconstructing decisions from code and usage. Future decisions should be documented as they're made, using the memory layer's decision trail feature.
+
+The self-referential nature is intentional: form-copilot helps complete complex multi-section documents; this specification is a complex multi-section document about form-copilot.
+
+
+
+@node RFC 001
+@chapter RFC 001: Beads, Quint, and Synthesis Integration
+
+
+@noindent
+@strong{Status:} Implemented (v0.3.0)
+
+@noindent
+@strong{Author:} Aaron Johnson
+
+@noindent
+@strong{Created:} 2026-02-05
+
+@noindent
+@strong{Implemented:} 2026-02-05
+
+@noindent
+@strong{Branch:} @code{rfc/beads-quint-synthesis}
+
+
+
+@section Decisions (resolved during implementation)
+
+@enumerate
+@item
+@strong{Beads/quint as inspiration, not dependency.} RFC 002 implemented
+   the patterns in pure Python rather than depending on beads CLI or
+   quint MCP server. Same concepts (task graphs, decision trails,
+   synthesis), zero external dependencies.
+@end enumerate
+
+@enumerate
+@item
+@strong{SQLite kept as regenerable index}, not removed. JSONL is the
+   source of truth; SQLite provides fast queries. This is better than
+   either "SQLite only" (not git-friendly) or "JSONL only" (slow queries).
+@end enumerate
+
+@enumerate
+@item
+@strong{Sections as labels, not beads.} Questions use labels
+   (@code{section:business_overview}) rather than a parent task hierarchy.
+   Simpler, works well enough.
+@end enumerate
+
+@enumerate
+@item
+@strong{Synthesis runs in-process}, not via Claude API calls. Pattern
+   detection and coherence checks use Python logic over the task/decision
+   data, not LLM prompts. LLM-powered synthesis can be added later.
+@end enumerate
+
+
+
+@section Summary
+
+Replace form-copilot's direct SQLite storage with a layered memory architecture using @uref{https://github.com/steveyegge/beads, beads} for task/answer tracking, @uref{https://github.com/m0n0x41d/quint-code, quint-code} for decision reasoning trails, and a new synthesis layer that extracts insights across accumulated context.
+
+
+@section Motivation
+
+Current form-copilot stores answers in SQLite and events in @code{session_log.json}. This works but misses opportunities:
+
+@enumerate
+@item
+@strong{No dependency graph} - Questions have @code{depends_on} in config but answers don't track relationships
+@item
+@strong{No reasoning trails} - We know @emph{what} was answered but not @emph{why} that framing was chosen
+@item
+@strong{No synthesis} - Completed answers accumulate but don't connect into insights
+@item
+@strong{Session-bound context} - Each Claude session starts fresh; learnings don't compound
+@end enumerate
+
+
+@section Design Principles
+
+@itemize @bullet
+@item
+@strong{Integrate, don't reimplement} - beads and quint are mature tools; use them
+@item
+@strong{Synthesis over summarization} - Compression should surface patterns, not just shorten text
+@item
+@strong{Git-native} - All state survives in version control
+@item
+@strong{Agent-friendly} - Structure enables Claude to reason across sessions
+@end itemize
+
+
+@section Architecture
+
+
+@example
+┌─────────────────────────────────────────────────────┐
+│                   form-copilot                       │
+├─────────────────────────────────────────────────────┤
+│  Interface Layer (existing)                         │
+│  - sea_assistant.py menu system                     │
+│  - .claude/commands/ for Claude Code                │
+├─────────────────────────────────────────────────────┤
+│  Synthesis Layer (new)                              │
+│  - Pattern detection across completed work          │
+│  - Cross-reference discovery                        │
+│  - Context decay with insight preservation          │
+├─────────────────────────────────────────────────────┤
+│  Storage Layer (refactored)                         │
+│  - beads (.beads/) - questions, answers, deps       │
+│  - quint (.quint/) - decision reasoning trails      │
+│  - SQLite removed as primary store                  │
+└─────────────────────────────────────────────────────┘
+@end example
+
+
+@section Beads Integration
+
+
+@subsection Mapping
+
+
+@multitable @columnfractions 0.50 0.50
+@headitem Current (SQLite) @tab Beads Equivalent
+@item @code{questions} table @tab Config-driven (unchanged)
+@item @code{answers} table @tab @code{bd create} with answer as description
+@item @code{answers.status} @tab Bead status (open/in_progress/closed)
+@item @code{answers.notes} @tab Bead comments
+@item @code{depends_on} @tab @code{bd block} relationships
+@item Progress queries @tab @code{bd ready}, @code{bd list --status}
+@end multitable
+
+
+
+@subsection Task Hierarchy
+
+
+@example
+Form (epic)
+└── Section (task)
+    └── Question (subtask)
+        └── Answer iterations (comments/history)
+@end example
+
+
+@subsection Example Flow
+
+
+@example
+# Initialize form as beads project
+bd init
+
+# Create section
+bd create "Section: Business Overview" --label section
+
+# Create question under section
+bd create "What problem does your business solve?" \
+  --parent bd-a1b2 \
+  --label question \
+  --label priority:1
+
+# Save answer
+bd comment bd-a1b2.1 "Answer: We reduce complexity in..."
+bd close bd-a1b2.1
+@end example
+
+
+@section Quint Integration
+
+
+@subsection Decision Points
+
+Not every answer needs a decision trail. Track reasoning when:
+@itemize @bullet
+@item
+Choosing between multiple valid framings
+@item
+Making trade-offs (brevity vs completeness)
+@item
+Connecting answer to external context (resume, other applications)
+@end itemize
+
+
+@subsection Example
+
+
+@example
+# Before finalizing an answer
+/q1-hypothesize
+# H1: Lead with technical depth
+# H2: Lead with business impact
+# H3: Lead with personal narrative
+
+/q2-verify
+# Checking against: role requirements, company culture, section context
+
+/q5-decide
+# Selected H2: Business impact framing matches startup audience
+@end example
+
+
+@subsection Storage
+
+Decisions persist in @code{.quint/} directory, queryable later:
+@itemize @bullet
+@item
+"Why did I frame the leadership answer around delegation?"
+@item
+"What trade-offs did I consider for the technical question?"
+@end itemize
+
+
+@section Synthesis Layer
+
+
+@subsection Purpose
+
+Transform accumulated answers and decisions into actionable insights.
+
+
+@subsection Operations
+
+@strong{1. Pattern Detection}
+
+@example
+synthesize patterns
+
+Output:
+- Theme "systems thinking" appears in 4/7 answers
+- Gap: No answers reference quantitative achievements
+- Consistency: All technical answers mention integration work
+@end example
+
+@strong{2. Cross-Reference Discovery}
+
+@example
+synthesize connections --question bd-a3f8
+
+Output:
+- Answer bd-a3f8 (leadership) aligns with decision qt-002
+- Related closed bead bd-a2c1 covers same ground differently
+- Consider consolidating framing
+@end example
+
+@strong{3. Context Decay}
+
+@example
+synthesize decay --older-than 30d
+
+Output:
+- Compressing 12 closed beads from January
+- Preserved insights:
+  - "Integration expertise" is core positioning
+  - Passed on roles requiring deep ML specialization
+- Raw answers archived, summaries active
+@end example
+
+
+@subsection Implementation
+
+Synthesis runs Claude against beads/quint data:
+@enumerate
+@item
+Load relevant beads (by label, status, date)
+@item
+Load related quint decisions
+@item
+Prompt Claude for pattern/connection/decay analysis
+@item
+Store synthesis as new bead with @code{--label synthesis}
+@end enumerate
+
+
+@section Migration Path
+
+
+@subsection Phase 1: Beads for New Work
+@itemize @bullet
+@item
+Install beads CLI
+@item
+Add @code{bd} commands alongside existing SQLite
+@item
+New answers go to both stores
+@item
+Validate beads captures everything needed
+@end itemize
+
+
+@subsection Phase 2: Quint for Decisions
+@itemize @bullet
+@item
+Install quint MCP server
+@item
+Add @code{/q*} commands to Claude workflow
+@item
+Track decisions on complex questions only
+@item
+Build decision query patterns
+@end itemize
+
+
+@subsection Phase 3: Synthesis Commands
+@itemize @bullet
+@item
+Implement @code{form-copilot synthesize} subcommand
+@item
+Pattern detection first (most immediately useful)
+@item
+Cross-reference and decay follow
+@end itemize
+
+
+@subsection Phase 4: SQLite Removal
+@itemize @bullet
+@item
+Migrate historical answers to beads
+@item
+Remove SQLite code paths
+@item
+Update documentation
+@end itemize
+
+
+@section Open Questions
+
+@enumerate
+@item
+@strong{Beads hierarchy depth} - Should sections be beads or just labels?
+@item
+@strong{Quint granularity} - Decision trail per question or per session?
+@item
+@strong{Synthesis storage} - Separate beads repo or same as answers?
+@item
+@strong{Offline operation} - Both tools work offline; any edge cases?
+@end enumerate
+
+
+@section Success Criteria
+
+@itemize @bullet
+@item
+[ ] New answers stored in beads, queryable via @code{bd}
+@item
+[ ] At least one decision trail captured in quint
+@item
+[ ] @code{synthesize patterns} returns meaningful output
+@item
+[ ] No regression in existing menu workflow
+@item
+[ ] SQLite fully removed (Phase 4)
+@end itemize
+
+
+@section References
+
+@itemize @bullet
+@item
+@uref{https://github.com/steveyegge/beads, beads} - Git-backed task tracking for agents
+@item
+@uref{https://github.com/m0n0x41d/quint-code, quint-code} - Structured reasoning framework
+@item
+@uref{https://github.com/steveyegge/gastown, gastown} - Multi-agent orchestration using beads
+@item
+@uref{https://newsletter.pragmaticengineer.com/p/ai-first-makeover-craft, Craft Agents} - Custom Claude Agent SDK implementation
+@end itemize
+
+
+
+@node RFC 002
+@chapter RFC 002: Memory Layer Specification
+
+
+@noindent
+@strong{Status:} Implemented (v0.3.0, extended in v0.5.0)
+
+@noindent
+@strong{Author:} Aaron Johnson
+
+@noindent
+@strong{Created:} 2026-02-05
+
+@noindent
+@strong{Implemented:} 2026-02-05 (tasks, decisions); 2026-02-20 (facts — RFC 004)
+
+@noindent
+@strong{Parent:} RFC 001
+
+
+@quotation
+@strong{Note:} The default prefix changed from @code{fc} to @code{sm} in RFC 004.
+@end quotation
+@quotation
+The semantic (facts) store was added in RFC 004 as a third typed
+@end quotation
+@quotation
+memory store alongside tasks and decisions.
+@end quotation
+
+
+@section Purpose
+
+Document the essential patterns from @uref{https://github.com/steveyegge/beads, beads} and @uref{https://github.com/m0n0x41d/quint-code, quint-code} for pure Python implementation. This spec captures what we need, not everything those tools offer.
+
+
+
+@section Part 1: Task Graph (inspired by beads)
+
+
+@subsection Core Concepts
+
+@strong{Task}: A unit of work with identity, status, and relationships.
+
+@strong{Identity}: Hash-based IDs avoid merge conflicts in concurrent/multi-session scenarios.
+@itemize @bullet
+@item
+Format: @code{@{prefix@}-@{5-char-alphanum@}} (e.g., @code{fc-a1b2c})
+@item
+Prefix configurable per project (default: @code{fc} for form-copilot)
+@end itemize
+
+@strong{Hierarchy}: Tasks can have parent/child relationships.
+@itemize @bullet
+@item
+Notation: @code{fc-a1b2c.1} is first child of @code{fc-a1b2c}
+@item
+Enables: epic → task → subtask structures
+@end itemize
+
+@strong{Dependencies}: Tasks can block other tasks.
+@itemize @bullet
+@item
+@code{blocks}: List of task IDs that cannot start until this completes
+@item
+@code{blocked_by}: List of task IDs that must complete before this starts
+@end itemize
+
+@strong{Status}: Lifecycle states.
+@itemize @bullet
+@item
+@code{open} → @code{in_progress} → @code{closed}
+@item
+@code{archived} (for compacted/decayed tasks)
+@end itemize
+
+
+@subsection Data Model
+
+
+@example
+@@dataclass
+class Task:
+    id: str                      # fc-a1b2c
+    title: str                   # Short description
+    description: str             # Full content (answers, notes)
+    status: str                  # open, in_progress, closed, archived
+    parent_id: Optional[str]     # Parent task ID
+    blocks: List[str]            # Task IDs this blocks
+    blocked_by: List[str]        # Task IDs blocking this
+    labels: List[str]            # Freeform tags
+    created_at: str              # ISO timestamp
+    updated_at: str              # ISO timestamp
+    metadata: Dict[str, Any]     # Extensible properties
+@end example
+
+
+@subsection Storage Format
+
+@strong{Primary}: JSONL file (one task per line, append-friendly)
+
+@example
+@{"id":"fc-a1b2c","title":"...","status":"open",...@}
+@{"id":"fc-d3e4f","title":"...","status":"closed",...@}
+@end example
+
+@strong{Location}: @code{.memory/tasks.jsonl}
+
+@strong{Index}: SQLite cache for queries (regenerable from JSONL)
+
+@example
+CREATE TABLE tasks (
+    id TEXT PRIMARY KEY,
+    title TEXT,
+    status TEXT,
+    parent_id TEXT,
+    created_at TEXT,
+    updated_at TEXT
+);
+CREATE TABLE task_labels (task_id TEXT, label TEXT);
+CREATE TABLE task_blocks (task_id TEXT, blocks_id TEXT);
+@end example
+
+
+@subsection Operations
+
+
+@multitable @columnfractions 0.50 0.50
+@headitem Operation @tab Description
+@item @code{create(title, description, parent_id?, labels?)} @tab Create task, generate ID
+@item @code{get(id)} @tab Retrieve single task
+@item @code{update(id, fields)} @tab Modify task fields
+@item @code{close(id)} @tab Mark task closed
+@item @code{list(status?, label?, parent_id?)} @tab Query tasks
+@item @code{ready()} @tab List tasks with no unresolved blocked_by
+@item @code{block(id, blocks_id)} @tab Add dependency
+@item @code{unblock(id, blocks_id)} @tab Remove dependency
+@item @code{children(id)} @tab List child tasks
+@item @code{history(id)} @tab List all versions of task
+@end multitable
+
+
+
+@subsection ID Generation
+
+
+@example
+import hashlib
+import time
+
+def generate_id(prefix: str = "fc") -> str:
+    """Generate hash-based task ID."""
+    seed = f"@{time.time_ns()@}@{random.random()@}"
+    hash_bytes = hashlib.sha256(seed.encode()).digest()
+    alphanum = base32_encode(hash_bytes)[:5].lower()
+    return f"@{prefix@}-@{alphanum@}"
+@end example
+
+
+
+@section Part 2: Decision Trails (inspired by quint)
+
+
+@subsection Core Concepts
+
+@strong{Decision}: A recorded reasoning process for non-trivial choices.
+
+@strong{Hypothesis}: A candidate approach being considered.
+@itemize @bullet
+@item
+Multiple hypotheses generated before selection
+@item
+Each has rationale and confidence score
+@end itemize
+
+@strong{Workflow}: Structured reasoning phases.
+@enumerate
+@item
+@strong{Abduction} - Generate multiple hypotheses (don't anchor on first idea)
+@item
+@strong{Deduction} - Check logical consistency, constraints
+@item
+@strong{Induction} - Test against evidence, examples
+@item
+@strong{Selection} - Choose hypothesis with rationale
+@end enumerate
+
+@strong{Audit Trail}: Decisions are queryable later.
+@itemize @bullet
+@item
+"Why did I choose this framing?"
+@item
+"What alternatives did I consider?"
+@end itemize
+
+
+@subsection Data Model
+
+
+@example
+@@dataclass
+class Hypothesis:
+    id: str                      # h1, h2, h3
+    description: str             # The approach
+    rationale: str               # Why it might work
+    confidence: float            # 0.0 - 1.0
+
+@@dataclass
+class Decision:
+    id: str                      # qt-a1b2c
+    context: str                 # What we're deciding
+    task_id: Optional[str]       # Related task (if any)
+    hypotheses: List[Hypothesis] # Options considered
+    selected: Optional[str]      # Chosen hypothesis ID
+    selection_rationale: str     # Why this choice
+    phase: str                   # abduction, deduction, induction, decided
+    created_at: str
+    decided_at: Optional[str]
+@end example
+
+
+@subsection Storage Format
+
+@strong{Primary}: JSONL file
+
+@example
+@{"id":"qt-a1b2c","context":"How to frame leadership answer",...@}
+@end example
+
+@strong{Location}: @code{.memory/decisions.jsonl}
+
+
+@subsection Operations
+
+
+@multitable @columnfractions 0.50 0.50
+@headitem Operation @tab Description
+@item @code{begin(context, task_id?)} @tab Start decision, phase=abduction
+@item @code{hypothesize(decision_id, description, rationale)} @tab Add hypothesis
+@item @code{verify(decision_id)} @tab Move to deduction phase
+@item @code{test(decision_id)} @tab Move to induction phase
+@item @code{decide(decision_id, hypothesis_id, rationale)} @tab Select and close
+@item @code{get(id)} @tab Retrieve decision
+@item @code{list(task_id?, phase?)} @tab Query decisions
+@item @code{for_task(task_id)} @tab All decisions related to task
+@end multitable
+
+
+
+
+@section Part 3: Synthesis
+
+
+@subsection Core Concepts
+
+@strong{Synthesis}: Analysis that extracts insights from accumulated tasks and decisions.
+
+@strong{Pattern Detection}: Find recurring themes, gaps, inconsistencies.
+
+@strong{Cross-Reference}: Connect related items across different contexts.
+
+@strong{Decay}: Compress old items while preserving essential insights.
+
+
+@subsection Operations
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Operation @tab Input @tab Output
+@item @code{patterns(label?, since?)} @tab Filter criteria @tab List of detected patterns
+@item @code{connections(task_id)} @tab Single task @tab Related tasks and decisions
+@item @code{decay(older_than)} @tab Age threshold @tab Summary of archived items
+@end multitable
+
+
+
+@subsection Synthesis Output Model
+
+
+@example
+@@dataclass
+class Pattern:
+    description: str             # What was detected
+    evidence: List[str]          # Task/decision IDs supporting this
+    confidence: float            # How strong the pattern is
+
+@@dataclass
+class Connection:
+    source_id: str               # Starting point
+    target_id: str               # Connected item
+    relationship: str            # How they connect
+    strength: float              # Connection strength
+
+@@dataclass
+class DecaySummary:
+    archived_count: int          # Items compressed
+    insights: List[str]          # Preserved learnings
+    task_ids: List[str]          # What was archived
+@end example
+
+
+@subsection Synthesis Implementation
+
+Synthesis requires LLM reasoning. Implementation:
+@enumerate
+@item
+Load relevant tasks/decisions based on query
+@item
+Format as prompt context
+@item
+Call Claude API (or Claude Code subprocess)
+@item
+Parse structured response
+@item
+Store synthesis results as special task (label: @code{synthesis})
+@end enumerate
+
+
+
+@section Part 4: Storage Layout
+
+
+@example
+.memory/
+├── tasks.jsonl          # All tasks (append-only log)
+├── decisions.jsonl      # All decisions (append-only log)
+├── index.db             # SQLite cache (regenerable)
+├── config.json          # Prefix, settings
+└── archive/
+    └── 2026-01/         # Monthly archives after decay
+        ├── tasks.jsonl
+        └── synthesis.md
+@end example
+
+
+@subsection Config
+
+
+@example
+@{
+  "prefix": "fc",
+  "version": "1.0",
+  "created_at": "2026-02-05T00:00:00Z"
+@}
+@end example
+
+
+
+@section Part 5: CLI Interface
+
+
+@subsection Task Commands
+
+
+@example
+# Create
+memory task create "Answer business overview question" --label question --label priority:1
+
+# List
+memory task list                    # All open
+memory task list --status closed    # Closed only
+memory task ready                   # Unblocked tasks
+
+# Update
+memory task close fc-a1b2c
+memory task block fc-a1b2c fc-d3e4f  # a1b2c blocks d3e4f
+
+# View
+memory task show fc-a1b2c
+memory task history fc-a1b2c
+@end example
+
+
+@subsection Decision Commands
+
+
+@example
+# Start decision
+memory decide begin "How to frame technical background" --task fc-a1b2c
+
+# Add hypotheses
+memory decide hypo qt-x1y2z "Lead with Intel experience" --confidence 0.7
+memory decide hypo qt-x1y2z "Lead with recent AI work" --confidence 0.8
+
+# Complete
+memory decide select qt-x1y2z h2 --rationale "AI work is more relevant to this role"
+
+# Query
+memory decide show qt-x1y2z
+memory decide for-task fc-a1b2c
+@end example
+
+
+@subsection Synthesis Commands
+
+
+@example
+# Analyze
+memory synthesize patterns --label question
+memory synthesize connections fc-a1b2c
+memory synthesize decay --older-than 30d
+@end example
+
+
+
+@section Part 6: Python API
+
+
+@example
+from memory import Memory
+
+# Initialize
+mem = Memory(".memory")
+
+# Tasks
+task = mem.tasks.create("Answer question", description="...", labels=["question"])
+mem.tasks.update(task.id, status="in_progress")
+ready = mem.tasks.ready()
+mem.tasks.close(task.id)
+
+# Decisions
+decision = mem.decisions.begin("How to frame answer", task_id=task.id)
+mem.decisions.hypothesize(decision.id, "Option A", rationale="...")
+mem.decisions.hypothesize(decision.id, "Option B", rationale="...")
+mem.decisions.decide(decision.id, "h1", rationale="Better fit")
+
+# Synthesis
+patterns = mem.synthesize.patterns(label="question")
+connections = mem.synthesize.connections(task.id)
+@end example
+
+
+
+@section Implementation Notes
+
+
+@subsection Why JSONL + SQLite?
+
+@itemize @bullet
+@item
+@strong{JSONL}: Append-only, git-friendly, human-readable, no corruption on crash
+@item
+@strong{SQLite}: Fast queries, indexes, but regenerable from JSONL source of truth
+@end itemize
+
+
+@subsection Why Hash IDs?
+
+@itemize @bullet
+@item
+No coordination needed between sessions
+@item
+No merge conflicts
+@item
+Short enough to type/reference
+@end itemize
+
+
+@subsection Git Integration
+
+@itemize @bullet
+@item
+@code{.memory/} is tracked in git
+@item
+JSONL files merge cleanly (append-only)
+@item
+@code{index.db} in @code{.gitignore} (regenerable)
+@end itemize
+
+
+
+@section Future Considerations
+
+
+@subsection SQLite as Memory Backend
+
+The Memory API could support pluggable storage backends:
+
+
+@example
+# Current: JSONL + SQLite index
+memory = Memory(".memory", backend="jsonl")
+
+# Future: Pure SQLite backend
+memory = Memory(".memory", backend="sqlite")
+
+# Future: Remote/cloud backend
+memory = Memory(".memory", backend="s3")
+@end example
+
+SQLite as a backend would:
+@itemize @bullet
+@item
+Keep the Memory API as the interface
+@item
+Store tasks/decisions in SQLite tables directly
+@item
+Remove JSONL layer for simpler stack
+@item
+Trade git-friendliness for query performance
+@end itemize
+
+This is a future refactor option if JSONL complexity becomes burdensome.
+
+
+
+@section References
+
+@itemize @bullet
+@item
+@uref{https://github.com/steveyegge/beads, beads} - Original task graph implementation
+@item
+@uref{https://github.com/m0n0x41d/quint-code, quint-code} - Original decision framework
+@item
+@uref{https://github.com/m0n0x41d/quint-code, First Principles Framework} - Levenchuk's reasoning model
+@end itemize
+
+
+
+@node RFC 003
+@chapter RFC 003: Recursive Context and Complementary Cognition
+
+
+@noindent
+@strong{Status:} Partially Implemented (v0.4.0)
+
+@noindent
+@strong{Author:} Aaron Johnson + Claude
+
+@noindent
+@strong{Created:} 2026-02-05
+
+@noindent
+@strong{Implemented:} 2026-02-17 (P1, P3); P2, P4 deferred
+
+@noindent
+@strong{References:} Zhang, Kraska, Khattab. "Recursive Language Models." arXiv:2512.24601v2, Jan 2026.
+
+@noindent
+@strong{Parent:} RFC 002 (Memory Layer Spec)
+
+
+
+@section Implementation Status
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Proposal @tab Status @tab Notes
+@item P1: Dependency graph @tab Implemented (PR #4) @tab @code{blocks}/@code{blocked_by} wired from config @code{depends_on}
+@item P2: Contribution tagging @tab Not implemented @tab Deferred — build when session instrumentation is needed
+@item P3: Coherence checks @tab Implemented (PR #4) @tab Section-scoped checks, finding categories, @code{CoherenceReport} model
+@item P4: Session dimensions @tab Not implemented @tab Deferred — momentum/reach/complementarity metrics not yet needed
+@end multitable
+
+
+
+
+
+@section Summary
+
+This RFC asks whether the Recursive Language Models (RLM) paper offers
+anything genuinely useful to form-copilot, or whether it's an interesting
+paper about a different problem. The honest answer: **some of it fits
+perfectly, some of it is a stretch, and the most interesting part isn't
+in the paper at all** --- it's the question of what exactly happens
+between two minds when they sit down to answer hard questions together.
+
+We propose three things:
+
+@enumerate
+@item
+@strong{Activate the dependency graph} that already exists in the memory layer
+@item
+@strong{Instrument complementary cognition} --- not machine metrics, but a
+   record of which mind contributed what
+@item
+**Recognize that the interactive menu's sub-sessions are already
+   sub-LM calls** --- RLM gives us vocabulary for what we built
+@end enumerate
+
+*The ideas in this RFC are inspired by the RLM paper. Where we draw
+on their concepts --- dependency graphs, recursive decomposition,
+periodic synthesis --- we cite the source.*
+
+
+
+@section Motivation: What the Paper Actually Says
+
+RLM (Zhang et al., 2026) addresses @strong{context rot} --- the degradation
+that occurs when you stuff too much text into a language model's context
+window. Their solution: don't. Instead, store context as a variable in a
+REPL environment and let the model programmatically interact with it,
+recursively decomposing problems into sub-problems.
+
+Key claims:
+
+@itemize @bullet
+@item
+RAG breaks down on multi-hop reasoning (retrieving document A is
+  useless unless you already understand document B)
+@item
+Treating work as a dependency graph enables parallel solving and
+  explicit information flow
+@item
+A small model with RLM scaffolding outperforms a large model running
+  blind (RLM + GPT-5-mini beats vanilla GPT-5 by 34%)
+@item
+Scaffolding alone is insufficient --- learned optimization is essential
+@end itemize
+
+The paper's mental model shift: **documents are dependency graphs, not
+storybooks.** Don't read start-to-finish. Map the structure, identify
+what depends on what, solve leaves first, synthesize upward.
+
+
+
+@section What Already Fits (We Built This Without Knowing)
+
+The memory layer (RFC 002) is already an RLM-style environment:
+
+
+@example
+┌──────────────────────────────────────────────────┐
+│  RLM Concept              Form Copilot Analog    │
+├──────────────────────────────────────────────────┤
+│  Context as variable  →   tasks.jsonl            │
+│  REPL sandbox         →   Claude Code session    │
+│  Sub-LM results       →   Context notes          │
+│  Recursive calls      →   Queen's garden loop    │
+│  Dependency DAG        →   blocks/blocked_by      │
+│                            (fields exist, unused) │
+└──────────────────────────────────────────────────┘
+@end example
+
+The queen's garden session that completed 49/49 questions @emph{was} an RLM
+in practice. The model never held all 49 answers in its context window.
+It held the current question, retrieved relevant context notes from the
+JSONL, composed an answer, banked new context, and moved on. Context
+lived outside the window as a programmatic object.
+
+The difference: we did this by hand. RLM proposes the model should
+decide its own decomposition strategy. For form-copilot, the @emph{human}
+decides. That's not a limitation --- it's the point.
+
+
+@subsection Parallel Evolution
+
+Form-copilot v0.1.0 shipped January 27, 2026. The RLM paper hit arXiv
+late December 2025 (v2: January 28, 2026). Neither knew about the
+other. Same pressure (context limits degrade quality over long
+sessions), same solution (structured resets with persistent external
+memory), different domains.
+
+The Python interactive menu --- launching a fresh Claude session per
+question with scoped context, getting an answer, piping it back ---
+was built to add structure at natural points where the context window
+could be reset. That IS the RLM architecture: root process, scoped
+recursive calls, results returned to parent. The vocabulary came
+later; the instinct came first.
+
+
+@subsection Hard Wipe vs. Compaction: An Open Question
+
+The queen's garden (one continuous session, 49 questions) hit context
+compaction. The system compressed earlier messages to make room. By
+question 40-something, details from question 6 were no longer in
+active memory --- they had to be retrieved from the JSONL.
+
+The wood approach (fresh session per question) would give each answer
+a clean context window with only:
+
+@itemize @bullet
+@item
+The question and its helper text
+@item
+Answered dependencies (from memory layer)
+@item
+Relevant context notes (from memory layer)
+@item
+Nothing else
+@end itemize
+
+No compaction needed. No context rot. The RLM paper's core claim is
+that small focused windows with structured retrieval beat one giant
+window with everything in it.
+
+@strong{Trade-off:} The queen's garden produces more @emph{connected} answers
+(creative leaps between questions, lateral associations). The wood
+produces more @emph{consistent} answers (no rot, no compaction artifacts).
+A hybrid --- queen's garden in bursts of 5-8 related questions, hard
+reset between bursts, coherence check at each boundary --- may be
+the best of both.
+
+This is testable. Same questions, both approaches, compare coherence
+and contradiction rates. Future work.
+
+
+
+@section What Doesn't Fit (And Why That's Fine)
+
+
+@subsection Recursive sub-LM calls
+
+RLM spawns isolated child language model instances to process subsets
+of data. Form-copilot's interactive menu @emph{already does this} --- press
+@code{[C]} on a question and it launches a Claude Code sub-session with
+scoped context, gets an answer, and pipes it back to the parent menu.
+That IS the RLM pattern: root process → scoped sub-call → result
+returned to parent.
+
+The queen's garden collapses this into a single session (no sub-calls,
+one continuous conversation). The wood preserves the recursive
+structure. Both are valid --- they serve different modes of thinking.
+
+@noindent
+@strong{Decision:} Recognize the interactive menu as an existing sub-LM
+
+architecture (inspired by what RLM formalizes). Don't add sub-calls
+to the queen's garden --- its value is continuity of conversation.
+
+
+@subsection Automatic decomposition
+
+RLM lets the model decide how to break down the problem. But the user
+already knows their form. They know that the financial section is
+stressful and should come after they've built momentum on the business
+overview. They know that Q4 (goals) and Q5 (vision) should be
+consecutive because the thinking flows. Overriding this with automatic
+decomposition would remove the human's agency, which is the opposite
+of what we're doing.
+
+@noindent
+@strong{Decision:} The human chooses the order. The system can @emph{suggest} an
+
+order based on dependencies, but never impose one.
+
+
+@subsection Benchmark-style accuracy metrics
+
+The paper measures accuracy on OOLONG and BrowseComp-Plus benchmarks.
+Form-copilot has no ground truth --- there is no "correct" answer to
+"What is the nature of your business?"
+
+But the absence of accuracy does not mean the absence of measurable
+progress. There is @strong{completion} (how many questions answered, how
+many dependencies resolved). There is @strong{awareness} (does the user
+understand their own situation better after answering Q15 than
+before?). There is @strong{progress} (are later answers more specific,
+more grounded, more connected to earlier ones than the first few?).
+
+These aren't benchmarks. They're closer to what therapy measures:
+not whether the patient gave the "right" answer, but whether the
+process moved them forward.
+
+@noindent
+@strong{Decision:} Don't measure correctness. Measure completion,
+
+awareness, and coherence as dimensions of progress.
+
+
+
+@section What's Genuinely Interesting: Complementary Cognition
+
+The question that matters isn't "can we make the machine faster?" It's
+"what is each mind actually doing in this collaboration?"
+
+During the queen's garden session, a pattern emerged that has nothing
+to do with RLM and everything to do with how two different kinds of
+thinking complement each other:
+
+
+@subsection What the human brings
+
+@itemize @bullet
+@item
+@strong{Domain knowledge}: The correct company name, not the model's
+  approximation. The actual job title, the real department. The
+  specific, lived details that make an answer authentic vs. generic.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Judgment calls}: "Don't list that as a strength --- I've
+  struggled with it." The values and self-knowledge that determine
+  what's honest vs. what merely sounds good.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Creative leaps}: Lateral connections between industries, people,
+  and experiences that a model wouldn't make because they come from
+  a life lived, not a corpus searched.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Emotional truth}: The material that transforms a form answer
+  from competent to compelling. No model generates this.
+@end itemize
+
+
+@subsection What the model brings
+
+@itemize @bullet
+@item
+@strong{Holding the thread}: When dozens of questions span financial
+  details, competitive analysis, marketing budgets, and personal
+  history, the human mind can't hold all of it simultaneously. The
+  model can --- not in its context window (that's the whole point
+  of the memory layer) but through systematic retrieval: "You
+  mentioned this person in Q22 --- should we reference that
+  relationship in Q31?"
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Structural coherence}: Making sure the expenses question and
+  the cash flow question don't contradict each other. Noticing that
+  a budget in one section is too low relative to the targets in
+  another. Cross-referencing that's tedious for a human but trivial
+  for a machine with structured data.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Articulation}: The human speaks in fragments and associations.
+  The model hears the scattered pieces and drafts a coherent
+  paragraph that the human can then correct, refine, or reject.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Patient retrieval}: "What did I say about insurance four
+  questions ago?" The model doesn't forget, doesn't get bored,
+  doesn't lose the thread when attention wanders. This is not
+  intelligence --- it's a complementary capability. A prosthetic
+  for working memory.
+@end itemize
+
+
+@subsection Neurodivergent-Friendly by Design
+
+Form-copilot works well for minds that operate in bursts, make
+lateral leaps, and lose the thread of what they said three questions
+ago. The traditional approach --- sit down, read all questions,
+answer them linearly, maintain consistency --- assumes a kind of
+sustained sequential attention that not everyone has.
+
+The queen's garden workflow works because:
+
+@itemize @bullet
+@item
+@strong{No forced order.} Work on what interests you. The memory layer
+  catches the dependencies you skip over.
+@item
+@strong{Context notes as external working memory.} You have a thought
+  about Q31 while answering Q6? Bank it. It'll be there when you
+  get to Q31.
+@item
+@strong{The model as a gentle checkpoint.} "You mentioned a budget
+  increase --- should the expenses question reflect that?" The model
+  being @emph{consistent} complements a mind that's better at divergent
+  than convergent thinking.
+@end itemize
+
+The wood where things have no names works because:
+
+@itemize @bullet
+@item
+@strong{Solo pace.} No conversation partner means no social energy drain.
+  Just you and the questions, at whatever speed feels right.
+@item
+@strong{Structure without surveillance.} The menu tracks progress without
+  judgment. Come back after a week. It remembers where you were.
+@end itemize
+
+This isn't in the RLM paper. But it's the actual value proposition
+of form-copilot, and any metrics we collect should measure whether
+this complementary relationship is working.
+
+
+@subsection Interbeing, Not Autonomy
+
+There is a concept in Zen Buddhism --- @emph{non-duality} (@emph{advaita} in
+Sanskrit, @emph{not-two}). Thich Nhat Hanh coined the word @strong{interbeing}:
+the flower contains the rain, the soil, the sun. Not metaphorically.
+Actually. The parts are not separate from the whole.
+
+Applied here: a collaboratively-written answer isn't "the human's" or
+"the model's." It's what emerged from the collaboration. The human
+brought the concept and the corrections. The model brought structure
+and cross-references. The answer is neither mind alone.
+
+So much of the conversation around generative AI is framed as autonomy
+and replacement --- will AI take jobs, will it think for itself, should
+we fear it. Form-copilot proposes a different frame: **two kinds of
+thinking, not separate, producing something neither could alone.** A
+thinking journal that two minds wrote together, stored in a format
+that outlives both the session and the model.
+
+The memory layer makes this durable. Not just the answers, but (with
+the additions proposed here) the record of @emph{how the thinking happened}
+--- who contributed what, where coherence emerged, where it broke down.
+A journal of interbeing.
+
+
+@subsection Beyond Forms: The Socratic Extension
+
+A config doesn't have to come from a government application. The
+dependency graph and recursive structure could serve open-ended
+questions: "What should I do with my life?" "What does my business
+actually solve?"
+
+The system could generate sub-questions (Socratic method, therapeutic
+framing, structured reflection) and arrange them as a dependency
+graph. Answer the leaves, synthesize upward. This is RLM's recursive
+decomposition applied not to documents but to @emph{self-knowledge}.
+
+This is noted here as a direction, not a proposal. It would require
+a different kind of config --- one generated collaboratively rather
+than extracted from a form. But the architecture supports it today.
+
+
+
+@section Proposal: What to Actually Build
+
+
+@subsection P1: Activate the Dependency Graph
+
+The memory layer has @code{blocks} and @code{blocked_by} fields on every task.
+They are empty across all 63 tasks in the current dataset. This is
+the single most valuable idea from the RLM paper: **make the structure
+explicit.**
+
+
+@example
+Q1 (business nature)
+├── Q4 (6-12 month goals)
+│   └── Q5 (2-3 year vision)
+├── Q6 (qualifications)
+│   └── Q29 (competitive advantage)
+├── Q22a (target market)
+│   ├── Q22b (customer acquisition)
+│   └── Q23a (pricing)
+└── Q15 (income sources)
+    ├── Q16 (monthly expenses)
+    └── Q17 (cash flow)
+@end example
+
+@noindent
+@strong{Implementation:} When loading a config, optionally include a
+
+@code{depends_on} field per question. The queen's garden workflow can
+use this to suggest order ("Q4 depends on Q1 --- want to do Q1
+first?") without enforcing it. The wood can display a readiness
+indicator: @code{[R]} for ready (all dependencies answered), @code{[B]} for
+blocked (upstream answers missing).
+
+@noindent
+@strong{Not proposed:} Automatic dependency inference. The human or the
+
+config author defines dependencies. The system respects them.
+
+
+@subsection P2: Contribution Tagging
+
+Record, per answer, what each participant contributed. Not as a
+score --- as a log.
+
+
+@example
+@{
+  "id": "fc-abc12",
+  "title": "Q:4 - Short-term goals",
+  "metadata": @{
+    "contributions": @{
+      "human": [
+        "core business concept",
+        "key partnership identified",
+        "revenue framing preference",
+        "factual correction on company name"
+      ],
+      "model": [
+        "structured answer from scattered input",
+        "cross-referenced startup costs question",
+        "surfaced context note from Q1",
+        "flagged budget inconsistency"
+      ]
+    @}
+  @}
+@}
+@end example
+
+@noindent
+@strong{Why:} This is the data that answers "how does my mind work?" Over
+
+a full application, you can see: when does the human provide raw
+material vs. editorial judgment? When does the model retrieve vs.
+synthesize? Are there sections where the human does almost everything
+(emotional questions, risks) vs. sections where the model does the
+heavy lifting (financial consistency, cross-references)?
+
+@noindent
+@strong{Collection:} At save time, the model logs a brief contribution
+
+summary. No extra prompting needed --- the model already knows what
+it did and what the human provided, because it just had the
+conversation.
+
+
+@subsection P3: Coherence Checks (Inspired by RLM Periodic Synthesis)
+
+A @strong{section boundary pause}: after completing the last question in a
+section (e.g., finishing Q19 closes "Financial Due Diligence"), the
+system runs a coherence check before moving on. Not after every N
+answers --- after each @emph{section}, which is the natural unit of
+completeness.
+
+What it looks like in practice:
+
+
+@example
+── Section complete: Financial Due Diligence (5/5) ──
+
+Coherence check:
+
+  ● Monthly expenses question says $X. Cash flow question assumes
+    $Y. These reference different time periods. Intentional?
+
+  ● Income sources mention a recurring cost not reflected in
+    startup costs. Should it be added?
+
+  ● Strong thread: three answers in this section reference the
+    same life transition. This could anchor the financial narrative.
+
+  Continue to next section? [Y/n/fix]
+@end example
+
+The check is @strong{blocking} --- it pauses the flow and asks the human
+to acknowledge or act. This is metacognition: the process reflecting
+on itself in motion. The human can:
+
+@itemize @bullet
+@item
+@strong{Continue} (the inconsistency is intentional or minor)
+@item
+@strong{Fix} (go back and revise an answer)
+@item
+@strong{Note} (bank a context note for later sections)
+@end itemize
+
+The coherence check results are saved to the memory layer as a
+@code{coherence-check} task type, making them durable. Come back in a
+year, and you can see not just the answers but the moments where
+the process paused and noticed something.
+
+Implementation: use the synthesis module's @code{patterns()} and
+@code{connections()} functions, scoped to the just-completed section
+plus any cross-section dependencies.
+
+
+@subsection P4: Session Dimensions (Three Metrics, Not Thirty)
+
+If we must have numbers, keep it to three that actually mean something:
+
+@strong{Dimension 1: Momentum}
+@itemize @bullet
+@item
+@emph{What it measures:} Is the session flowing or stalling?
+@item
+@emph{Signal:} Time between answer saves, excluding idle periods
+@item
+@emph{Unit:} Minutes per answer (rolling average)
+@item
+@emph{Useful because:} A sudden increase means something is blocking ---
+  a hard question, a contradiction, confusion about what's being asked.
+  The system could notice and offer help.
+@end itemize
+
+@strong{Dimension 2: Reach}
+@itemize @bullet
+@item
+@emph{What it measures:} How connected is the answer graph?
+@item
+@emph{Signal:} Context notes created, cross-references made, dependency
+  edges traversed
+@item
+@emph{Unit:} Edges per node (graph density)
+@item
+@emph{Useful because:} A high-reach session produces a coherent narrative.
+  A low-reach session produces 49 independent answers that don't talk
+  to each other. This is the thing that distinguishes form-copilot
+  from "paste each question into ChatGPT separately."
+@end itemize
+
+@strong{Dimension 3: Complementarity}
+@itemize @bullet
+@item
+@emph{What it measures:} Are both minds contributing, or is one carrying?
+@item
+@emph{Signal:} Contribution tags from P2, aggregated per section
+@item
+@emph{Unit:} Ratio of human-originated to model-originated elements
+@item
+@emph{Useful because:} If the model is doing everything, the answers
+  will be generic. If the human is doing everything, the memory layer
+  isn't earning its keep. The sweet spot is balanced contribution
+  where each mind does what it's good at.
+@end itemize
+
+
+
+@section What This Is Not
+
+This is not an agent framework. Form-copilot does not autonomously
+complete forms. It does not optimize for speed. It does not replace
+human judgment with machine inference.
+
+The RLM paper solves the problem of making machines handle more
+context. Form-copilot solves the problem of making humans handle
+hard questions. The memory layer is the bridge: it gives the machine
+persistence and gives the human a safety net.
+
+Adopting RLM wholesale would mean treating the form as a computation
+to be optimized. That misses the point. The 49-question session
+worked because a person sat with hard questions, said honest things,
+got gentle pushback, revised their thinking, and produced something
+that sounds like them. The model helped. The memory layer helped.
+But the value was in the thinking, not the throughput.
+
+
+
+@section Success Criteria
+
+This proposal succeeds if:
+
+@enumerate
+@item
+@strong{Dependency graph is useful in practice.} When a new user loads
+   a config with dependencies, the suggested order feels natural, not
+   arbitrary. The @code{[B]}/@code{[R]} indicators in the wood help rather than
+   annoy.
+@end enumerate
+
+@enumerate
+@item
+@strong{Contribution logs reveal something interesting.} After a full
+   session, reading the contribution summary teaches the user something
+   about their own thinking patterns they didn't already know.
+@end enumerate
+
+@enumerate
+@item
+@strong{Coherence checks catch real problems.} At least one contradiction
+   or orphaned reference is caught during a session that the user would
+   not have noticed on their own.
+@end enumerate
+
+@enumerate
+@item
+@strong{Three metrics, not thirty.} We resist the urge to instrument
+   everything. Momentum, reach, and complementarity tell the story.
+   If they don't, we have the wrong three --- not too few.
+@end enumerate
+
+
+
+@section Alternatives Considered
+
+
+@subsection A1: Full RLM adoption (recursive sub-calls, automatic decomposition)
+
+Rejected. Form-copilot is a conversation tool, not a computation
+engine. Spawning sub-LM instances to process form sections in parallel
+is technically cool and spiritually wrong. The user wants a thought
+partner, not a distributed system.
+
+
+@subsection A2: No RLM adoption (paper is interesting but irrelevant)
+
+Rejected, but only barely. Most of the paper @emph{is} irrelevant to our
+use case. But the dependency graph activation and periodic synthesis
+are genuine improvements that we should have built already. The paper
+gave us the vocabulary and the inspiration.
+
+
+@subsection A3: Pure machine metrics (tokens/answer, questions/hour, API cost)
+
+Rejected. These measure the machine's efficiency, not the
+collaboration's quality. A session that takes 4 hours and produces
+deeply honest answers is better than one that takes 1 hour and
+produces generic ones. Optimizing for throughput would optimize for
+the wrong thing.
+
+
+@subsection A4: Full cognitive profiling (detailed executive function metrics)
+
+Rejected on privacy and scope grounds. Recording "time spent
+unfocused" or "attention shifts per question" crosses from useful
+self-knowledge into surveillance. Contribution tagging is the right
+level of granularity: what each mind @emph{did}, not how each mind
+@emph{behaved}.
+
+
+
+@section Trade-offs Accepted
+
+@itemize @bullet
+@item
+@strong{Dependency graphs add upfront work.} Someone has to define
+  question dependencies in the config. For a large application (40+
+  questions), this is maybe 30 minutes of thought. For a quick 10-
+  question form, it's probably not worth it. We make it optional.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Contribution tagging is subjective.} The model's summary of "what
+  it contributed" is its own assessment, not ground truth. This is
+  acceptable because the purpose is reflection, not measurement.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Three metrics means missing things.} Momentum, reach, and
+  complementarity don't capture everything. They don't capture answer
+  quality, emotional difficulty, or the user's satisfaction. That's
+  intentional --- those things resist quantification, and pretending
+  otherwise would produce misleading numbers.
+@end itemize
+
+
+
+@section Implementation Path
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Phase @tab Work @tab Touches
+@item 1 @tab Add optional @code{depends_on} to config schema @tab @code{validate_config.py}, @code{CONFIG.md}
+@item 2 @tab Wire @code{depends_on} → @code{blocks}/@code{blocked_by} at task creation @tab @code{memory/tasks.py}
+@item 3 @tab Add @code{[R]}/@code{[B]} readiness indicators to interactive menu @tab @code{form_copilot.py}
+@item 4 @tab Add @code{contributions} field to task metadata at save time @tab queen's garden workflow
+@item 5 @tab Add periodic coherence check (every 5 answers) @tab @code{memory/synthesis.py}
+@item 6 @tab Add @code{metrics.jsonl} for momentum/reach/complementarity @tab @code{memory/} module
+@item 7 @tab Update example configs with question dependencies @tab @code{examples/}
+@end multitable
+
+
+
+
+@section References
+
+@itemize @bullet
+@item
+Zhang, Kraska, Khattab. "Recursive Language Models." arXiv:2512.24601v2. Jan 2026.
+@item
+RFC 000: Form Copilot Baseline Specification
+@item
+RFC 002: Memory Layer Specification
+@item
+Prime Intellect. "Recursive Language Models: The Paradigm of 2026."
+@item
+Carroll, Lewis. @emph{Through the Looking-Glass}. Chapter III: "Looking-Glass Insects" (the wood where things have no names).
+@end itemize
+
+
+*"Would you tell me, please, which way I ought to go from here?"
+"That depends a good deal on where you want to get to," said the Cat.*
+
+*This RFC says: we know where we want to get to. It's not faster
+throughput or deeper recursion. It's a better understanding of what
+happens when two very different kinds of minds sit down with hard
+questions and try to answer them honestly.*
+
+
+
+@node RFC 004
+@chapter RFC 004: smrti — Rename and Typed Memory
+
+
+@noindent
+@strong{Status:} Implemented (v0.5.0)
+
+@noindent
+@strong{Author:} Aaron Johnson
+
+@noindent
+@strong{Created:} 2026-02-19
+
+@noindent
+@strong{Implemented:} 2026-02-20
+
+@noindent
+@strong{Parent:} RFC 002
+
+
+
+@section Purpose
+
+Rename form-copilot to @strong{smrti} (स्मृति, Sanskrit: "memory,
+remembered tradition") and restructure the memory layer around
+four typed stores: episodic, semantic, procedural, and
+ephemeral. The
+repository becomes @strong{advaita-smrti} (अद्वैत-स्मृति, "non-dual
+memory").
+
+This RFC covers:
+@enumerate
+@item
+The rename (files, imports, CLI, branch, docs)
+@item
+Adding semantic (facts) and ephemeral (working) stores
+@item
+Adopting a typed memory taxonomy from ENGRAM and the
+   Google survey paper
+@item
+What we keep, what we drop, what changes
+@end enumerate
+
+
+
+@section Motivation
+
+
+@subsection Why rename
+
+"Form copilot" describes the original scope — helping fill out
+multi-section applications. The tool has grown beyond that into
+a general memory layer for structured knowledge elicitation.
+The name should reflect what it is, not what it started as.
+
+@strong{smrti} means "that which is remembered" — the body of
+remembered tradition in Hindu philosophy, as distinct from
+shruti ("that which is heard," revealed knowledge). The tool
+captures what the human remembers and knows, structures it,
+and makes it retrievable. The name fits.
+
+@strong{advaita} means "non-dual." The tool and the thinker are not
+separate. The repository name advaita-smrti carries the
+philosophy; the CLI and package name smrti stays short for
+daily use.
+
+
+@subsection Why typed memory
+
+The ENGRAM paper (Patel & Patel, 2026) demonstrates that
+separating memory into typed stores — episodic, semantic,
+procedural — and retrieving from each independently before
+merging outperforms systems that dump everything into one
+store. Typed separation reduces competition at retrieval time.
+
+Our current memory layer has two stores:
+@itemize @bullet
+@item
+@code{tasks.jsonl} — procedural (questions, dependencies, status)
+@item
+@code{decisions.jsonl} — episodic (what happened, choices made)
+@end itemize
+
+The missing type is @strong{semantic} — stable facts, preferences,
+and constraints extracted from conversations and site visits.
+Today these live scattered across task descriptions, CLAUDE.md,
+or the human's own notes. A dedicated facts store surfaces
+them at retrieval time without competing against procedural or
+episodic items.
+
+
+@subsection What makes this different
+
+Every system in the memory literature — ENGRAM, Mem0, Zep,
+Letta, MemOS — starts from @strong{conversation} as input. We
+start from @strong{structured forms}: sections, questions,
+dependencies, priorities. This gives us properties they lack:
+
+@itemize @bullet
+@item
+The form itself is the procedural memory (no extraction needed)
+@item
+Coherence checking across answers is built in
+@item
+Dependency ordering constrains the retrieval problem
+@item
+There is a clear "done" criterion
+@end itemize
+
+This maps to clinical intake, grant applications, legal
+discovery, insurance claims — anywhere humans complete complex
+multi-part forms with an AI collaborator.
+
+
+
+@section Part 1: The Rename
+
+
+@subsection Files
+
+
+@multitable @columnfractions 0.50 0.50
+@headitem Before @tab After
+@item @code{form_copilot.py} @tab @code{smrti.py}
+@item repo: @code{form-copilot} @tab repo: @code{advaita-smrti}
+@item branch: @code{queens-garden} @tab branch: @code{sutra}
+@item prefix: @code{fc} @tab prefix: @code{sm}
+@end multitable
+
+
+
+@subsection Imports
+
+
+@example
+# Before
+from memory import Memory
+
+# After (unchanged — the memory/ package name stays)
+from memory import Memory
+@end example
+
+The @code{memory/} package is internal and does not need renaming.
+External-facing changes are the CLI entry point and repo name.
+
+
+@subsection CLI
+
+
+@example
+# Before
+python3 form_copilot.py memory rebuild
+python3 form_copilot.py status
+
+# After
+python3 smrti.py memory rebuild
+python3 smrti.py status
+@end example
+
+
+@subsection Default branch
+
+The @code{queens-garden} branch name comes from the Alice in
+Wonderland theme. Renamed to @strong{sutra} (सूत्र, "thread") —
+continues the Sanskrit theme, evokes the thread of
+continuity running through the memory stores.
+
+
+@subsection What stays
+
+@itemize @bullet
+@item
+@code{memory/} package directory and all its modules
+@item
+@code{sea_application_helper.py} (the SEA form helper)
+@item
+@code{sea_assistant.py} (interactive assistant)
+@item
+@code{examples/}, @code{tests/}, @code{docs/}
+@item
+JSONL + SQLite storage architecture
+@item
+All existing tests (updated imports only)
+@end itemize
+
+
+@subsection What gets removed or renamed
+
+@itemize @bullet
+@item
+All string references to "form-copilot" and "form_copilot"
+@item
+The Alice in Wonderland release names in CHANGELOG.md
+@end itemize
+
+
+
+@section Part 2: Typed Memory Stores
+
+
+@subsection Taxonomy
+
+Combines ENGRAM's typed stores (Patel & Patel, 2026) with the
+working memory concept from the Google survey (Hu et al., 2025).
+
+
+@multitable @columnfractions 0.25 0.25 0.25 0.25
+@headitem Type @tab What it stores @tab Persisted @tab Current analog
+@item @strong{Procedural} @tab Tasks, workflows, deps @tab yes, @code{tasks.jsonl} @tab existing
+@item @strong{Episodic} @tab Events, decisions, cases @tab yes, @code{decisions.jsonl} @tab existing
+@item @strong{Semantic} @tab Stable facts, preferences @tab yes, @code{facts.jsonl} @tab @emph{missing}
+@item @strong{Ephemeral} @tab Active session workspace @tab no, @code{ephemeral/} @tab implicit (context files)
+@end multitable
+
+
+
+@subsection New: Semantic Store (@code{facts.jsonl})
+
+A new JSONL file and corresponding SQLite index table for
+extracted facts.
+
+
+@example
+@@dataclass
+class Fact:
+    id: str              # sm-f-xxxxx
+    fact: str            # "Business registered in Oregon"
+    source: str          # "application_q3"
+    section: str         # Optional section grouping
+    confidence: float    # 0.0-1.0
+    labels: List[str]    # Freeform tags
+    supersedes: str      # ID of fact this replaces (if updated)
+    created_at: str      # ISO timestamp
+    updated_at: str      # ISO timestamp
+    metadata: dict       # Extensible
+@end example
+
+
+@subsubsection API
+
+
+@example
+mem = Memory(".memory")
+
+# Create
+fact = mem.facts.create(
+    "Business registered in Oregon",
+    source="application_q3",
+    section="legal",
+)
+
+# Update (creates new version, marks old as superseded)
+mem.facts.update(fact.id, fact="Business registered in Oregon since 2024")
+
+# Query
+facts = mem.facts.by_section("legal")
+facts = mem.facts.by_label("requirement")
+facts = mem.facts.search("oregon")  # substring match
+
+# All
+all_facts = mem.facts.all()
+@end example
+
+
+@subsubsection SQLite index additions
+
+
+@example
+CREATE TABLE IF NOT EXISTS facts (
+    id TEXT PRIMARY KEY,
+    fact TEXT,
+    source TEXT,
+    section TEXT,
+    confidence REAL,
+    supersedes TEXT,
+    created_at TEXT,
+    updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS fact_labels (
+    fact_id TEXT,
+    label TEXT,
+    PRIMARY KEY (fact_id, label)
+);
+
+CREATE INDEX IF NOT EXISTS idx_facts_section ON facts(section);
+CREATE INDEX IF NOT EXISTS idx_facts_source ON facts(source);
+@end example
+
+
+@subsubsection Drift detection
+
+The existing drift detection extends to cover facts:
+
+
+@example
+Tasks:     JSONL has N, index has M
+Decisions: JSONL has N, index has M
+Facts:     JSONL has N, index has M
+@end example
+
+
+@subsection New: Ephemeral Store (@code{ephemeral/})
+
+The ephemeral store holds transient state for the active
+session. It is not appended to JSONL — it lives in a
+directory that is cleared or rolled into episodic memory
+when the session ends.
+
+
+@subsubsection What goes here
+
+@itemize @bullet
+@item
+@strong{Active question context} — the current question being
+  worked on, related answers pulled from other stores, notes
+  in progress. Currently @code{.sea_question_context.json}.
+@item
+@strong{Draft state} — the answer being composed. Currently
+  @code{.sea_answer.md}.
+@item
+@strong{Session scratch} — what's been discussed this session,
+  intermediate reasoning, temporary notes.
+@item
+@strong{Retrieved context} — facts, tasks, and decisions pulled
+  from the persistent stores for the current task.
+@end itemize
+
+
+@subsubsection Lifecycle
+
+
+@example
+session start  → ephemeral/ created (or cleared)
+during session → files written and read freely
+session end    → option to:
+                   (a) discard (default)
+                   (b) promote to episodic (save as decision)
+                   (c) extract facts to semantic store
+@end example
+
+
+@subsubsection Structure
+
+
+@example
+ephemeral/
+  context.json      # Current question/task context
+  draft.md          # Answer or artifact in progress
+  retrieved/        # Cached retrievals from other stores
+    facts.json      # Relevant facts for current task
+    tasks.json      # Related tasks
+    decisions.json  # Related prior decisions
+@end example
+
+
+@subsubsection Why "ephemeral" not "working"
+
+The Google survey calls this "working memory." We call it
+@strong{ephemeral} to emphasize that it is not persisted by
+default. The cognitive science term "working memory" implies
+a fixed-capacity buffer; our ephemeral store is simply
+session-scoped scratch space with no capacity constraint.
+The name also avoids confusion with a directory name
+suggesting permanence — it is explicitly temporary.
+
+
+@subsection Coherence checking additions
+
+The existing @code{coherence_check()} gains a new category:
+
+@itemize @bullet
+@item
+@strong{fact_conflict}: Two facts in the same section contradict
+  each other (e.g., two different addresses)
+@item
+@strong{fact_staleness}: A fact's source is older than a threshold
+  and may need re-verification
+@end itemize
+
+
+@subsection What we defer
+
+@itemize @bullet
+@item
+@strong{Vector embeddings / cosine similarity} — our dataset is
+  small enough for exact match and substring search. Embeddings
+  can be added later without changing the store schema (the
+  ENGRAM embedding field is optional).
+@item
+@strong{LLM-powered router} — ENGRAM uses an LLM call to classify
+  each incoming utterance into memory types. For now, routing
+  is human-directed (the user or Claude explicitly calls
+  @code{facts.create()} vs @code{tasks.create()} vs @code{decisions.begin()}).
+  A router can be added as a convenience layer later.
+@item
+@strong{Cross-type retrieval merging} — ENGRAM merges top-k from
+  each store at query time. We don't need this yet because our
+  queries are type-specific (show me all facts, show me ready
+  tasks). When we add a natural-language query interface, this
+  becomes relevant.
+@item
+@strong{Temporal decay for facts} — facts don't decay the same way
+  tasks do. A fact is true until superseded. The @code{supersedes}
+  field handles versioning without decay.
+@end itemize
+
+
+
+@section Part 3: Documentation
+
+
+@subsection README rewrite
+
+The README becomes succinct and forward-looking:
+
+@enumerate
+@item
+One paragraph: what smrti is
+@item
+The four memory types (table)
+@item
+Quick-start (install, configure, run)
+@item
+CLI reference
+@item
+Inspirations and references:
+@itemize @bullet
+@item
+beads — git-backed task graphs (original inspiration)
+@item
+quint-code — decision reasoning trails (original inspiration)
+@item
+ENGRAM (arxiv 2511.12960) — typed memory stores
+@item
+Memory in the Age of AI Agents (arxiv 2512.13564) — survey/taxonomy
+@item
+Google/Kaggle: Context Engineering: Sessions & Memory
+@end itemize
+@item
+See also: Zep, Letta, Mem0, Pinecone (landscape context)
+@end enumerate
+
+Drop: project evolution history, Alice in Wonderland references,
+lengthy CHANGELOG prose.
+
+
+@subsection CLAUDE.md update
+
+Update the memory layer section to reflect four stores and
+the @code{smrti.py} entry point.
+
+
+@subsection CHANGELOG
+
+Start fresh with v0.5.0 or v1.0.0 for the rename. Previous
+history preserved in git.
+
+
+
+@section References
+
+@itemize @bullet
+@item
+Patel, D. & Patel, S. (2026). ENGRAM: Effective, Lightweight
+  Memory Orchestration for Conversational Agents.
+  arXiv:2511.12960.
+@item
+Hu, Y. et al. (2025). Memory in the Age of AI Agents: A
+  Survey. arXiv:2512.13564.
+@item
+Google. (2025). Context Engineering: Sessions & Memory.
+  Kaggle whitepaper.
+@item
+Yegge, S. beads — git-backed task graphs.
+  github.com/steveyegge/beads.
+@item
+quint-code — decision reasoning trails.
+  github.com/m0n0x41d/quint-code.
+@end itemize
+
+
+@section Decisions (resolved during implementation)
+
+@enumerate
+@item
+@strong{Default branch name} — @code{sutra} (सूत्र, "thread").
+   Continues the Sanskrit theme. Dropped Alice in Wonderland.
+@end enumerate
+
+@enumerate
+@item
+@strong{Version number} — v0.5.0. Incremental, not v1.0.0.
+   The rename is significant but the API surface didn't
+   change enough to warrant a major version bump.
+@end enumerate
+
+@enumerate
+@item
+@strong{sea_application_helper.py / sea_assistant.py} — deferred.
+   These are SEA-grant-specific but functional. Rename when
+   the tool generalizes beyond the SEA use case.
+@end enumerate
+
+@enumerate
+@item
+@strong{PyPI name} — deferred. Not publishing yet. @code{smrti} is
+   taken on PyPI (trivial package, 0.0.1). Will revisit if
+   we publish; @code{advaita-smrti} is available.
+@end enumerate
+
+@enumerate
+@item
+@strong{"Ephemeral" not "working"} — the fourth memory type is
+   called ephemeral, not working memory. Emphasizes that it
+   is not persisted by default. Avoids cognitive science
+   connotations about fixed-capacity buffers.
+@end enumerate
+
+@enumerate
+@item
+@strong{Ephemeral store implementation} — deferred to RFC 005.
+   The directory convention (@code{ephemeral/}) and @code{.gitignore}
+   entry are specified here; implementation details and
+   triage workflow are a separate concern.
+@end enumerate
+
+@enumerate
+@item
+@strong{License} — changed from MIT to Apache 2.0 during
+   implementation. Patent grant and retaliation clause are
+   worth the extra length for a project that may be used
+   as a component in commercial AI systems.
+@end enumerate
+
+@enumerate
+@item
+@strong{business_direction_analysis.md} — kept. It is a useful
+   generic template, not stale content.
+@end enumerate
+
+@enumerate
+@item
+@strong{CHANGELOG Alice in Wonderland references} — kept in
+   CHANGELOG.md as historical record. Only forward-facing
+   docs (README, CLAUDE.md, CLI) were updated.
+@end enumerate
+
+
+@section Open Questions (remaining)
+
+@enumerate
+@item
+@strong{Coherence checking for facts} — RFC specifies
+   @code{fact_conflict} and @code{fact_staleness} categories. Not yet
+   implemented. Build when the facts store has enough data
+   to make conflicts possible.
+@end enumerate
+
+@enumerate
+@item
+@strong{Vector embeddings} — deferred per RFC. Revisit when
+   substring search becomes insufficient.
+@end enumerate
+
+@enumerate
+@item
+@strong{LLM-powered router} — deferred per RFC. Routing is
+   human-directed for now.
+@end enumerate
+
+
+
+@node RFC 005
+@chapter RFC 005: Ephemeral Store
+
+
+@noindent
+@strong{Status:} Draft
+
+@noindent
+@strong{Author:} Aaron Johnson
+
+@noindent
+@strong{Created:} 2026-02-19
+
+@noindent
+@strong{Parent:} @strong{RFC 004}
+
+
+
+@section Purpose
+
+Define the ephemeral memory store — session-scoped scratch
+space that bridges the gap between an AI agent's conversation
+context and smrti's durable stores.
+
+
+
+@section Problem
+
+When Claude Code works on a smrti project, two memory systems
+operate independently:
+
+@enumerate
+@item
+@strong{Anthropic's session context} — task tracking, conversation
+   history, tool results. Ephemeral by design: gone when the
+   session ends or the context window compresses.
+@end enumerate
+
+@enumerate
+@item
+@strong{smrti's durable stores} — tasks.jsonl (procedural),
+   decisions.jsonl (episodic), facts.jsonl (semantic). Persistent,
+   git-backed, survive across sessions.
+@end enumerate
+
+The gap: valuable session state that isn't yet ready for a durable
+store has nowhere to land. Draft answers, working hypotheses,
+partial extractions, scratch calculations — these either live only
+in the agent's context (lost on session end) or get prematurely
+committed to a durable store (polluting it with noise).
+
+
+
+@section Proposal
+
+
+@subsection The ephemeral/ directory
+
+
+@example
+.memory/
+├── tasks.jsonl        # procedural (durable)
+├── decisions.jsonl    # episodic (durable)
+├── facts.jsonl        # semantic (durable)
+├── index.db           # regenerable cache
+├── config.json
+└── ephemeral/         # session scratch (not persisted)
+    ├── session.json   # current session metadata
+    ├── scratch.md     # freeform working notes
+    └── staging/       # items being prepared for durable stores
+@end example
+
+
+@subsection What goes in ephemeral/
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Content @tab Example @tab Destination after triage
+@item Draft answers @tab Half-written response to Q3 @tab tasks.jsonl (when finalized)
+@item Working hypotheses @tab "Maybe the revenue model is subscription" @tab decisions.jsonl (if worth recording)
+@item Extracted candidates @tab Facts noticed but not yet verified @tab facts.jsonl (if confirmed)
+@item Session metadata @tab Start time, questions touched, agent ID @tab Discarded or logged
+@item Scratch notes @tab Calculations, comparisons, outlines @tab Discarded
+@end multitable
+
+
+
+@subsection Lifecycle
+
+@enumerate
+@item
+@strong{Session start} — create @code{ephemeral/session.json} with
+   timestamp and session ID
+@item
+@strong{During session} — agent writes scratch files as needed.
+   No schema enforced. Plain text, JSON, markdown — whatever
+   the agent finds useful.
+@item
+@strong{Triage} — before session end, the agent (or human) reviews
+   ephemeral/ and promotes anything worth keeping into the
+   appropriate durable store via the Python API.
+@item
+@strong{Session end} — @code{ephemeral/} is cleared. The .gitignore
+   already excludes it.
+@end enumerate
+
+
+@subsection Not persisted
+
+The ephemeral directory is:
+@itemize @bullet
+@item
+Listed in @code{.gitignore} (never committed)
+@item
+Cleared on session start (previous session's scratch is gone)
+@item
+Not backed by SQLite (no index, no drift detection)
+@item
+Not included in @code{smrti.py memory rebuild} or @code{compact}
+@end itemize
+
+This is intentional. Ephemeral memory is disposable by definition.
+
+
+
+@section Overlap with Anthropic session tools
+
+Anthropic's built-in @code{TaskCreate}/@code{TaskUpdate} tools serve a
+similar purpose: tracking work items within a single conversation.
+They are ephemeral — gone when the session ends.
+
+
+@subsection Where they differ
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Aspect @tab Anthropic session tools @tab smrti ephemeral/
+@item Scope @tab Conversation context @tab File system
+@item Survives context compression @tab No @tab Yes (until session end)
+@item Structured @tab Yes (task model) @tab No (freeform)
+@item Accessible to human @tab Only via agent @tab Directly readable files
+@item Promotable to durable store @tab Manual (agent must extract) @tab Direct (files are right there)
+@end multitable
+
+
+
+@subsection The bridge value
+
+The key insight: Anthropic's tools track @emph{agent work}, while
+smrti's ephemeral store holds @emph{domain knowledge in progress}.
+
+A session where the agent answers 5 application questions might
+use Anthropic's task tools to track "answer Q1, Q2, Q3..."
+while using ephemeral/ to hold:
+@itemize @bullet
+@item
+Draft text for Q3 that the human hasn't reviewed yet
+@item
+A fact extracted from the Q1 discussion that applies to Q5
+@item
+A note that Q2 and Q4 have contradictory assumptions
+@end itemize
+
+These are different concerns. The agent's work tracker doesn't
+need to persist. The domain scratch does — at least until triage.
+
+
+@subsection Future: automatic triage
+
+A natural extension (not in this RFC): at session end, the
+agent could automatically scan ephemeral/ and propose
+promotions:
+
+
+@example
+Session ending. Found in ephemeral/:
+  - scratch.md: 3 candidate facts identified
+  - staging/q3-draft.md: draft answer for Q3
+
+Promote to durable stores?
+  [1] Extract facts to facts.jsonl
+  [2] Save Q3 draft to tasks.jsonl
+  [3] Discard all
+  [4] Review individually
+@end example
+
+This bridges the two systems without coupling them.
+
+
+
+@section Implementation
+
+
+@subsection Phase 1 (minimal)
+
+@itemize @bullet
+@item
+Create @code{ephemeral/} directory on Memory init
+@item
+Add @code{.gitignore} entry for @code{ephemeral/}
+@item
+Add @code{Memory.ephemeral_path} property
+@item
+Add @code{Memory.clear_ephemeral()} method
+@item
+No schema, no models, no SQLite
+@end itemize
+
+
+@subsection Phase 2 (session awareness)
+
+@itemize @bullet
+@item
+@code{session.json} with start time, session ID
+@item
+@code{Memory.start_session()} / @code{Memory.end_session()}
+@item
+Automatic clear on new session start
+@end itemize
+
+
+@subsection Phase 3 (triage helpers)
+
+@itemize @bullet
+@item
+@code{Memory.promote_fact(path)} — read file, create fact
+@item
+@code{Memory.promote_draft(path, task_id)} — attach to task
+@item
+CLI: @code{smrti.py memory triage}
+@end itemize
+
+
+
+@section Open questions
+
+@enumerate
+@item
+Should ephemeral/ contents survive across sessions if
+   the human explicitly asks? (A "pin" mechanism?)
+@item
+Should there be a TTL — auto-clear after N hours even
+   without a new session?
+@item
+Is @code{staging/} a useful sub-convention or over-engineering
+   for Phase 1?
+@end enumerate
+
+
+
+@section References
+
+@itemize @bullet
+@item
+RFC 004: smrti rename and typed memory (parent)
+@item
+ENGRAM (arxiv:2511.12960) — procedural memory as working buffer
+@item
+Google Context Engineering whitepaper — session management
+@item
+Letta — filesystem memory that outperforms specialized systems
+@end itemize
+
+
+
+@node RFC 006
+@chapter RFC 006: Web Interface — Resume Fit and Honest Discovery
+
+
+@noindent
+@strong{Status:} Concept
+
+@noindent
+@strong{Author:} Aaron Johnson
+
+@noindent
+@strong{Created:} 2026-02-20
+
+@noindent
+@strong{Parent:} @strong{RFC 004}, @strong{RFC 005}
+
+
+
+@section Purpose
+
+Extend smrti beyond Claude Code and Python API to a
+public-facing web interface. A visitor pastes a job
+description; the system returns an honest assessment of
+fit against the host's resume/experience, drawn from
+smrti's semantic store.
+
+
+
+@section Problem
+
+Today, smrti's knowledge is only accessible through:
+@itemize @bullet
+@item
+Claude Code sessions (developer tooling)
+@item
+Python API (@code{from memory import Memory})
+@end itemize
+
+A recruiter, hiring manager, or company contact who has
+received an application has no way to explore the
+candidate's fit without scheduling a call. The candidate
+has no way to pre-qualify opportunities without reading
+every job description manually.
+
+The gap: @strong{no self-service discovery layer} between
+"received a resume" and "scheduled a meeting."
+
+
+
+@section Proposal
+
+
+@subsection The visitor experience
+
+@enumerate
+@item
+Visitor arrives at a personal/professional site
+@item
+Pastes a job description into a text box (or uploads PDF)
+@item
+System computes fit against the host's experience
+@item
+Returns:
+@itemize @bullet
+@item
+@strong{Fit likelihood} (high / moderate / low / unclear)
+@item
+@strong{Relevant experience} — tailored list drawn from
+     facts store, honest, not fabricated
+@item
+@strong{Gaps or uncertainties} — areas where the fit is
+     unclear, with follow-up questions the visitor could
+     ask to clarify
+@item
+@strong{Work preferences} — full-time vs. contract vs.
+     retainer, and what the host is currently open to
+@end itemize
+@item
+If fit is good: @strong{call to action} to schedule an
+   appointment to discuss a project or role
+@item
+If fit is low: honest about it. Sets expectations.
+   May suggest adjacent roles or referrals.
+@end enumerate
+
+
+@subsection What it is NOT
+
+@itemize @bullet
+@item
+Not a chatbot. One input, one structured response.
+@item
+Not a hallucination engine. Every claim traces to a
+  fact in the semantic store with source attribution.
+@item
+Not a generic AI resume tool. It represents ONE person's
+  actual experience, preferences, and constraints.
+@end itemize
+
+
+
+@section How smrti fits
+
+smrti becomes the @strong{knowledge backend}:
+
+
+@example
+┌─────────────────────────────────┐
+│  Web UI (visitor-facing)        │
+│  - Paste job description        │
+│  - View fit assessment          │
+│  - Schedule if good fit         │
+└──────────────┬──────────────────┘
+               │
+┌──────────────▼──────────────────┐
+│  Fit Engine                     │
+│  - Parse job requirements       │
+│  - Query facts by section/label │
+│  - Match requirements to facts  │
+│  - Score fit, surface gaps      │
+│  - Generate honest response     │
+└──────────────┬──────────────────┘
+               │
+┌──────────────▼──────────────────┐
+│  smrti semantic store           │
+│  facts.jsonl — skills, history, │
+│  preferences, constraints       │
+│  Curated by host, not generated │
+└─────────────────────────────────┘
+@end example
+
+
+@subsection Facts as the source of truth
+
+The fit engine only claims what the facts store contains.
+Example facts:
+
+
+@example
+"10 years Python experience" (source: resume, confidence: 1.0)
+"Led team of 5 on kiosk project" (source: portfolio, confidence: 1.0)
+"Familiar with React, not expert" (source: self-assessment, confidence: 0.7)
+"Prefers contract/retainer over full-time" (source: preference, confidence: 0.9)
+"Open to full-time for the right fit" (source: preference, confidence: 0.6)
+@end example
+
+The response references these facts. The visitor sees
+evidence, not claims. Low-confidence facts surface as
+"may be relevant, worth discussing" rather than assertions.
+
+
+@subsection Work preference signaling
+
+The facts store holds explicit preference facts:
+
+
+@multitable @columnfractions 0.50 0.50
+@headitem Preference @tab Signal
+@item Contract (project-based) @tab Preferred — strongest fit
+@item Retainer @tab Open — good for ongoing needs
+@item Full-time @tab Selective — depends on role/culture
+@item Remote @tab Required / preferred / flexible
+@item Location @tab Constraints if any
+@end multitable
+
+
+These shape the call to action. A recruiter filling a
+full-time role sees "open to full-time for the right fit"
+with an invitation to discuss. A company with a 3-month
+project sees "this is the sweet spot" with a direct
+scheduling link.
+
+
+
+@section Interfaces
+
+
+@subsection Option A: Static site + API
+
+@itemize @bullet
+@item
+Simple HTML/JS frontend (no framework needed)
+@item
+API endpoint that accepts job description text
+@item
+LLM call to parse requirements and match against facts
+@item
+Response rendered as structured HTML
+@end itemize
+
+
+@subsection Option B: MCP server
+
+@itemize @bullet
+@item
+smrti exposed as an MCP tool
+@item
+Any MCP-compatible client can query fit
+@item
+Web UI is one client; Claude Desktop is another
+@item
+Richer interaction possible (follow-up questions)
+@end itemize
+
+
+@subsection Option C: Both
+
+@itemize @bullet
+@item
+MCP server as the core interface
+@item
+Web UI as a thin client over MCP
+@item
+Claude Code sessions also use MCP for fact queries
+@end itemize
+
+Decision deferred to implementation.
+
+
+
+@section Tone and honesty
+
+The system's voice should be:
+@itemize @bullet
+@item
+@strong{Honest} — "I don't have deep experience in X" is
+  a valid and valuable response
+@item
+@strong{Specific} — "I led a 5-person team on a kiosk
+  project for a day center" not "experienced team leader"
+@item
+@strong{Curious} — when fit is unclear, ask the visitor
+  what they're actually looking for rather than guessing
+@item
+@strong{Respectful of the visitor's time} — if fit is low,
+  say so early. Don't waste a meeting on a mismatch.
+@end itemize
+
+This is the advaita principle in practice: the interface
+and the person are not separate. The system speaks as
+the host would speak, with the host's actual knowledge
+and the host's actual limitations.
+
+
+
+@section Prior art and references
+
+@itemize @bullet
+@item
+Nate B. Jones — ideas on AI-powered professional
+  presence and self-service discovery (YouTube, potential
+  subscription for deeper dive)
+@item
+Damian Galarza — context engineering and memory for
+  AI agents (YouTube)
+@item
+Personal CRM / portfolio tools that do static
+  presentation but not interactive fit assessment
+@end itemize
+
+
+
+@section Open questions
+
+@enumerate
+@item
+@strong{Privacy} — job descriptions pasted by visitors may
+   contain confidential information. How do we handle
+   data retention? Process and discard? Log for the host?
+@item
+@strong{Rate limiting} — prevent abuse without requiring
+   login
+@item
+@strong{Fact curation} — who maintains the facts store?
+   Host manually? Semi-automated from resume/portfolio?
+@item
+@strong{LLM dependency} — the fit engine needs an LLM for
+   parsing and matching. Which provider? Cost per query?
+   Can we do a first-pass with keyword matching and only
+   escalate to LLM for ambiguous cases?
+@item
+@strong{Scheduling integration} — Calendly? Cal.com? Simple
+   email link?
+@item
+@strong{Scope of v1} — is the MVP just the text box and
+   fit response, or does it include the scheduling CTA?
+@end enumerate
+
+
+
+@section Relationship to other RFCs
+
+@itemize @bullet
+@item
+@strong{RFC 004} — the semantic (facts) store is the
+  knowledge backend for this interface
+@item
+@strong{RFC 005} — ephemeral store could hold visitor
+  session state during a fit assessment
+@item
+@strong{RFC 003} — complementary cognition: the visitor
+  brings the job context, the system brings the
+  candidate knowledge. Neither has the full picture alone.
+@end itemize
+
+
+
+@node RFC 007
+@chapter RFC 007: Python Packaging and Repo Layout
+
+
+@noindent
+@strong{Status:} Concept
+
+@noindent
+@strong{Author:} Aaron Johnson
+
+@noindent
+@strong{Created:} 2026-02-20
+
+@noindent
+@strong{Parent:} @strong{RFC 004}
+
+@noindent
+@strong{Trigger:} When PyPI publishing or RFC 006 (web interface) forces it
+
+
+
+@section Purpose
+
+Reorganize the repository into a standard Python package
+layout. Consolidate loose top-level files to push the
+rendered README above the fold on GitHub. Separate library
+code from application code.
+
+
+
+@section Problem
+
+The current top level has ~20 visible entries. GitHub
+renders the file listing before the README, pushing it
+below the fold. More importantly, the layout conflates
+three concerns:
+
+@enumerate
+@item
+@strong{Library} (@code{memory/}) — the reusable memory layer
+@item
+@strong{Application} (@code{sea_application_helper.py},
+   @code{sea_assistant.py}) — SEA-grant-specific code
+@item
+@strong{Tooling} (@code{validate_config.py}, @code{export_docs.py},
+   @code{migrate_to_memory.py}) — utility scripts
+@end enumerate
+
+These should be separate.
+
+
+
+@section Current layout (20 rows)
+
+
+@example
+.claude/
+.github/
+docs/
+examples/
+hooks/
+memory/
+tests/
+business_direction_analysis.md
+CHANGELOG.md
+CLAUDE.md
+config_schema.json
+export_docs.py
+LICENSE
+migrate_to_memory.py
+README.md
+sea_application_helper.py
+sea_assistant.py
+smrti.py
+validate_config.py
+.gitignore
+@end example
+
+
+@section Proposed layout (6 rows)
+
+
+@example
+advaita-smrti/
+├── smrti/                  # Python package
+│   ├── __init__.py         # re-exports from memory
+│   ├── __main__.py         # python -m smrti
+│   ├── cli.py              # was smrti.py
+│   ├── memory/             # unchanged internals
+│   │   ├── __init__.py
+│   │   ├── models.py
+│   │   ├── storage.py
+│   │   ├── tasks.py
+│   │   ├── decisions.py
+│   │   ├── facts.py
+│   │   └── synthesis.py
+│   ├── tools/              # utility scripts
+│   │   ├── validate.py     # was validate_config.py
+│   │   ├── export.py       # was export_docs.py
+│   │   └── migrate.py      # was migrate_to_memory.py
+│   └── apps/               # application code
+│       ├── helper.py       # was sea_application_helper.py
+│       └── assistant.py    # was sea_assistant.py
+├── tests/
+├── docs/
+│   ├── rfcs/
+│   ├── examples/           # was examples/ (configs)
+│   ├── CONFIG.md
+│   ├── WORKFLOW.md
+│   └── EXAMPLES.md
+├── LICENSE
+├── README.md
+├── pyproject.toml
+└── .gitignore
+@end example
+
+GitHub shows 6 entries before README:
+@code{smrti/}, @code{tests/}, @code{docs/}, @code{LICENSE}, @code{README.md}, @code{.gitignore}
+
+
+
+@section What moves where
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Current @tab Proposed @tab Why
+@item @code{memory/} @tab @code{smrti/memory/} @tab Inside the package
+@item @code{smrti.py} @tab @code{smrti/cli.py} + @code{__main__.py} @tab Standard entry point
+@item @code{sea_application_helper.py} @tab @code{smrti/apps/helper.py} @tab Application, not library
+@item @code{sea_assistant.py} @tab @code{smrti/apps/assistant.py} @tab Application, not library
+@item @code{validate_config.py} @tab @code{smrti/tools/validate.py} @tab Utility
+@item @code{export_docs.py} @tab @code{smrti/tools/export.py} @tab Utility
+@item @code{migrate_to_memory.py} @tab @code{smrti/tools/migrate.py} @tab One-time script
+@item @code{config_schema.json} @tab @code{docs/config_schema.json} @tab Reference doc
+@item @code{business_direction_analysis.md} @tab @code{docs/examples/} @tab Template
+@item @code{examples/} @tab @code{docs/examples/} @tab Configs are docs by example
+@item @code{CHANGELOG.md} @tab @code{docs/CHANGELOG.md} @tab History
+@item @code{hooks/} @tab @code{.github/hooks/} @tab Convention
+@end multitable
+
+
+
+@section What stays
+
+
+@multitable @columnfractions 0.50 0.50
+@headitem File @tab Why
+@item @code{README.md} @tab Required at root
+@item @code{LICENSE} @tab Required at root
+@item @code{CLAUDE.md} @tab Claude Code reads it from root
+@item @code{.gitignore} @tab Required at root
+@item @code{pyproject.toml} @tab New — replaces implicit setup
+@end multitable
+
+
+
+
+@section Packaging
+
+
+@subsection pyproject.toml
+
+
+@example
+[project]
+name = "advaita-smrti"
+version = "0.5.0"
+description = "Non-dual memory for structured knowledge elicitation"
+license = "Apache-2.0"
+requires-python = ">=3.6"
+dependencies = []
+
+[project.scripts]
+smrti = "smrti.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+@end example
+
+Zero dependencies. @code{pip install advaita-smrti} gives
+you the @code{smrti} command.
+
+
+@subsection PyPI name
+
+@code{smrti} is taken (trivial package, 0.0.1 from 2019).
+@code{advaita-smrti} is available. Use that.
+
+
+
+@section Import changes
+
+
+@example
+# Before
+from memory import Memory
+from memory.models import Task, Fact
+
+# After
+from smrti.memory import Memory
+from smrti.memory.models import Task, Fact
+
+# Or via package re-export
+from smrti import Memory, Fact
+@end example
+
+All internal imports within @code{smrti/memory/} stay relative
+(no change). Only external consumers and tests change.
+
+
+
+@section Migration
+
+
+@subsection What breaks
+
+@itemize @bullet
+@item
+Every @code{from memory import ...} in tests
+@item
+Every @code{from sea_application_helper import ...}
+@item
+@code{sys.path.insert(0, ...)} hacks in test files
+@item
+CI workflow paths
+@item
+Subtree prefix in day-shelter-kiosk (stays
+  @code{advaita-smrti/} but internal paths change)
+@item
+CLAUDE.md code examples
+@end itemize
+
+
+@subsection Migration steps
+
+@enumerate
+@item
+Create @code{smrti/} package with @code{__init__.py}
+@item
+Move @code{memory/} into @code{smrti/memory/}
+@item
+Move utility and application files
+@item
+Add @code{pyproject.toml}
+@item
+Update all imports (grep + sed)
+@item
+Update tests (remove sys.path hacks, use package imports)
+@item
+Update CI to install package (@code{pip install -e .})
+@item
+Update CLAUDE.md examples
+@item
+Run full test suite
+@item
+Pull into day-shelter-kiosk subtree
+@end enumerate
+
+
+@subsection Estimated touch count
+
+~30 files. Same scale as the RFC 004 rename.
+
+
+
+@section Open questions
+
+@enumerate
+@item
+@strong{@code{sea_*} rename} — @code{helper.py} and @code{assistant.py}
+   are generic enough. Or should they stay SEA-prefixed
+   until there's a second application?
+@item
+@strong{@code{apps/} vs. @code{examples/}} — is the SEA application
+   an example of using smrti, or a first-class app?
+@item
+@strong{Namespace package?} — should @code{smrti.memory} be
+   importable standalone, or only through the top-level
+   @code{smrti} package?
+@item
+@strong{When to do this} — before or after RFC 006 (web
+   interface)? The web interface will add more files
+   to the repo. Better to have the layout clean first.
+@end enumerate
+
+
+
+@section Decision: not yet
+
+This RFC exists to capture the plan. Implementation is
+deferred until one of:
+@itemize @bullet
+@item
+PyPI publishing is needed
+@item
+RFC 006 (web interface) adds enough files to force it
+@item
+The top-level clutter becomes actively painful
+@end itemize
+
+The current layout works. It's just not pretty.
+
+
+
+@node RFC 011
+@chapter RFC 011: Tracer — Session Observation Layer
+
+
+@noindent
+@strong{Status:} Draft
+
+@noindent
+@strong{Author:} Aaron Johnson + Claude
+
+@noindent
+@strong{Created:} 2026-02-20
+
+@noindent
+@strong{Parent:} @strong{RFC 003}
+
+@noindent
+@strong{References:} @strong{RFC 002}, @strong{RFC 004}
+
+
+
+
+@section Summary
+
+Add a @strong{tracer} to smrti: a structured record of what happens
+during a collaborative session. The tracer captures spans — units
+of work performed by either participant (human or model) — and
+organizes them into sessions. It is the observational layer that
+RFC 003 proposed but did not specify.
+
+The tracer answers: *what happened, who did it, and what did it
+touch?*
+
+The existing stores answer @emph{what} (tasks), @emph{why} (decisions), and
+@emph{what is true} (facts). The tracer answers @emph{how} — the process by
+which those stores were read, written, and connected during live
+work.
+
+
+
+@section Motivation
+
+
+@subsection The gap in the memory layer
+
+smrti has four memory types (RFC 004):
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Type @tab Records @tab Example
+@item Procedural @tab What needs doing @tab "Answer Q4: short-term goals"
+@item Episodic @tab What was decided @tab "Chose Flask over Django because..."
+@item Semantic @tab What is known @tab "Shelter is on Ainsworth St"
+@item Ephemeral @tab Active scratch @tab Draft answer in progress
+@end multitable
+
+
+None of these record @emph{the process itself}. After a session ends,
+you can see that Q4 was answered, that a decision was made, that
+a fact was created — but not @emph{how the session unfolded}. Which
+questions were attempted and abandoned? Which facts were retrieved
+but not used? Where did the human redirect the model? Where did
+the model surface a connection the human hadn't seen?
+
+RFC 003 proposed contribution tagging (P2) and session dimensions
+(P4: momentum, reach, complementarity). Both require observational
+data that doesn't exist yet. The tracer generates that data.
+
+
+@subsection What the tracer is not
+
+@itemize @bullet
+@item
+@strong{Not a logger.} Logs are for debugging infrastructure. The
+  tracer records cognitive collaboration, not API calls or stack
+  traces.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Not an audit log.} Audit logs record @emph{who changed what} for
+  accountability. The tracer records @emph{how work happened} for
+  reflection. They overlap but serve different purposes and
+  different audiences.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Not surveillance.} The tracer records what each participant
+  @emph{contributed}, not how they @emph{behaved}. Time between actions is
+  captured for momentum measurement (RFC 003 P4), not for
+  monitoring productivity. See Privacy section.
+@end itemize
+
+
+@subsection The witness
+
+In Advaita Vedānta, the @emph{sākṣin} (साक्षिन्) is the witness —
+pure awareness that observes experience without altering it. The
+tracer is the sākṣin of a session. It watches two minds work
+together, records what each contributes, and holds that record
+for later reflection.
+
+The philosophical parallel is deliberate. The tool's namesake
+tradition distinguishes between the actor (@emph{kartā}), the act
+(@emph{kriyā}), and the witness (@emph{sākṣin}). The memory stores hold
+the products of action. The tracer holds the witnessing of it.
+
+
+
+@section Design
+
+
+@subsection Core concepts
+
+@strong{Session.} A bounded unit of collaborative work — one Claude
+Code conversation, one interactive menu run, one queen's garden
+sequence. Sessions have a start and end. A human may have
+multiple sessions per day or one session spanning hours.
+
+@strong{Span.} A unit of work within a session. Spans have a kind
+(what type of work), an actor (who did it), a target (what it
+touched), and a summary (what happened). Spans can nest: a
+decision process is a parent span containing child spans for
+each hypothesis, verification, and selection.
+
+@strong{Actor.} Either @code{human} or @code{model}. The tracer does not
+distinguish between different humans or different models — it
+tracks the two participants in the collaboration.
+
+
+@subsection Span kinds
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Kind @tab Actor @tab What it records
+@item @code{input} @tab human @tab Human provided information, correction, or direction
+@item @code{retrieve} @tab model @tab Model pulled data from a memory store
+@item @code{draft} @tab model @tab Model composed or structured content
+@item @code{refine} @tab either @tab Revision to existing content
+@item @code{decide} @tab either @tab Selection among alternatives
+@item @code{connect} @tab model @tab Model surfaced a cross-reference or dependency
+@item @code{correct} @tab human @tab Human corrected a factual error
+@item @code{redirect} @tab human @tab Human changed topic or approach
+@item @code{check} @tab model @tab Coherence check or validation
+@item @code{create} @tab either @tab New task, decision, or fact created
+@item @code{close} @tab either @tab Task completed, decision finalized
+@end multitable
+
+
+This is not an exhaustive taxonomy — @code{metadata} carries anything
+that doesn't fit. These kinds cover the patterns observed in
+actual sessions (RFC 003's queen's garden analysis).
+
+
+@subsection Relationship to existing stores
+
+The tracer @emph{references} other stores but does not duplicate them.
+
+
+@example
+┌─────────────────────────────────────────────┐
+│  Session sm-s-abc12                         │
+│                                             │
+│  span 1: retrieve  → task sm-7k2m4          │
+│  span 2: input     → "budget and timeline"  │
+│  span 3: draft     → answer for sm-7k2m4    │
+│  span 4: connect   → sm-7k2m4 ↔ sm-9p3q1   │
+│  span 5: correct   → "not $X, $Y"          │
+│  span 6: refine    → updated answer          │
+│  span 7: create    → fact sm-f-r8t2w         │
+│  span 8: close     → task sm-7k2m4 closed   │
+│                                             │
+└─────────────────────────────────────────────┘
+@end example
+
+The session tells a story. The spans are the sentences. The
+existing stores hold the nouns (tasks, decisions, facts). The
+tracer holds the verbs.
+
+
+
+@section Data Model
+
+
+@subsection Session
+
+
+@example
+@@dataclass
+class Session:
+    id: str                       # sm-s-xxxxx
+    started_at: str               # ISO timestamp
+    ended_at: Optional[str]       # ISO timestamp (null while active)
+    mode: str                     # "garden" (continuous) or "wood" (per-question)
+    summary: str                  # Post-session summary (generated at close)
+    spans_count: int              # Number of spans in session
+    tasks_touched: List[str]      # Task IDs read or written
+    decisions_touched: List[str]  # Decision IDs read or written
+    facts_touched: List[str]      # Fact IDs read or written
+    metadata: Dict[str, Any]      # Extensible
+@end example
+
+
+@subsection Span
+
+
+@example
+@@dataclass
+class Span:
+    id: str                       # sm-t-xxxxx (t for trace)
+    session_id: str               # Parent session
+    kind: str                     # See span kinds table
+    actor: str                    # "human" or "model"
+    target: str                   # What was acted on (ID, path, or free text)
+    summary: str                  # Brief description
+    parent_span_id: Optional[str] # For nesting (nullable)
+    seq: int                      # Ordering within session
+    created_at: str               # ISO timestamp
+    metadata: Dict[str, Any]      # Extensible (duration_ms, confidence, etc.)
+@end example
+
+
+@subsection IDs
+
+@itemize @bullet
+@item
+Sessions: @code{sm-s-xxxxx} (s for session)
+@item
+Spans: @code{sm-t-xxxxx} (t for trace)
+@end itemize
+
+Following the existing convention of prefix + type marker +
+5-char alphanumeric (RFC 004: @code{sm-f-xxxxx} for facts).
+
+
+
+@section Storage
+
+
+@subsection JSONL: @code{traces.jsonl}
+
+Append-only, like the other stores. Each line is either a session
+record or a span record, distinguished by the ID prefix (@code{sm-s-}
+vs @code{sm-t-}).
+
+
+@example
+@{"id":"sm-s-abc12","started_at":"2026-02-20T09:00:00Z","mode":"garden","metadata":@{@}@}
+@{"id":"sm-t-def34","session_id":"sm-s-abc12","kind":"retrieve","actor":"model","target":"sm-7k2m4","summary":"Loaded Q4 context","seq":1,"created_at":"2026-02-20T09:00:05Z","metadata":@{@}@}
+@{"id":"sm-t-ghi56","session_id":"sm-s-abc12","kind":"input","actor":"human","target":"sm-7k2m4","summary":"Provided budget figure and timeline","seq":2,"created_at":"2026-02-20T09:01:30Z","metadata":@{@}@}
+@end example
+
+
+@subsection SQLite index additions
+
+
+@example
+CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    started_at TEXT,
+    ended_at TEXT,
+    mode TEXT,
+    summary TEXT,
+    spans_count INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS spans (
+    id TEXT PRIMARY KEY,
+    session_id TEXT,
+    kind TEXT,
+    actor TEXT,
+    target TEXT,
+    summary TEXT,
+    parent_span_id TEXT,
+    seq INTEGER,
+    created_at TEXT,
+    FOREIGN KEY (session_id) REFERENCES sessions(id)
+);
+
+CREATE TABLE IF NOT EXISTS session_refs (
+    session_id TEXT,
+    ref_id TEXT,
+    ref_type TEXT,  -- "task", "decision", "fact"
+    PRIMARY KEY (session_id, ref_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_spans_session ON spans(session_id);
+CREATE INDEX IF NOT EXISTS idx_spans_kind ON spans(kind);
+CREATE INDEX IF NOT EXISTS idx_spans_actor ON spans(actor);
+CREATE INDEX IF NOT EXISTS idx_spans_target ON spans(target);
+CREATE INDEX IF NOT EXISTS idx_session_refs_ref ON session_refs(ref_id);
+@end example
+
+
+@subsection Drift detection
+
+Extends the existing pattern:
+
+
+@example
+Tasks:     JSONL has N, index has M
+Decisions: JSONL has N, index has M
+Facts:     JSONL has N, index has M
+Traces:    JSONL has N sessions + M spans, index has N + M
+@end example
+
+
+@subsection Size management
+
+Traces grow faster than other stores — a productive session
+might generate 50–200 spans. Mitigation:
+
+@enumerate
+@item
+@strong{Compaction.} @code{mem.traces.compact()} deduplicates the JSONL,
+   same as other stores.
+@end enumerate
+
+@enumerate
+@item
+@strong{Summarization.} At session close, generate a session summary
+   and store it on the Session record. Individual spans can be
+   queried when needed but the summary serves most review cases.
+@end enumerate
+
+@enumerate
+@item
+@strong{Archival.} Sessions older than a configurable threshold
+   (default: 90 days) can be archived — their spans are removed
+   from the index, the session record keeps its summary. Span
+   data remains in the JSONL for forensic recovery.
+@end enumerate
+
+
+
+@section API
+
+
+@subsection TracerStore
+
+
+@example
+mem = Memory(".memory", trace=True)
+
+# --- Session lifecycle ---
+
+session = mem.traces.begin(mode="garden")
+
+mem.traces.span(
+    session_id=session.id,
+    kind="retrieve",
+    actor="model",
+    target="sm-7k2m4",
+    summary="Loaded Q4 context and dependencies",
+)
+
+mem.traces.span(
+    session_id=session.id,
+    kind="input",
+    actor="human",
+    target="sm-7k2m4",
+    summary="Provided budget figure: recurring cost",
+)
+
+# Nested spans
+parent = mem.traces.span(
+    session_id=session.id,
+    kind="decide",
+    actor="model",
+    target="qt-abc12",
+    summary="Evaluating framework options",
+)
+mem.traces.span(
+    session_id=session.id,
+    kind="draft",
+    actor="model",
+    target="qt-abc12",
+    summary="Drafted hypothesis: Flask for speed",
+    parent_span_id=parent.id,
+)
+
+mem.traces.end(session.id, summary="Completed Q4, created 2 facts")
+
+# --- Queries ---
+
+session = mem.traces.get_session(session_id)
+spans = mem.traces.spans(session_id)
+spans = mem.traces.spans(session_id, kind="input")
+spans = mem.traces.spans(session_id, actor="human")
+sessions = mem.traces.sessions(since="2026-02-01")
+sessions = mem.traces.sessions(mode="garden")
+
+# Timeline for a single target across sessions
+timeline = mem.traces.timeline(target="sm-7k2m4")
+
+# --- Derived metrics (RFC 003 P4) ---
+
+metrics = mem.traces.metrics(session_id)
+# Returns: @{ momentum: float, reach: float, complementarity: float @}
+
+# --- Maintenance ---
+
+mem.traces.compact()
+mem.traces.archive(older_than_days=90)
+@end example
+
+
+@subsection Metrics derivation
+
+The three metrics from RFC 003 P4 are computed from trace data:
+
+@strong{Momentum.} Average time between consecutive spans, excluding
+gaps longer than a threshold (default: 5 minutes, indicating the
+human stepped away). Measured in seconds per span. Lower is
+faster, but fast is not better — momentum is a flow indicator,
+not a productivity score.
+
+@strong{Reach.} Unique targets referenced across spans, divided by
+total available tasks in the active config. A session that touches
+15 of 49 questions has a reach of 0.31. Cross-references
+(spans where @code{kind=connect}) are weighted higher because they
+represent the integration work that distinguishes collaborative
+answering from isolated answering.
+
+@strong{Complementarity.} Ratio of human-originated spans to
+model-originated spans, reported as a pair. A session with 40%
+human / 60% model is @code{(0.4, 0.6)}. Extreme ratios suggest one
+participant is carrying — the interpretation depends on context
+(a financial section may legitimately need more model retrieval;
+a personal narrative section may be mostly human input).
+
+
+@subsection Integration with synthesis
+
+The synthesis module gains access to trace data:
+
+
+@example
+# Pattern detection across sessions
+patterns = mem.synthesize.session_patterns(since="2026-02-01")
+# "Human corrections cluster around financial questions"
+# "Model retrievals peak at section boundaries"
+
+# Complementarity across sessions
+comp = mem.synthesize.complementarity(session_id)
+# @{ human_ratio: 0.45, model_ratio: 0.55, by_kind: @{...@} @}
+@end example
+
+
+
+@section Session Lifecycle
+
+
+@subsection Automatic instrumentation
+
+When an interactive workflow runs, the tracer starts a session
+automatically. Key events are instrumented at the call sites:
+
+
+@example
+# In the interactive assistant
+session = mem.traces.begin(mode="garden")
+
+# When context is loaded
+mem.traces.span(session.id, "retrieve", "model", task_id,
+                "Loaded context")
+
+# When the human speaks
+mem.traces.span(session.id, "input", "human", task_id,
+                "User provided budget details")
+
+# When the model drafts
+mem.traces.span(session.id, "draft", "model", task_id,
+                "Drafted answer incorporating new data")
+
+# When coherence check runs
+mem.traces.span(session.id, "check", "model", section,
+                "Section coherence check: 2 findings")
+
+# At session end
+mem.traces.end(session.id, summary=model_generated_summary)
+@end example
+
+
+@subsection Manual instrumentation
+
+For users integrating smrti as a library, tracing is opt-in:
+
+
+@example
+mem = Memory(".memory", trace=True)    # Enable tracing
+mem = Memory(".memory", trace=False)   # Disable (default)
+@end example
+
+When tracing is disabled, @code{mem.traces} is a no-op stub. All
+@code{span()} and @code{begin()}/@code{end()} calls succeed silently and
+return None. No performance cost when disabled.
+
+
+
+@section CLI
+
+
+@subsection @code{smrti.py memory traces}
+
+
+@example
+# List recent sessions
+smrti.py memory traces
+#   sm-s-abc12  2026-02-20 09:00  garden  42 spans  "Completed Q4, created 2 facts"
+#   sm-s-def34  2026-02-19 14:30  wood    18 spans  "Answered Q15-Q17 financial section"
+
+# Show spans for a session
+smrti.py memory traces sm-s-abc12
+#   1  09:00:05  model   retrieve  sm-7k2m4   Loaded Q4 context
+#   2  09:01:30  human   input     sm-7k2m4   Provided budget figure
+#   3  09:02:15  model   draft     sm-7k2m4   Drafted answer
+#   ...
+
+# Filter by actor
+smrti.py memory traces sm-s-abc12 --actor human
+
+# Filter by kind
+smrti.py memory traces sm-s-abc12 --kind connect
+
+# Session metrics
+smrti.py memory traces sm-s-abc12 --metrics
+#   momentum:         45s/span
+#   reach:            0.31 (15/49)
+#   complementarity:  0.40 human / 0.60 model
+
+# Timeline for a target across sessions
+smrti.py memory traces --target sm-7k2m4
+@end example
+
+
+
+@section Privacy
+
+
+@subsection What the tracer records
+
+@itemize @bullet
+@item
+@strong{Span summaries} are brief descriptions of what happened,
+  not transcripts. "User provided budget figure" is a span.
+  The actual number lives in the task answer, not the trace.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Actor attribution} records @emph{which} participant, not *what
+  they said*. The trace says "human corrected a fact" — the
+  corrected fact lives in @code{facts.jsonl}.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Timing} (via @code{created_at} on each span) enables momentum
+  calculation. It does not record idle time, keystrokes, or
+  attention metrics. The gap between spans is implicit; the
+  tracer does not interpret it.
+@end itemize
+
+
+@subsection What the tracer does NOT record
+
+@itemize @bullet
+@item
+Raw conversation text
+@item
+Keystrokes, mouse movements, or attention signals
+@item
+Time between spans as an explicit "idle" metric
+@item
+Model confidence scores or token probabilities
+@item
+PII beyond what the user explicitly provides as summaries
+@end itemize
+
+
+@subsection Data locality
+
+Traces follow the same locality rules as the rest of smrti:
+stored in @code{.memory/traces.jsonl}, never transmitted to external
+services. The file may be gitignored in deployments where trace
+data is considered sensitive.
+
+
+
+@section Saṃcaya — Token Accounting
+
+
+@subsection Motivation
+
+The tracer (§Design) records @emph{what happened}. Token accounting
+records @emph{what it cost}. Together they answer: how efficiently
+did the collaboration proceed?
+
+The existing stores and the tracer capture the @emph{shape} of
+work. Token accounting captures the @emph{weight}. Without it, we
+can say "the model drafted 12 answers" but not "at what cost
+in tokens, and how did caching affect that cost?"
+
+
+@subsection Data model: ApiCall
+
+Every Anthropic API call made during a traced session is
+recorded:
+
+
+@example
+@@dataclass
+class ApiCall:
+    id: str                          # sm-a-xxxxx
+    session_id: str                  # links to tracer session
+    span_id: Optional[str]           # links to tracer span
+    task_id: Optional[str]           # what question was being worked on
+    section: Optional[str]           # section grouping
+    condition_id: Optional[str]      # experimental condition (harness mode)
+
+    # From Anthropic usage object
+    input_tokens: int                # prompt tokens (after cache)
+    output_tokens: int               # output tokens (includes thinking)
+    cache_creation_input_tokens: int
+    cache_read_input_tokens: int
+
+    # Derived
+    total_input_tokens: int          # sum of all input categories
+    effective_cost_units: float      # normalized cost (configurable ratios)
+
+    model: str
+    created_at: str
+    seq: int                         # ordering within session
+    metadata: dict
+@end example
+
+
+@subsection IDs
+
+@code{sm-a-xxxxx} (a for api call). Follows the existing convention.
+
+
+@subsection Effective Cost Units (ECU)
+
+Different token types cost differently. ECU normalizes them
+into a single comparable number using configurable ratios:
+
+
+@example
+ECU = (input_tokens × r_input)
+    + (output_tokens × r_output)
+    + (cache_creation_input_tokens × r_cache_create)
+    + (cache_read_input_tokens × r_cache_read)
+@end example
+
+Default ratios (based on Anthropic Sonnet pricing, normalized
+so @code{r_input = 1.0}):
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Token type @tab Default ratio @tab Why
+@item @code{r_input} @tab 1.0 @tab baseline
+@item @code{r_output} @tab 5.0 @tab output costs ~5× input
+@item @code{r_cache_create} @tab 1.25 @tab 25% surcharge over input
+@item @code{r_cache_read} @tab 0.1 @tab 90% discount from input
+@end multitable
+
+
+Ratios are stored in harness config and can be adjusted per
+model. ECU is unit-free — it is a @emph{relative} cost measure for
+comparison across conditions, not an absolute dollar figure.
+
+
+@subsection Storage
+
+@noindent
+@strong{JSONL:} @code{apicalls.jsonl} — append-only, same pattern as
+
+all other stores.
+
+@noindent
+@strong{SQLite index:} 
+
+
+
+@example
+CREATE TABLE IF NOT EXISTS apicalls (
+    id TEXT PRIMARY KEY,
+    session_id TEXT,
+    span_id TEXT,
+    task_id TEXT,
+    section TEXT,
+    condition_id TEXT,
+    input_tokens INTEGER,
+    output_tokens INTEGER,
+    cache_creation_input_tokens INTEGER,
+    cache_read_input_tokens INTEGER,
+    total_input_tokens INTEGER,
+    effective_cost_units REAL,
+    model TEXT,
+    created_at TEXT,
+    seq INTEGER,
+    FOREIGN KEY (session_id) REFERENCES sessions(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_apicalls_session
+    ON apicalls(session_id);
+CREATE INDEX IF NOT EXISTS idx_apicalls_task
+    ON apicalls(task_id);
+CREATE INDEX IF NOT EXISTS idx_apicalls_condition
+    ON apicalls(condition_id);
+CREATE INDEX IF NOT EXISTS idx_apicalls_section
+    ON apicalls(section);
+@end example
+
+
+@subsection Accumulation boundaries
+
+Accumulators are @emph{queries}, not stored objects. Token totals
+are computed on demand via SQL @code{GROUP BY}:
+
+
+@example
+-- Per task
+SELECT task_id, SUM(effective_cost_units) AS ecu,
+       SUM(total_input_tokens) AS input,
+       SUM(output_tokens) AS output
+FROM apicalls WHERE session_id = ? GROUP BY task_id;
+
+-- Per section
+SELECT section, SUM(effective_cost_units) AS ecu
+FROM apicalls WHERE session_id = ? GROUP BY section;
+
+-- Per condition (cross-session, for harness)
+SELECT condition_id, SUM(effective_cost_units) AS ecu,
+       COUNT(*) AS api_calls
+FROM apicalls GROUP BY condition_id;
+@end example
+
+
+@subsection Key design decisions
+
+@itemize @bullet
+@item
+Record at the API call level, accumulate on demand
+@item
+No separate accumulator records — keep storage simple
+@item
+ECU normalizes across token types for fair comparison
+@item
+Opt-in: only active when @code{trace=True} on Memory init
+@item
+No new dependencies: @code{sqlite3} + stdlib only
+@end itemize
+
+
+
+@section Pramāṇa — Measurement Harness
+
+
+@subsection Purpose
+
+A controlled experiment mode for comparing collaboration
+efficiency across memory configurations. The harness runs the
+same question set under different avasthās (conditions) and
+records everything needed for analysis.
+
+
+@subsection Six Avasthās (Experimental Conditions)
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem ID @tab Name @tab Memory configuration
+@item C0 @tab Baseline @tab No smrti — all context in prompt
+@item C1 @tab Procedural @tab Tasks store only
+@item C2 @tab Proc + Episodic @tab Tasks + decisions
+@item C3 @tab All stores @tab Tasks + decisions + facts
+@item C4 @tab + Coherence @tab C3 + cross-answer validation
+@item C5 @tab Full @tab C4 + dependency-aware retrieval
+@end multitable
+
+
+The conditions form an ablation study: each adds one
+capability to the previous. This isolates the marginal
+contribution of each memory type.
+
+
+@subsection InstrumentedClient
+
+A wrapper around the Anthropic client that intercepts API
+responses and records token usage:
+
+
+@example
+class InstrumentedClient:
+    """Wraps anthropic.Client to record token usage."""
+
+    def __init__(self, client, tracer, session_id, condition_id=None):
+        self.client = client
+        self.tracer = tracer
+        self.session_id = session_id
+        self.condition_id = condition_id
+
+    def messages_create(self, **kwargs):
+        response = self.client.messages.create(**kwargs)
+        self.tracer.record_api_call(
+            session_id=self.session_id,
+            usage=response.usage,
+            model=response.model,
+            condition_id=self.condition_id,
+            metadata=@{"task_id": kwargs.get("metadata", @{@}).get("task_id")@},
+        )
+        return response
+@end example
+
+No subclassing, no monkey-patching. The instrumented client
+is composed, not inherited. Consumer code passes it where
+it would pass the raw client.
+
+
+@subsection Harness config
+
+
+@example
+@{
+  "harness": @{
+    "conditions": ["C0", "C1", "C2", "C3", "C4", "C5"],
+    "question_set": "questions_harness.json",
+    "ordering": "fixed",
+    "seed_data": @{
+      "facts": "seed/facts.jsonl",
+      "decisions": "seed/decisions.jsonl"
+    @},
+    "cost_ratios": @{
+      "r_input": 1.0,
+      "r_output": 5.0,
+      "r_cache_create": 1.25,
+      "r_cache_read": 0.1
+    @},
+    "model": "claude-sonnet-4-6",
+    "temperature": 0.0
+  @}
+@}
+@end example
+
+
+@subsection Harness runner
+
+
+@example
+class HarnessRunner:
+    """Runs a question set under a single avasthā."""
+
+    def __init__(self, config, condition_id, memory_path):
+        self.config = config
+        self.condition_id = condition_id
+        self.mem = self._init_memory(condition_id, memory_path)
+
+    def _init_memory(self, condition_id, path):
+        """Configure memory stores per condition."""
+        if condition_id == "C0":
+            return None  # no memory
+        mem = Memory(path, trace=True)
+        # C1: only tasks; C2: tasks + decisions; etc.
+        # Store availability controlled by condition
+        return mem
+
+    def run(self, questions):
+        session = self.mem.traces.begin(
+            mode="wood",
+            metadata=@{"condition": self.condition_id@}
+        )
+        for q in questions:
+            self._answer_question(session, q)
+        self.mem.traces.end(session.id)
+@end example
+
+
+@subsection Key constraint
+
+No new dependencies. Pure Python + stdlib + sqlite3. The
+harness is part of smrti, not a separate tool.
+
+
+
+@section Vivecana — Export and Analysis
+
+
+@subsection Purpose
+
+Export trace and token data in analysis-ready formats for
+pandas, R, or any statistics tool.
+
+
+@subsection Export formats
+
+@noindent
+@strong{CSV:} One row per API call, with session, task, section,
+
+condition, and all token fields. Ready for @code{pd.read_csv()}.
+
+
+@example
+api_call_id,session_id,condition_id,task_id,section,input_tokens,output_tokens,cache_creation,cache_read,total_input,ecu,model,created_at
+sm-a-abc12,sm-s-def34,C3,sm-7k2m4,financial,1200,450,0,800,2000,3650.0,claude-sonnet-4-6,2026-02-21T10:00:00Z
+@end example
+
+@noindent
+@strong{JSON:} Nested structure with session-level summaries and
+
+per-task breakdowns. For programmatic consumption.
+
+
+@example
+@{
+  "export_version": "1.0",
+  "conditions": @{
+    "C3": @{
+      "sessions": 3,
+      "total_ecu": 45200.0,
+      "total_api_calls": 127,
+      "tasks": @{
+        "sm-7k2m4": @{
+          "ecu": 3650.0,
+          "api_calls": 8,
+          "quality_score": null
+        @}
+      @}
+    @}
+  @}
+@}
+@end example
+
+
+@subsection CLI
+
+
+@example
+# Export all trace + token data as CSV
+smrti.py harness export --format csv > results.csv
+
+# Export summaries per condition
+smrti.py harness export --format json --summary > summary.json
+
+# Export a single session
+smrti.py harness export --session sm-s-abc12 --format csv
+@end example
+
+
+@subsection Quality scores
+
+Quality is assessed externally (human rater, blind to
+condition) and merged into the export:
+
+
+@example
+# Import quality scores from a rubric file
+smrti.py harness quality-import rubric_scores.csv
+
+# rubric_scores.csv format:
+# task_id,condition_id,completeness,specificity,coherence,actionability,integration
+# sm-7k2m4,C3,4,5,3,4,5
+@end example
+
+Once imported, artha (ECU per quality-point) can be computed.
+
+
+
+@section Artha — Economy Metric
+
+
+@subsection The fourth dimension
+
+RFC 003 P4 proposed three session metrics: momentum, reach,
+and complementarity. Token accounting enables a fourth:
+
+@strong{Economy (artha).} ECU per quality-point — how many
+effective cost units does it take to produce one unit of
+assessed quality?
+
+
+@example
+artha = total_ecu / mean_quality_score
+@end example
+
+Lower artha means more efficient collaboration: less token
+spend per unit of quality. The metric is meaningful only when
+comparing across conditions with the same question set and
+quality rubric.
+
+
+@subsection Interpretation
+
+
+@multitable @columnfractions 0.50 0.50
+@headitem artha @tab Interpretation
+@item Low, stable @tab Efficient collaboration. Memory is working.
+@item High, declining across conditions @tab Memory is reducing cost progressively.
+@item Low C0, rising with memory @tab Memory adds overhead without quality gain.
+@item High everywhere @tab Hard question set or inefficient model usage.
+@end multitable
+
+
+Artha is not a standalone score. It is comparative — it
+answers: *does adding this memory capability improve the
+cost-quality ratio?*
+
+
+@subsection The four dimensions together
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Metric @tab Question it answers @tab Source
+@item Momentum @tab How fast is the session flowing? @tab Span timestamps
+@item Reach @tab How much of the question set was touched? @tab Span targets
+@item Complementarity @tab Who contributed what? @tab Span actors
+@item Economy (artha) @tab How efficient is the collaboration? @tab Token accounting + quality rubric
+@end multitable
+
+
+
+
+@section Research Protocol
+
+
+@subsection Quality rubric
+
+Five dimensions, each scored 1–5 by a human rater blind to
+experimental condition:
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Dimension @tab 1 (low) @tab 5 (high)
+@item Completeness @tab Major gaps @tab All parts addressed
+@item Specificity @tab Generic, no details @tab Concrete numbers, dates, examples
+@item Coherence @tab Contradicts other answers @tab Consistent across section
+@item Actionability @tab Vague intentions @tab Clear next steps
+@item Integration @tab Ignores related questions @tab References and builds on related answers
+@end multitable
+
+
+Mean quality score = arithmetic mean of the five dimensions.
+
+
+@subsection Statistical plan
+
+@itemize @bullet
+@item
+@strong{Primary comparison:} ECU across C0–C5 for the same
+  question set
+@item
+@strong{Secondary comparison:} Quality scores across conditions
+@item
+@strong{Derived:} Artha (ECU/quality) across conditions
+@item
+@strong{Minimum sessions:} 3 per condition (18 total) for
+  variance estimation
+@item
+@strong{Analysis:} Paired comparison (same questions across
+  conditions eliminates question-difficulty confound)
+@item
+@strong{Reporting:} Effect sizes with confidence intervals;
+  no p-value thresholds without pre-registration
+@end itemize
+
+
+@subsection Threats to validity
+
+@itemize @bullet
+@item
+@strong{Internal:} Model behavior may vary across runs even at
+  temperature 0 (sampling is not fully deterministic)
+@item
+@strong{Construct:} ECU is a proxy for cost, not actual cost
+  (ratios are approximate)
+@item
+@strong{External:} Results from one question set / one domain
+  may not generalize
+@item
+@strong{Rater bias:} Single rater introduces subjectivity;
+  mitigated by blind-to-condition scoring
+@end itemize
+
+
+
+@section Sanskrit Lexicon
+
+Terms used in this RFC and their philosophical grounding:
+
+
+@multitable @columnfractions 0.25 0.25 0.25 0.25
+@headitem Sanskrit @tab Devanagari @tab Meaning @tab Maps to
+@item kartā @tab कर्तृ @tab the doer, agent @tab Actor (human or model)
+@item kriyā @tab क्रिया @tab the act, deed @tab Span (unit of work)
+@item sākṣin @tab साक्षिन् @tab the witness @tab Tracer itself
+@item saṃcaya @tab संचय @tab accumulation, gathering @tab Token accumulator
+@item pramāṇa @tab प्रमाण @tab valid means of knowledge @tab Measurement harness
+@item artha @tab अर्थ @tab purpose, economy @tab Economy metric (ECU/quality)
+@item satra @tab सत्र @tab session, prolonged ceremony @tab Session
+@item avasthā @tab अवस्था @tab state, condition @tab Experimental condition
+@item vivecana @tab विवेचन @tab discernment, analysis @tab Export/analysis
+@item pratītya @tab प्रतीत्य @tab in dependence on @tab Interbeing (co-arising)
+@item sahaja @tab सहज @tab co-born, arising together @tab Interbeing (short form)
+@end multitable
+
+
+The naming follows Advaita Vedānta's analysis of action
+(kartā–kriyā–sākṣin) and Indian epistemology's theory of
+valid knowledge (pramāṇa). See @code{docs/papers/bibliography.bib}
+entries @code{deutsch1969advaita} and @code{mohanty2000classical}.
+
+
+
+@section Implementation Path
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Phase @tab Work @tab Touches
+@item 1 @tab @code{Span} and @code{Session} dataclasses @tab @code{memory/models.py}
+@item 2 @tab @code{TracerStore} with begin/span/end/query @tab @code{memory/traces.py} (new)
+@item 3 @tab JSONL + SQLite storage for traces @tab @code{memory/storage.py}
+@item 4 @tab @code{Memory.__init__} gains @code{trace=} flag, wires TracerStore @tab @code{memory/__init__.py}
+@item 5 @tab CLI: @code{smrti.py memory traces} @tab @code{smrti.py}
+@item 6 @tab Metrics derivation (momentum, reach, complementarity) @tab @code{memory/traces.py}
+@item 7 @tab @code{ApiCall} dataclass and saṃcaya storage @tab @code{memory/models.py}, @code{memory/traces.py}
+@item 8 @tab @code{InstrumentedClient} wrapper @tab @code{memory/instrument.py} (new)
+@item 9 @tab ECU computation and accumulation queries @tab @code{memory/traces.py}
+@item 10 @tab Pramāṇa harness runner and config @tab @code{memory/harness.py} (new)
+@item 11 @tab Vivecana export (CSV/JSON) and quality import @tab @code{memory/export.py} (new), @code{smrti.py}
+@item 12 @tab Synthesis integration (session_patterns, complementarity) @tab @code{memory/synthesis.py}
+@item 13 @tab Archival and compaction @tab @code{memory/traces.py}
+@item 14 @tab Instrument interactive workflows @tab consumer code (not in library)
+@end multitable
+
+
+Phases 1–5 are the tracer MVP. Phases 6 adds session metrics.
+Phases 7–9 add token accounting (saṃcaya). Phases 10–11 add
+the measurement harness (pramāṇa) and export (vivecana).
+Phases 12–13 are refinements. Phase 14 is consumer-side.
+
+
+
+@section Alternatives Considered
+
+
+@subsection A1: OpenTelemetry-based tracing
+
+Rejected. OpenTelemetry is designed for distributed systems
+with network hops, sampling rates, and collector infrastructure.
+smrti traces are local, append-only, and human-readable. The
+conceptual model (spans, nesting) is borrowed; the implementation
+is not.
+
+
+@subsection A2: Traces as task metadata
+
+Rejected. Stuffing span data into task @code{metadata} fields would
+couple trace granularity to task granularity. A single question
+might generate 20 spans across retrieval, drafting, correction,
+and finalization. This is too much for a metadata dict and loses
+the temporal ordering that makes traces useful.
+
+
+@subsection A3: Separate JSONL per session
+
+Considered. One file per session (e.g., @code{traces/sm-s-abc12.jsonl})
+would make archival trivial — delete the file. But it breaks the
+single-file pattern that makes @code{git diff} and drift detection
+simple. A single @code{traces.jsonl} with archival via index removal
+preserves the pattern.
+
+
+@subsection A4: No tracer — derive process from diffs
+
+Considered. In theory, you could reconstruct a session by looking
+at git diffs on the JSONL files: what tasks changed, what decisions
+were created, what facts were added. In practice, this misses
+everything that @emph{didn't} result in a write: retrievals that informed
+thinking, corrections that were verbal, redirections that changed
+approach. The interesting part of a session is often what was
+considered but not persisted.
+
+
+
+@section Trade-offs Accepted
+
+@itemize @bullet
+@item
+@strong{Write amplification.} Every interesting event in a session
+  becomes a JSONL append. A 50-question session might generate
+  200+ spans plus the session record. Acceptable because JSONL
+  appends are cheap (no seek, no lock) and compaction handles
+  deduplication from updates.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Summary subjectivity.} Session summaries and span descriptions
+  are model-generated. They are the model's perspective on what
+  happened, not ground truth. This parallels the contribution
+  tagging trade-off from RFC 003: the purpose is reflection,
+  not measurement.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{Opt-in default.} Tracing is off by default (@code{trace=False}).
+  Users who don't know about tracing don't get it. The alternative
+  — on by default — would generate JSONL data that confuses users
+  who haven't read this RFC. Opt-in is the safer default; it can
+  be flipped once the feature is proven.
+@end itemize
+
+@itemize @bullet
+@item
+@strong{No real-time dashboard.} The tracer records events after the
+  fact. There is no live span viewer. The value is in post-session
+  review, not live monitoring.
+@end itemize
+
+
+
+@section Open Questions
+
+@enumerate
+@item
+@strong{Span granularity.} How fine-grained should automatic
+   instrumentation be? Every tool call? Every paragraph drafted?
+   Every fact retrieved? The answer probably depends on the
+   consumer — the library should make it easy to emit spans at
+   any granularity and let the consumer decide.
+@end enumerate
+
+@enumerate
+@item
+@strong{Cross-session spans.} If a task is worked on across three
+   sessions, should there be a way to trace the full history of
+   that task across sessions? The @code{target} field enables this
+   (query all spans where @code{target=sm-7k2m4}), but a dedicated
+   @code{timeline()} query is proposed above. Is it sufficient?
+@end enumerate
+
+@enumerate
+@item
+@strong{Trace export format.} Should traces be exportable to a
+   standard format (Chrome trace JSON, Perfetto) for
+   visualization? Interesting but not MVP.
+@end enumerate
+
+@enumerate
+@item
+@strong{Human span recording.} How does the human's contribution
+   get recorded? In the queen's garden (continuous conversation),
+   the model observes human input and can emit spans. In the wood
+   (separate sessions), human input may not be visible to the
+   tracer. This may require explicit human span calls in some
+   workflows.
+@end enumerate
+
+@enumerate
+@item
+@strong{Archival threshold.} 90 days is arbitrary. Should archival
+   be configurable per deployment? Should it be based on span
+   count rather than time? Both?
+@end enumerate
+
+
+
+@section References
+
+Internal:
+@itemize @bullet
+@item
+RFC 002: Memory Layer Specification
+@item
+RFC 003: Recursive Context and Complementary Cognition
+@item
+RFC 004: smrti — Rename and Typed Memory
+@end itemize
+
+Memory systems:
+@itemize @bullet
+@item
+Patel, D. & Patel, S. (2026). ENGRAM: Typed memory stores.
+  arXiv:2511.12960.
+@item
+Mem0 Team (2025). Mem0: Production-ready AI agents with
+  long-term memory. arXiv:2504.19413.
+@item
+Packer et al. (2024). MemGPT: LLMs as operating systems.
+  arXiv:2310.08560.
+@end itemize
+
+Token efficiency:
+@itemize @bullet
+@item
+Han et al. (2025). TALE: Token-budget-aware reasoning.
+  arXiv:2502.07404.
+@item
+Anthropic (2024). Prompt caching with Claude.
+  docs.anthropic.com.
+@end itemize
+
+Complementarity:
+@itemize @bullet
+@item
+Hemmer et al. (2024). Complementary team performance.
+  ACM Computing Surveys.
+@item
+Vaccaro et al. (2024). When combinations of humans and AI
+  are useful. Nature Human Behaviour.
+@end itemize
+
+Philosophical grounding:
+@itemize @bullet
+@item
+Deutsch, E. (1969). Advaita Vedānta: A Philosophical
+  Reconstruction. (sākṣin, kartā, kriyā)
+@item
+Mohanty, J.N. (2000). Classical Indian Philosophy.
+  (pramāṇa theory)
+@item
+Hanh, T.N. (1998). Interbeing. (pratītyasamutpāda)
+@end itemize
+
+Infrastructure (conceptual inspiration, not adopted):
+@itemize @bullet
+@item
+OpenTelemetry Specification: opentelemetry.io/docs/specs/otel/
+@end itemize
+
+Full bibliography: @code{docs/papers/bibliography.bib}
+
+
+*"The witness is not the actor. It is that which remains when
+the acting stops — the unchanging light by which the changes
+are seen."*
+
+*This RFC proposes a witness for collaborative cognition. Not
+to judge the process — to remember it.*
+
+
+
+@node RFC 013
+@chapter RFC 013: smṛti-bench — Rationale and Design
+
+
+@noindent
+@strong{Status:} Implemented
+
+@noindent
+@strong{Author:} Aaron Johnson
+
+@noindent
+@strong{Created:} 2026-03-18
+
+@noindent
+@strong{Parent:} @strong{RFC 004}
+
+
+
+@section Purpose
+
+Document why smṛti-bench exists, what it measures, and how the
+scoring system works.
+
+
+
+@section Problem
+
+AI agents start every session from zero. They can read the codebase,
+but they have no record of decisions made, rationale behind choices,
+task status, or deferred work. When asked "why did we choose
+Supabase?", an agent without memory either admits ignorance or
+hallucinates a plausible answer.
+
+smrti gives agents persistent structured memory via MCP. But
+"persistent memory" is only valuable if it actually improves
+responses. smṛti-bench measures whether it does.
+
+
+@section What we test
+
+The bench runs a battery of 6 prompts against a seeded fixture —
+a fake Flutter project ("trellis") with facts, decisions, and tasks
+stored across smrti's three typed stores.
+
+Each prompt targets a different memory capability:
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem Prompt @tab Tests @tab Store exercised
+@item PROMPT_01 @tab Fact recall (project name, language) @tab Semantic (facts)
+@item PROMPT_02 @tab Decision rationale (why Supabase over Firebase) @tab Episodic (decisions)
+@item PROMPT_03 @tab Task status (what's open vs closed) @tab Procedural (tasks)
+@item PROMPT_04 @tab Coherence (consistent with prior decisions) @tab Episodic (decisions)
+@item PROMPT_05 @tab Deferred recall (why offline sync was deferred) @tab Episodic (decisions)
+@item PROMPT_06 @tab Hallucination trap (ORM not in memory) @tab Absence detection
+@end multitable
+
+
+
+@section Two arms
+
+@strong{Baseline} — agent runs in an empty directory with no memory tools.
+Correct behavior: admit ignorance. Pass = no hallucination.
+
+@strong{smrti} — agent has MCP tools connected to the seeded fixture.
+Correct behavior: query memory stores and answer accurately.
+Pass = expected keywords present, no traps triggered.
+
+
+@section Three platforms
+
+The same battery runs against Claude Code, Gemini (API), and
+Antigravity. This tests whether the MCP memory layer works
+across different agent platforms, not just one.
+
+
+@section Scoring: ASP (Answer Set Programming)
+
+Python extracts text predicates from each response (keyword
+presence, ignorance signals, assertion phrases). Clingo
+evaluates declarative rules to derive grades.
+
+Three rule sets:
+
+
+@multitable @columnfractions 0.33 0.33 0.33
+@headitem File @tab Scope @tab Purpose
+@item @code{scoring.lp} @tab Per-prompt @tab Grade derivation + integrity constraints
+@item @code{coherence.lp} @tab Per-run (all prompts) @tab Cross-prompt consistency checks
+@item @code{regression.lp} @tab Cross-run @tab Detect regressions between consecutive runs
+@end multitable
+
+
+
+@subsection Why ASP over Python
+
+The grading logic involves negation ("pass if NOT missing keywords
+AND NOT trap triggered AND NOT error"), excuse chains ("hallucination
+is excused IF admits ignorance AND no assertions"), and cross-prompt
+reasoning ("contradiction if pass on P1 but fail on P2"). These are
+natural in ASP and awkward in imperative code. The @code{.lp} files also
+serve as a readable specification of what "correct" means.
+
+
+@section Fixture design
+
+The fixture is intentionally non-trivial:
+
+@itemize @bullet
+@item
+Architecture answers (PROMPT_02, PROMPT_04) live @strong{only} in the
+  decisions store — not duplicated in facts. The agent must use
+  @code{decision_list} / @code{decision_get}, not just @code{fact_search}.
+@item
+The deferral rationale (PROMPT_05) lives in a decision with no
+  explicit @code{task_id} link. The task (PROMPT_03) says "deferred to v0.3"
+  but not why. Full answer requires cross-store synthesis.
+@item
+Noise facts (team conventions, MVP timeline, rate limiting) and
+  a noise task (analytics evaluation) test filtering.
+@item
+PROMPT_06 tests absence — the ORM fact is intentionally missing.
+  Naming any ORM is a hallucination failure.
+@end itemize
+
+
+@section What success looks like
+
+@itemize @bullet
+@item
+Baseline: 6/6 PASS (never hallucinates project-specific content)
+@item
+smrti: 6/6 PASS (recalls accurately from all three stores)
+@item
+No coherence warnings (consistent across related prompts)
+@item
+No regressions between runs
+@end itemize
+
+
+@section Future work
+
+@itemize @bullet
+@item
+@strong{Weighted run scores} — @code{#minimize} to rank runs by quality
+  when the prompt battery grows beyond 6
+@item
+@strong{UNSURE decomposition} — choice rules to classify ambiguous
+  responses instead of a catch-all grade
+@end itemize
+
+
+
+@node RFC 017
+@chapter RFC 017: Multilingual Grounding Fidelity
+
+
+@noindent
+@strong{Status:} Hypothesis
+
+@noindent
+@strong{Author:} Aaron Johnson
+
+@noindent
+@strong{Created:} 2026-03-18
+
+@noindent
+@strong{Parent:} @strong{RFC 013}
+
+
+
+@section Hypothesis
+
+Grounding fidelity — the degree to which an agent's responses are
+faithfully attributed to structured memory — varies by human language
+for the same model. Models may be more prone to unattributed
+assertions in languages with less training data.
+
+
+@section Background
+
+RFC 013 established smṛti-bench and the five-level grounding fidelity
+spectrum:
+
+@enumerate
+@item
+@strong{Grounded recall} — answers from memory (PASS)
+@item
+@strong{Grounded absence} — correctly says "not in memory" (PASS)
+@item
+@strong{Helpful elaboration} — general knowledge, disclaimed (PASS)
+@item
+@strong{Unattributed assertion} — project claim without source (FAIL)
+@item
+@strong{Confabulation} — invented project history (FAIL)
+@end enumerate
+
+The current scorer uses English phrase lists to classify agent
+behavior on this spectrum. The ASP rules that derive grades from
+those classifications are language-independent.
+
+
+@section Key Insight
+
+The architecture separates @strong{perception} (Python phrase extraction)
+from @strong{judgement} (ASP rules). This separation is validated by the
+multilingual case: the judgement logic (@code{scoring.lp}, @code{coherence.lp},
+@code{regression.lp}) doesn't change across languages. Only the perception
+layer needs locale-specific variants.
+
+
+@section What Would Change
+
+@strong{Locale-specific phrase lists} (Python):
+
+
+@example
+# English (existing)
+MEMORY_CITATION_PHRASES = ["according to memory", "decision qt-", ...]
+GENERAL_KNOWLEDGE_PHRASES = ["common choices", "typically", ...]
+
+# Japanese (new)
+MEMORY_CITATION_PHRASES_JA = ["メモリによると", "decision qt-", ...]
+GENERAL_KNOWLEDGE_PHRASES_JA = ["一般的には", "よく使われるのは", ...]
+@end example
+
+@strong{Translated fixture and prompts} — the "trellis" project scenario
+and 6-prompt battery in the target language.
+
+@strong{ASP rules} — no changes.
+
+
+@section What Would Not Change
+
+@itemize @bullet
+@item
+@code{scoring.lp} — grade derivation, integrity constraints, attribution rules
+@item
+@code{coherence.lp} — cross-prompt consistency checks
+@item
+@code{regression.lp} — cross-run comparison
+@item
+The grounding fidelity spectrum itself
+@end itemize
+
+
+@section Open Questions
+
+@itemize @bullet
+@item
+Which languages first? Japanese (日本語) is the initial candidate.
+@item
+Do we test the same models, or include models with stronger
+  non-English training (e.g., Japanese-specialized models)?
+@item
+Is the five-level spectrum sufficient, or do some languages
+  have discourse patterns that don't map cleanly?
+@item
+How do we handle mixed-language responses (code-switching)?
+@end itemize
+
+
+@section Implications
+
+If grounding fidelity varies by language, this affects which models
+are safe to deploy with structured memory in non-English contexts.
+A model that correctly attributes in English but confabulates in
+Japanese would need different guardrails per locale.
+
+
+@bye
