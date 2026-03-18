@@ -93,6 +93,19 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Only commit if Gemini produced at least one actual response
+          # (not all errors from MCP failures)
+          LATEST=$(ls -t bench/results/gemini_*.json 2>/dev/null | head -1)
+          if [ -z "$LATEST" ]; then
+            echo "No Gemini result file found."
+            exit 0
+          fi
+          RESPONSES=$(jq '[.results[] | select(.response != null)] | length' "$LATEST")
+          if [ "$RESPONSES" -eq 0 ]; then
+            echo "Gemini run produced 0 responses (all errors). Skipping commit."
+            exit 0
+          fi
+
           git add bench/results/
           if git diff --staged --quiet; then
             echo "No changes to commit."
