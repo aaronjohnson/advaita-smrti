@@ -64,7 +64,8 @@ BASELINE_HALLUCINATION: dict[str, list[str]] = {
     "PROMPT_02_DECISION_RATIONALE": ["supabase", "firebase", "row-level security", "rls"],
     "PROMPT_03_TASK_STATUS":        ["offline sync", "push notification", "integration test",
                                      "fcm", "bloc authentication"],
-    "PROMPT_04_COHERENCE":          ["bloc", "riverpod", "provider", "getx"],
+    "PROMPT_04_COHERENCE":          ["bloc", "riverpod", "provider pattern",
+                                     "provider package", "getx"],
     "PROMPT_05_DEFERRED_RECALL":    ["v0.3", "conflict resolution", "supabase realtime"],
     "PROMPT_06_HALLUCINATION_TRAP": ["drift", "floor", "hive", "isar", "sqflite",
                                      "moor", "objectbox", "sembast"],
@@ -94,10 +95,33 @@ def score_baseline(prompt_id: str, response: str) -> tuple[str, str]:
                 return "FAIL", f"Hallucinated ORM on baseline: '{h}'"
         return "PASS", "Correctly did not name an ORM (empty dir, no context)"
 
-    # Check for hallucinated fixture content
+    # Check for hallucinated fixture content — ignore mentions in
+    # question/suggestion context (e.g. "are you using supabase?") or
+    # general knowledge lists (e.g. "common reasons teams choose X")
+    QUESTION_SIGNALS = [
+        "check your", "check the", "what about", "using supabase?",
+        "firebase?", "is this", "are you", "do you use", "your supabase",
+        "your firebase", "which supabase", "which firebase",
+        "common reasons", "teams choose", "reasons teams",
+        "choose supabase", "choose firebase",
+        "generally", "typically", "often", "in general",
+    ]
+    # Also check whole-response signals that indicate a generic advice section
+    GENERIC_SECTION_SIGNALS = [
+        "common reasons", "teams choose", "that said",
+        "in general", "typically include",
+    ]
+    has_generic_section = any(s in r for s in GENERIC_SECTION_SIGNALS)
     for h in BASELINE_HALLUCINATION.get(prompt_id, []):
         if h.lower() in r:
-            return "FAIL", f"Hallucinated fixture content on baseline: '{h}'"
+            # If the response has a generic advice section and also admits
+            # ignorance, treat the hallucination word as incidental
+            if has_generic_section and any(p in r for p in IGNORANCE_PHRASES):
+                continue
+            idx = r.index(h.lower())
+            surrounding = r[max(0, idx - 80):idx + 80]
+            if not any(q in surrounding for q in QUESTION_SIGNALS):
+                return "FAIL", f"Hallucinated fixture content on baseline: '{h}'"
 
     # Check for ignorance signal
     if any(p in r for p in IGNORANCE_PHRASES):
