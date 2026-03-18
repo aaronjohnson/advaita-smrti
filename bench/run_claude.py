@@ -91,13 +91,13 @@ def run_claude_headless(
     return result.stdout.strip()
 
 
-def build_mcp_config(fixture_memory_dir: Path) -> dict:
-    """Generate mcp_config.json pointing smṛti at the fixture .memory/."""
+def build_mcp_config() -> dict:
+    """Generate mcp_config.json for smṛti (finds .memory/ in cwd via symlink)."""
     return {
         "mcpServers": {
             "advaita-smrti": {
                 "command": "smrti-mcp",
-                "args": ["--profile", "coding", "--memory-dir", str(fixture_memory_dir)],
+                "args": [],
             }
         }
     }
@@ -135,11 +135,14 @@ def main():
     print(f"Isolated run dir: {run_dir}")
 
     if args.arm == "smrti":
+        # Symlink fixture into run_dir so smrti-mcp finds .memory/ at default path
+        memory_link = run_dir / ".memory"
+        memory_link.symlink_to(FIXTURE_DIR.resolve())
+        print(f"smṛti arm: .memory → {FIXTURE_DIR} (symlink)")
         mcp_config_path = run_dir / "mcp_config.json"
-        mcp_config = build_mcp_config(FIXTURE_DIR)   # absolute path, in-place
+        mcp_config = build_mcp_config()
         mcp_config_path.write_text(json.dumps(mcp_config, indent=2))
         print(f"smṛti arm: MCP config → {mcp_config_path}")
-        print(f"smṛti arm: fixture    → {FIXTURE_DIR}")
 
     try:
         for p in prompts:
