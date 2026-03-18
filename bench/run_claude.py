@@ -61,9 +61,20 @@ def parse_battery(prompts_file: Path) -> list[dict]:
     return prompts
 
 
-def run_claude_headless(prompt: str, mcp_config: Path | None = None) -> str:
-    """Run a single prompt through claude CLI in headless mode."""
-    cmd = ["claude", "--print"]
+def run_claude_headless(
+    prompt: str,
+    mcp_config: Path | None = None,
+    run_dir: Path | None = None,
+) -> str:
+    """
+    Run a single prompt through claude CLI in headless mode.
+
+    run_dir: working directory for the claude process. Should be an isolated
+    temp dir containing only the fixture .memory/ so Claude does not read
+    the real project codebase and answer about it instead of the fixture.
+    """
+    MODEL = "claude-sonnet-4-6"
+    cmd = ["claude", "--print", "--model", MODEL]
     if mcp_config:
         cmd += ["--mcp-config", str(mcp_config)]
     cmd += ["-p", prompt]
@@ -72,7 +83,8 @@ def run_claude_headless(prompt: str, mcp_config: Path | None = None) -> str:
         cmd,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,  # MCP arm can be slow — 5 min ceiling
+        cwd=str(run_dir) if run_dir else None,
     )
     if result.returncode != 0:
         raise RuntimeError(f"claude CLI error: {result.stderr}")
@@ -116,19 +128,29 @@ def main():
     mcp_config_path = None
     tmp_dir = None
 
+    # Run from an empty temp dir so Claude has no codebase to read.
+    # The MCP server points at the fixture by absolute path — no copy needed.
+    tmp_dir = tempfile.mkdtemp(prefix="smrti-bench-")
+    run_dir = Path(tmp_dir)
+    print(f"Isolated run dir: {run_dir}")
+
     if args.arm == "smrti":
-        tmp_dir = tempfile.mkdtemp(prefix="smrti-bench-")
-        mcp_config_path = Path(tmp_dir) / "mcp_config.json"
-        mcp_config = build_mcp_config(FIXTURE_DIR)
+        mcp_config_path = run_dir / "mcp_config.json"
+        mcp_config = build_mcp_config(FIXTURE_DIR)   # absolute path, in-place
         mcp_config_path.write_text(json.dumps(mcp_config, indent=2))
-        print(f"smṛti arm: MCP config written to {mcp_config_path}")
+        print(f"smṛti arm: MCP config → {mcp_config_path}")
+        print(f"smṛti arm: fixture    → {FIXTURE_DIR}")
 
     try:
         for p in prompts:
             print(f"  Running {p['id']}...", end=" ", flush=True)
             t0 = time.monotonic()
             try:
-                response = run_claude_headless(p["text"], mcp_config=mcp_config_path)
+                response = run_claude_headless(
+                    p["text"],
+                    mcp_config=mcp_config_path,
+                    run_dir=run_dir,
+                )
                 elapsed = time.monotonic() - t0
                 print(f"OK ({elapsed:.1f}s)")
                 results.append(
@@ -157,8 +179,7 @@ def main():
                     }
                 )
     finally:
-        if tmp_dir:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
     args.out.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -167,6 +188,7 @@ def main():
         json.dumps(
             {
                 "platform": "claude_code",
+                "model": "claude-sonnet-4-6",
                 "arm": args.arm,
                 "timestamp": ts,
                 "fixture": str(FIXTURE_DIR),

@@ -37,10 +37,13 @@ err()  { echo -e "${RED}✗${NC} $*"; }
 ARM=""
 SCORE_ONLY=false
 
+AUTO_COMMIT=false
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --arm)        ARM="$2"; shift 2 ;;
     --score-only) SCORE_ONLY=true;  shift ;;
+    --yes|-y)     AUTO_COMMIT=true;  shift ;;
     *)            err "Unknown argument: $1"; exit 1 ;;
   esac
 done
@@ -101,14 +104,19 @@ fi
 # ── Score ─────────────────────────────────────────────────────────────────────
 echo ""
 echo "── Scoring all results ──────────────────────────────────────────────────"
-python3 "$SCORE" "$RESULTS_DIR" --format markdown | tee "$RESULTS_DIR/SCORES_local.md"
+python3 "$SCORE" "$RESULTS_DIR" --format markdown > "$RESULTS_DIR/SCORES_local.md"
+cat "$RESULTS_DIR/SCORES_local.md"
 python3 "$SCORE" "$RESULTS_DIR" --format json > "$RESULTS_DIR/scores_local.json"
 ok "Scores written to bench/results/SCORES_local.md"
 
 # ── Offer to commit ───────────────────────────────────────────────────────────
 echo ""
 echo "── Commit results? ──────────────────────────────────────────────────────"
-read -rp "Commit and push bench/results/ to origin/sutra? [y/N] " confirm
+if $AUTO_COMMIT; then
+  confirm="y"
+else
+  read -rp "Commit and push bench/results/ to origin/sutra? [y/N] " confirm </dev/tty
+fi
 if [[ "$confirm" =~ ^[Yy]$ ]]; then
   cd "$REPO_ROOT"
   git add bench/results/

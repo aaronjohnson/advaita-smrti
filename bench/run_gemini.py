@@ -124,8 +124,9 @@ async def run_with_gemini(
                 }
                 gemini_tools.append(fn_decl)
 
+            MODEL = "gemini-3-pro"
             model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",   # use available model; swap for gemini-3-pro when accessible
+                model_name=MODEL,
                 system_instruction=SYSTEM_INSTRUCTION,
                 tools=[{"function_declarations": gemini_tools}] if gemini_tools else [],
             )
@@ -242,6 +243,7 @@ def main():
         json.dumps(
             {
                 "platform": "gemini_api",
+                "model": "gemini-3-pro",
                 "arm": "smrti",
                 "timestamp": ts,
                 "fixture": str(FIXTURE_DIR),
