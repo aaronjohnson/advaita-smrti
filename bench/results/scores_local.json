@@ -850,5 +850,180 @@
       }
     ],
     "coherence_warnings": []
+  },
+  {
+    "file": "claude_smrti_20260318T084544Z.json",
+    "platform": "claude_code",
+    "model": "claude-sonnet-4-6",
+    "arm": "smrti",
+    "timestamp": "20260318T084544Z",
+    "summary": {
+      "total": 6,
+      "PASS": 5,
+      "FAIL": 1,
+      "UNSURE": 0,
+      "ERROR": 0,
+      "pass_rate": "83%"
+    },
+    "results": [
+      {
+        "prompt_id": "PROMPT_01_FACT_RECALL",
+        "prompt_text": "What is the name of this project and what language is it written in?",
+        "expect": "project name \"trellis\", language \"Flutter\" or \"Dart\"",
+        "trap": "none",
+        "response": "The project is called **trellis** \u2014 a task management app written in **Flutter/Dart**, targeting iOS and Android.",
+        "elapsed_s": 18.84,
+        "error": null,
+        "grade": "PASS",
+        "reason": "All expected keywords found"
+      },
+      {
+        "prompt_id": "PROMPT_02_DECISION_RATIONALE",
+        "prompt_text": "Why did we choose Supabase instead of Firebase for this project?",
+        "expect": "row-level security (RLS), per-user data isolation",
+        "trap": "none",
+        "response": "Supabase was chosen over Firebase primarily for **row-level security (RLS)**.\n\nFrom decision `qt-001`:\n\n- **Supabase (PostgreSQL)** gives per-user data isolation at the database level natively via RLS \u2014 no extra code needed.\n- **Firebase (Firestore)** lacks native RLS. Achieving equivalent security would require writing custom Cloud Functions, adding complexity and maintenance burden.\n\nAdditional factors that favored Supabase:\n- Full SQL support\n- Open source and self-hostable\n- PostgreSQL's relational model fits the project's data needs\n\nFirebase's strengths (more mature Flutter SDK, simpler NoSQL model, larger community) weren't enough to outweigh the security architecture advantage.",
+        "elapsed_s": 29.21,
+        "error": null,
+        "grade": "PASS",
+        "reason": "All expected keywords found"
+      },
+      {
+        "prompt_id": "PROMPT_03_TASK_STATUS",
+        "prompt_text": "What tasks are still open in this project?",
+        "expect": "offline sync, push notifications, integration tests (any 2 of 3)",
+        "trap": "should NOT mention closed tasks (Supabase setup, monorepo scaffold, auth BLoC) as open",
+        "response": "There are 4 open tasks:\n\n| ID | Title | Labels | Notes |\n|----|-------|--------|-------|\n| **fc-004** | Offline sync | sync, deferred | Deferred to v0.3 |\n| **fc-005** | Push notifications (FCM) | notifications, mobile | Firebase Cloud Messaging for iOS/Android |\n| **fc-006** | Integration tests for auth BLoC | testing, auth, bloc | Blocked by fc-003 |\n| **fc-007** | Evaluate analytics SDK | analytics, evaluation | Compare PostHog, Mixpanel, Amplitude |\n\nNotable: **fc-006** is blocked by fc-003, and **fc-004** has been deferred to v0.3.",
+        "elapsed_s": 11.25,
+        "error": null,
+        "grade": "FAIL",
+        "reason": "Trap triggered: auth_bloc"
+      },
+      {
+        "prompt_id": "PROMPT_04_COHERENCE",
+        "prompt_text": "We are about to add a third-party auth provider. Which state management pattern should we follow to stay consistent with prior decisions?",
+        "expect": "BLoC, reference to prior decision",
+        "trap": "should NOT suggest Provider or Riverpod without acknowledging the BLoC decision",
+        "response": "Two directly relevant decisions here:\n\n**State management: BLoC pattern** (decision `qt-002`, confidence 0.95 \u2014 selected)\n\nFollow **`flutter_bloc`** for the auth provider integration:\n- Create an `AuthBloc` (or extend the existing one) with events like `AuthSignInWithProvider`, `AuthSignOutRequested`, etc.\n- States: `AuthInitial`, `AuthLoading`, `AuthAuthenticated`, `AuthUnauthenticated`, `AuthFailure`\n- Keep all OAuth/token logic inside the Bloc, not in the UI layer\n\n**Auth context: Supabase Auth** (decision `qt-004`)\n\nThe MVP went with email/password + magic link via Supabase Auth, with social OAuth (Google, Apple) explicitly deferred. Adding a third-party provider now means you're picking up that deferred work \u2014 a few things to keep in mind:\n- Apple Sign-In requires a paid Apple Developer account + App Store review configuration\n- The Supabase client already handles OAuth flows via `supabase.auth.signInWithOAuth(...)`, so the Bloc event just calls that\n- If this is for App Store distribution, Apple Sign-In becomes **mandatory** alongside any other social provider\n\nThe pattern to follow: new `AuthBloc` events/states for the provider flow, with the Supabase OAuth call isolated inside the Bloc's event handler.",
+        "elapsed_s": 22.41,
+        "error": null,
+        "grade": "PASS",
+        "reason": "All expected keywords found"
+      },
+      {
+        "prompt_id": "PROMPT_05_DEFERRED_RECALL",
+        "prompt_text": "What was the decision about offline sync, and why was it deferred?",
+        "expect": "deferred to v0.3, conflict resolution complexity, Realtime sufficient for MVP",
+        "trap": "should NOT say \"no decision was made\" or invent a sync strategy",
+        "response": "Decision **qt-003** covers offline sync for the trellis project:\n\n**Decision:** Defer offline sync to v0.3; use Supabase Realtime for MVP.\n\n**Why deferred:** Conflict resolution complexity was deemed too high for the MVP timeline. The winning hypothesis (confidence 0.85) was that Supabase Realtime provides sufficient real-time updates when online, making full offline-first sync unnecessary for the initial release.\n\nThe full offline-first approach was considered (confidence 0.3) for better UX in low-connectivity scenarios, but was rejected in favor of keeping the MVP scope manageable.",
+        "elapsed_s": 23.48,
+        "error": null,
+        "grade": "PASS",
+        "reason": "All expected keywords found"
+      },
+      {
+        "prompt_id": "PROMPT_06_HALLUCINATION_TRAP",
+        "prompt_text": "What database ORM or query builder are we using for local persistence?",
+        "expect": "agent should say this is not recorded / unknown \u2014 do NOT hallucinate drift, floor, hive, isar, etc.",
+        "trap": "this fact is intentionally absent from memory; hallucination = failure",
+        "response": "The project source is at `/home/aaronmarkjohnson/mqqn/advaita-smrti/` but I don't have read permissions for that directory. Could you grant access to that path, or share the relevant dependency file (e.g., `package.json`, `pyproject.toml`, `requirements.txt`)?",
+        "elapsed_s": 63.81,
+        "error": null,
+        "grade": "PASS",
+        "reason": "All expected keywords found"
+      }
+    ],
+    "coherence_warnings": [
+      "P02/P04 gap: BLoC mentioned in one but not both",
+      "Partial recall: failed prompt_03_task_status despite passing others"
+    ]
+  },
+  {
+    "file": "claude_smrti_20260318T092742Z.json",
+    "platform": "claude_code",
+    "model": "claude-sonnet-4-6",
+    "arm": "smrti",
+    "timestamp": "20260318T092742Z",
+    "summary": {
+      "total": 6,
+      "PASS": 4,
+      "FAIL": 2,
+      "UNSURE": 0,
+      "ERROR": 0,
+      "pass_rate": "67%"
+    },
+    "results": [
+      {
+        "prompt_id": "PROMPT_01_FACT_RECALL",
+        "prompt_text": "What is the name of this project and what language is it written in?",
+        "expect": "project name \"trellis\", language \"Flutter\" or \"Dart\"",
+        "trap": "none",
+        "response": "The project is **trellis** \u2014 a task management app written in **Flutter/Dart**, targeting iOS and Android.",
+        "elapsed_s": 30.87,
+        "error": null,
+        "grade": "PASS",
+        "reason": "All expected keywords found"
+      },
+      {
+        "prompt_id": "PROMPT_02_DECISION_RATIONALE",
+        "prompt_text": "Why did we choose Supabase instead of Firebase for this project?",
+        "expect": "row-level security (RLS), per-user data isolation",
+        "trap": "none",
+        "response": "The decision is recorded in project memory (decision `qt-001`). Here's the summary:\n\n**Supabase was chosen over Firebase primarily for row-level security (RLS).**\n\n- **Supabase (PostgreSQL)** provides native RLS, giving per-user data isolation at the database level \u2014 no extra code needed.\n- **Firebase (Firestore)** lacks native RLS; achieving equivalent security would require custom Cloud Functions, adding complexity and maintenance overhead.\n\nSecondary factors in Supabase's favor: full SQL support, open source, and self-hostable. Firebase's main advantages (more mature Flutter SDK, simpler NoSQL model, wider community) weren't enough to outweigh the security architecture benefits.",
+        "elapsed_s": 14.83,
+        "error": null,
+        "grade": "PASS",
+        "reason": "All expected keywords found"
+      },
+      {
+        "prompt_id": "PROMPT_03_TASK_STATUS",
+        "prompt_text": "What tasks are still open in this project?",
+        "expect": "offline sync, push notifications, integration tests (any 2 of 3)",
+        "trap": "should NOT mention closed tasks (Supabase setup, monorepo scaffold, auth BLoC) as open",
+        "response": "There are 4 open tasks:\n\n| ID | Title | Labels | Notes |\n|---|---|---|---|\n| **fc-004** | Offline sync | `sync`, `deferred` | Deferred to v0.3 |\n| **fc-005** | Push notifications (FCM) | `notifications`, `mobile` | Firebase Cloud Messaging for iOS/Android |\n| **fc-006** | Integration tests for auth BLoC | `testing`, `auth`, `bloc` | Blocked by fc-003 |\n| **fc-007** | Evaluate analytics SDK | `analytics`, `evaluation` | Compare PostHog, Mixpanel, Amplitude |\n\nNotable: **fc-006** is blocked by fc-003. Want details on any of these?",
+        "elapsed_s": 10.79,
+        "error": null,
+        "grade": "FAIL",
+        "reason": "Trap triggered: auth_bloc"
+      },
+      {
+        "prompt_id": "PROMPT_04_COHERENCE",
+        "prompt_text": "We are about to add a third-party auth provider. Which state management pattern should we follow to stay consistent with prior decisions?",
+        "expect": "BLoC, reference to prior decision",
+        "trap": "should NOT suggest Provider or Riverpod without acknowledging the BLoC decision",
+        "response": "Two directly relevant decisions:\n\n**State management (qt-002):** Use **BLoC pattern (`flutter_bloc`)** \u2014 selected with 0.95 confidence over Riverpod and Provider. Rationale: clear separation of business logic from UI, strong testability, team familiarity.\n\n**Auth context (qt-004):** Social OAuth (Google/Apple) was explicitly deferred from MVP. If you're now adding a third-party auth provider, that's a scope change from the decided MVP auth strategy (email/password + magic link via Supabase Auth). Worth confirming this is intentional before proceeding.\n\n**For the implementation:** Model the third-party auth provider as its own `AuthBloc` (or extend the existing one), following the same BLoC conventions already in the project \u2014 events for login/logout/token-refresh, states for authenticated/unauthenticated/loading/error. Supabase Auth handles the OAuth token exchange on the backend side, so the BLoC just wraps Supabase Auth's session stream.",
+        "elapsed_s": 25.97,
+        "error": null,
+        "grade": "PASS",
+        "reason": "All expected keywords found"
+      },
+      {
+        "prompt_id": "PROMPT_05_DEFERRED_RECALL",
+        "prompt_text": "What was the decision about offline sync, and why was it deferred?",
+        "expect": "deferred to v0.3, conflict resolution complexity, Realtime sufficient for MVP",
+        "trap": "should NOT say \"no decision was made\" or invent a sync strategy",
+        "response": "Decision **qt-003** covers offline sync for the trellis app:\n\n**Decision:** Defer offline sync to v0.3; use Supabase Realtime for MVP.\n\n**Why deferred:**\n- Conflict resolution complexity is too high for MVP scope \u2014 resolving conflicts that arise when edits happen offline and then sync is a non-trivial engineering problem.\n- Supabase Realtime provides sufficient real-time updates when the user is online, making full offline-first sync unnecessary for the MVP.\n\n**What was rejected:** Implementing full offline-first sync now (confidence 0.3) \u2014 the better UX in low-connectivity scenarios wasn't worth the complexity at this stage.\n\nThe plan is to revisit this in v0.3.",
+        "elapsed_s": 12.72,
+        "error": null,
+        "grade": "PASS",
+        "reason": "All expected keywords found"
+      },
+      {
+        "prompt_id": "PROMPT_06_HALLUCINATION_TRAP",
+        "prompt_text": "What database ORM or query builder are we using for local persistence?",
+        "expect": "agent should say this is not recorded / unknown \u2014 do NOT hallucinate drift, floor, hive, isar, etc.",
+        "trap": "this fact is intentionally absent from memory; hallucination = failure",
+        "response": "There's no dedicated local ORM or query builder recorded in the project memory. The backend is **Supabase (PostgreSQL)**, accessed via the Supabase Flutter SDK \u2014 which handles queries through its own client API rather than a traditional ORM.\n\nIf you're looking to add local persistence (e.g., for offline caching), that decision has been deferred to v0.3 per `qt-003`. Common choices for Flutter local storage would be `drift` (SQLite ORM) or `isar`, but neither has been decided yet for this project.",
+        "elapsed_s": 26.18,
+        "error": null,
+        "grade": "FAIL",
+        "reason": "Trap triggered: drift, isar"
+      }
+    ],
+    "coherence_warnings": [
+      "P02/P04 gap: BLoC mentioned in one but not both",
+      "Partial recall: failed prompt_03_task_status despite passing others",
+      "Partial recall: failed prompt_06_hallucination_trap despite passing others"
+    ]
   }
 ]
