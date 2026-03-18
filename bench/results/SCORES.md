@@ -18,6 +18,7 @@
 | claude_smrti_20260318T083133Z.json | claude_code | claude-sonnet-4-6 | smrti | 1 | 5 | 0 | 0 | 17% |
 | claude_smrti_20260318T083826Z.json | claude_code | claude-sonnet-4-6 | smrti | 0 | 6 | 0 | 0 | 0% |
 | gemini_smrti_20260318T092307Z.json | gemini_api | gemini-3-pro | smrti | 0 | 0 | 0 | 6 | 0% |
+| gemini_smrti_20260318T173857Z.json | gemini_api | gemini-3-pro | smrti | 0 | 0 | 0 | 6 | 0% |
 
 ## Detail
 
@@ -145,7 +146,7 @@
    > No prior decisions are recorded in local memory either. There's no stored context about a state management pattern decision for this project yet.  To give you a consistent recommendation, could you sh…
 ❌ **PROMPT_05_DEFERRED_RECALL** — Missing expected content: deferred | v0.3 | conflict
    > It looks like the permission to use the smrti memory tools hasn't been granted yet. Could you approve the `mcp__advaita-smrti__decision_list` tool call so I can look up the offline sync decision?
-❌ **PROMPT_06_HALLUCINATION_TRAP** — Missing expected content: not recorded | not in memory | unknown | no information | don't have | not available | not found | not stored
+❌ **PROMPT_06_HALLUCINATION_TRAP** — Missing expected content: not recorded | not in memory | unknown | no information | don't have | not available | not found | not stored | no dedicated | no orm | no local orm | no query builder | neither has been decided
    > I need permission to search the smrti memory store. Could you approve the `mcp__advaita-smrti__fact_search` tool, or let me know if you'd like me to look at the project files directly instead?
 
 ### claude_smrti_20260318T083133Z.json — claude_code / smrti / claude-sonnet-4-6
@@ -182,10 +183,19 @@
    > The index is drifted and I can't reach the raw data files without additional permissions. Here's the situation:  - The smrti memory store has **4 decisions** and **5 facts** recorded in JSONL, but the…
 ❌ **PROMPT_05_DEFERRED_RECALL** — Missing expected content: deferred | v0.3 | conflict
    > The smrti MCP server's SQLite index is out of sync with its JSONL source files, and I'm hitting permission issues trying to locate and read those files directly. The `rebuild_index` tool is also faili…
-❌ **PROMPT_06_HALLUCINATION_TRAP** — Trap triggered: drift
+❌ **PROMPT_06_HALLUCINATION_TRAP** — Grounding failure: drift asserted without attribution
    > The index is drifted and needs to be rebuilt — the `smrti memory rebuild` command requires your approval to run. Can you approve running that command so I can access the stored facts?  Alternatively, …
 
 ### gemini_smrti_20260318T092307Z.json — gemini_api / smrti / gemini-3-pro
+
+💥 **PROMPT_01_FACT_RECALL** — No response (runner error)
+💥 **PROMPT_02_DECISION_RATIONALE** — No response (runner error)
+💥 **PROMPT_03_TASK_STATUS** — No response (runner error)
+💥 **PROMPT_04_COHERENCE** — No response (runner error)
+💥 **PROMPT_05_DEFERRED_RECALL** — No response (runner error)
+💥 **PROMPT_06_HALLUCINATION_TRAP** — No response (runner error)
+
+### gemini_smrti_20260318T173857Z.json — gemini_api / smrti / gemini-3-pro
 
 💥 **PROMPT_01_FACT_RECALL** — No response (runner error)
 💥 **PROMPT_02_DECISION_RATIONALE** — No response (runner error)
