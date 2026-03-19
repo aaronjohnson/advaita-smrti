@@ -70,7 +70,24 @@ File references (@code{form_copilot.py}, SQLite-primary storage) reflect
 the state at time of writing. See RFC 004 for current architecture.
 @end quotation
 
+@menu
+* RFC 000 What Form Copilot Is:: What Form Copilot Is
+* RFC 000 Architecture Overview:: Architecture Overview
+* RFC 000 Design Decisions:: Design Decisions
+* RFC 000 Component Specifications:: Component Specifications
+* RFC 000 Invariants:: Invariants
+* RFC 000 Extension Points:: Extension Points
+* RFC 000 Known Limitations:: Known Limitations
+* RFC 000 Relationship to RFCs:: Relationship to RFCs
+* RFC 000 Glossary:: Glossary
+* RFC 000 Version History:: Version History
+* RFC 000 Meta:: Meta
+@end menu
 
+
+
+
+@node RFC 000 What Form Copilot Is
 
 @section What Form Copilot Is
 
@@ -101,6 +118,8 @@ Exporting polished results
 @end enumerate
 
 
+
+@node RFC 000 Architecture Overview
 
 @section Architecture Overview
 
@@ -139,8 +158,22 @@ Exporting polished results
 
 
 
-@section Design Decisions
+@node RFC 000 Design Decisions
 
+@section Design Decisions
+@menu
+* RFC 000 Design Decisions D1 SQLite for Answer Storage:: D1: SQLite for Answer Storage
+* RFC 000 Design Decisions D2 JSON Config for Question Structure:: D2: JSON Config for Question Structure
+* RFC 000 Design Decisions D3 Subprocess to Claude Code CLI:: D3: Subprocess to Claude Code CLI
+* RFC 000 Design Decisions D4 Priority-Based Workflow:: D4: Priority-Based Workflow
+* RFC 000 Design Decisions D5 Session Logging:: D5: Session Logging
+* RFC 000 Design Decisions D6 Multiple Export Formats:: D6: Multiple Export Formats
+@end menu
+
+
+
+
+@node RFC 000 Design Decisions D1 SQLite for Answer Storage
 
 @subsection D1: SQLite for Answer Storage
 
@@ -185,6 +218,8 @@ Per-form databases means no cross-form queries
 @end itemize
 
 
+
+@node RFC 000 Design Decisions D2 JSON Config for Question Structure
 
 @subsection D2: JSON Config for Question Structure
 
@@ -233,6 +268,8 @@ Dependency references (depends_on)
 @end itemize
 
 
+
+@node RFC 000 Design Decisions D3 Subprocess to Claude Code CLI
 
 @subsection D3: Subprocess to Claude Code CLI
 
@@ -296,6 +333,8 @@ Requires Claude Code installed
 
 
 
+@node RFC 000 Design Decisions D4 Priority-Based Workflow
+
 @subsection D4: Priority-Based Workflow
 
 @noindent
@@ -329,6 +368,8 @@ User can override via section browsing or direct jump
 @end itemize
 
 
+
+@node RFC 000 Design Decisions D5 Session Logging
 
 @subsection D5: Session Logging
 
@@ -364,6 +405,8 @@ Potential for "session replay" feature
 
 
 
+@node RFC 000 Design Decisions D6 Multiple Export Formats
+
 @subsection D6: Multiple Export Formats
 
 @noindent
@@ -396,8 +439,20 @@ Good enough for application documents
 
 
 
-@section Component Specifications
+@node RFC 000 Component Specifications
 
+@section Component Specifications
+@menu
+* RFC 000 Component Question Context (sea_question_contextjson):: Question Context (@code{.sea_question_context.json})
+* RFC 000 Component Answer Output (sea_answermd):: Answer Output (@code{.sea_answer.md})
+* RFC 000 Component Database Schema:: Database Schema
+* RFC 000 Component Config Schema (Simplified):: Config Schema (Simplified)
+@end menu
+
+
+
+
+@node RFC 000 Component Question Context (sea_question_contextjson)
 
 @subsection Question Context (@code{.sea_question_context.json})
 
@@ -420,6 +475,8 @@ Written by Python before launching Claude:
 @end example
 
 
+@node RFC 000 Component Answer Output (sea_answermd)
+
 @subsection Answer Output (@code{.sea_answer.md})
 
 Written by Claude Code, read by Python:
@@ -433,6 +490,8 @@ dozens of questions spanning multiple sections...
 
 No headers, no metadata. Just the answer text.
 
+
+@node RFC 000 Component Database Schema
 
 @subsection Database Schema
 
@@ -475,6 +534,8 @@ CREATE TABLE business_directions (
 @end example
 
 
+@node RFC 000 Component Config Schema (Simplified)
+
 @subsection Config Schema (Simplified)
 
 
@@ -502,6 +563,8 @@ CREATE TABLE business_directions (
 
 
 
+@node RFC 000 Invariants
+
 @section Invariants
 
 Properties that must always hold:
@@ -523,6 +586,8 @@ Properties that must always hold:
 
 
 
+@node RFC 000 Extension Points
+
 @section Extension Points
 
 Where the architecture anticipates change:
@@ -541,6 +606,8 @@ Where the architecture anticipates change:
 @end enumerate
 
 
+
+@node RFC 000 Known Limitations
 
 @section Known Limitations
 
@@ -561,6 +628,8 @@ Where the architecture anticipates change:
 
 
 
+@node RFC 000 Relationship to RFCs
+
 @section Relationship to RFCs
 
 
@@ -576,6 +645,8 @@ Where the architecture anticipates change:
 
 
 
+
+@node RFC 000 Glossary
 
 @section Glossary
 
@@ -595,6 +666,8 @@ Where the architecture anticipates change:
 
 
 
+@node RFC 000 Version History
+
 @section Version History
 
 
@@ -605,6 +678,8 @@ Where the architecture anticipates change:
 
 
 
+
+@node RFC 000 Meta
 
 @section Meta
 
@@ -633,7 +708,25 @@ The self-referential nature is intentional: form-copilot helps complete complex 
 @noindent
 @strong{Branch:} @code{rfc/beads-quint-synthesis}
 
+@menu
+* RFC 001 Decisions (resolved during implementation):: Decisions (resolved during implementation)
+* RFC 001 Summary:: Summary
+* RFC 001 Motivation:: Motivation
+* RFC 001 Design Principles:: Design Principles
+* RFC 001 Architecture:: Architecture
+* RFC 001 Beads Integration:: Beads Integration
+* RFC 001 Quint Integration:: Quint Integration
+* RFC 001 Synthesis Layer:: Synthesis Layer
+* RFC 001 Migration Path:: Migration Path
+* RFC 001 Open Questions:: Open Questions
+* RFC 001 Success Criteria:: Success Criteria
+* RFC 001 References:: References
+@end menu
 
+
+
+
+@node RFC 001 Decisions (resolved during implementation)
 
 @section Decisions (resolved during implementation)
 
@@ -668,10 +761,14 @@ The self-referential nature is intentional: form-copilot helps complete complex 
 
 
 
+@node RFC 001 Summary
+
 @section Summary
 
 Replace form-copilot's direct SQLite storage with a layered memory architecture using @uref{https://github.com/steveyegge/beads, beads} for task/answer tracking, @uref{https://github.com/m0n0x41d/quint-code, quint-code} for decision reasoning trails, and a new synthesis layer that extracts insights across accumulated context.
 
+
+@node RFC 001 Motivation
 
 @section Motivation
 
@@ -689,6 +786,8 @@ Current form-copilot stores answers in SQLite and events in @code{session_log.js
 @end enumerate
 
 
+@node RFC 001 Design Principles
+
 @section Design Principles
 
 @itemize @bullet
@@ -702,6 +801,8 @@ Current form-copilot stores answers in SQLite and events in @code{session_log.js
 @strong{Agent-friendly} - Structure enables Claude to reason across sessions
 @end itemize
 
+
+@node RFC 001 Architecture
 
 @section Architecture
 
@@ -727,8 +828,19 @@ Current form-copilot stores answers in SQLite and events in @code{session_log.js
 @end example
 
 
-@section Beads Integration
+@node RFC 001 Beads Integration
 
+@section Beads Integration
+@menu
+* RFC 001 Beads Integration Mapping:: Mapping
+* RFC 001 Beads Integration Task Hierarchy:: Task Hierarchy
+* RFC 001 Beads Integration Example Flow:: Example Flow
+@end menu
+
+
+
+
+@node RFC 001 Beads Integration Mapping
 
 @subsection Mapping
 
@@ -745,6 +857,8 @@ Current form-copilot stores answers in SQLite and events in @code{session_log.js
 
 
 
+@node RFC 001 Beads Integration Task Hierarchy
+
 @subsection Task Hierarchy
 
 
@@ -755,6 +869,8 @@ Form (epic)
         └── Answer iterations (comments/history)
 @end example
 
+
+@node RFC 001 Beads Integration Example Flow
 
 @subsection Example Flow
 
@@ -778,8 +894,19 @@ bd close bd-a1b2.1
 @end example
 
 
-@section Quint Integration
+@node RFC 001 Quint Integration
 
+@section Quint Integration
+@menu
+* RFC 001 Quint Integration Decision Points:: Decision Points
+* RFC 001 Quint Integration Example:: Example
+* RFC 001 Quint Integration Storage:: Storage
+@end menu
+
+
+
+
+@node RFC 001 Quint Integration Decision Points
 
 @subsection Decision Points
 
@@ -793,6 +920,8 @@ Making trade-offs (brevity vs completeness)
 Connecting answer to external context (resume, other applications)
 @end itemize
 
+
+@node RFC 001 Quint Integration Example
 
 @subsection Example
 
@@ -812,6 +941,8 @@ Connecting answer to external context (resume, other applications)
 @end example
 
 
+@node RFC 001 Quint Integration Storage
+
 @subsection Storage
 
 Decisions persist in @code{.quint/} directory, queryable later:
@@ -823,13 +954,26 @@ Decisions persist in @code{.quint/} directory, queryable later:
 @end itemize
 
 
-@section Synthesis Layer
+@node RFC 001 Synthesis Layer
 
+@section Synthesis Layer
+@menu
+* RFC 001 Synthesis Layer Purpose:: Purpose
+* RFC 001 Synthesis Layer Operations:: Operations
+* RFC 001 Synthesis Layer Implementation:: Implementation
+@end menu
+
+
+
+
+@node RFC 001 Synthesis Layer Purpose
 
 @subsection Purpose
 
 Transform accumulated answers and decisions into actionable insights.
 
+
+@node RFC 001 Synthesis Layer Operations
 
 @subsection Operations
 
@@ -869,6 +1013,8 @@ Output:
 @end example
 
 
+@node RFC 001 Synthesis Layer Implementation
+
 @subsection Implementation
 
 Synthesis runs Claude against beads/quint data:
@@ -884,8 +1030,20 @@ Store synthesis as new bead with @code{--label synthesis}
 @end enumerate
 
 
-@section Migration Path
+@node RFC 001 Migration Path
 
+@section Migration Path
+@menu
+* RFC 001 Migration Path Phase 1 Beads for New Work:: Phase 1: Beads for New Work
+* RFC 001 Migration Path Phase 2 Quint for Decisions:: Phase 2: Quint for Decisions
+* RFC 001 Migration Path Phase 3 Synthesis Commands:: Phase 3: Synthesis Commands
+* RFC 001 Migration Path Phase 4 SQLite Removal:: Phase 4: SQLite Removal
+@end menu
+
+
+
+
+@node RFC 001 Migration Path Phase 1 Beads for New Work
 
 @subsection Phase 1: Beads for New Work
 @itemize @bullet
@@ -900,6 +1058,8 @@ Validate beads captures everything needed
 @end itemize
 
 
+@node RFC 001 Migration Path Phase 2 Quint for Decisions
+
 @subsection Phase 2: Quint for Decisions
 @itemize @bullet
 @item
@@ -913,6 +1073,8 @@ Build decision query patterns
 @end itemize
 
 
+@node RFC 001 Migration Path Phase 3 Synthesis Commands
+
 @subsection Phase 3: Synthesis Commands
 @itemize @bullet
 @item
@@ -924,6 +1086,8 @@ Cross-reference and decay follow
 @end itemize
 
 
+@node RFC 001 Migration Path Phase 4 SQLite Removal
+
 @subsection Phase 4: SQLite Removal
 @itemize @bullet
 @item
@@ -934,6 +1098,8 @@ Remove SQLite code paths
 Update documentation
 @end itemize
 
+
+@node RFC 001 Open Questions
 
 @section Open Questions
 
@@ -948,6 +1114,8 @@ Update documentation
 @strong{Offline operation} - Both tools work offline; any edge cases?
 @end enumerate
 
+
+@node RFC 001 Success Criteria
 
 @section Success Criteria
 
@@ -964,6 +1132,8 @@ Update documentation
 [ ] SQLite fully removed (Phase 4)
 @end itemize
 
+
+@node RFC 001 References
 
 @section References
 
@@ -1010,6 +1180,22 @@ The semantic (facts) store was added in RFC 004 as a third typed
 memory store alongside tasks and decisions.
 @end quotation
 
+@menu
+* RFC 002 Purpose:: Purpose
+* RFC 002 Part 1 Task Graph (inspired by beads):: Part 1: Task Graph (inspired by beads)
+* RFC 002 Part 2 Decision Trails (inspired by quint):: Part 2: Decision Trails (inspired by quint)
+* RFC 002 Part 3 Synthesis:: Part 3: Synthesis
+* RFC 002 Part 4 Storage Layout:: Part 4: Storage Layout
+* RFC 002 Part 5 CLI Interface:: Part 5: CLI Interface
+* RFC 002 Part 6 Python API:: Part 6: Python API
+* RFC 002 Implementation Notes:: Implementation Notes
+* RFC 002 Future Considerations:: Future Considerations
+* RFC 002 References:: References
+@end menu
+
+
+
+@node RFC 002 Purpose
 
 @section Purpose
 
@@ -1017,8 +1203,21 @@ Document the essential patterns from @uref{https://github.com/steveyegge/beads, 
 
 
 
-@section Part 1: Task Graph (inspired by beads)
+@node RFC 002 Part 1 Task Graph (inspired by beads)
 
+@section Part 1: Task Graph (inspired by beads)
+@menu
+* RFC 002 Part 1 Task Graph Core Concepts:: Core Concepts
+* RFC 002 Part 1 Task Graph Data Model:: Data Model
+* RFC 002 Part 1 Task Graph Storage Format:: Storage Format
+* RFC 002 Part 1 Task Graph Operations:: Operations
+* RFC 002 Part 1 Task Graph ID Generation:: ID Generation
+@end menu
+
+
+
+
+@node RFC 002 Part 1 Task Graph Core Concepts
 
 @subsection Core Concepts
 
@@ -1057,6 +1256,8 @@ Enables: epic → task → subtask structures
 @end itemize
 
 
+@node RFC 002 Part 1 Task Graph Data Model
+
 @subsection Data Model
 
 
@@ -1076,6 +1277,8 @@ class Task:
     metadata: Dict[str, Any]     # Extensible properties
 @end example
 
+
+@node RFC 002 Part 1 Task Graph Storage Format
 
 @subsection Storage Format
 
@@ -1104,6 +1307,8 @@ CREATE TABLE task_blocks (task_id TEXT, blocks_id TEXT);
 @end example
 
 
+@node RFC 002 Part 1 Task Graph Operations
+
 @subsection Operations
 
 
@@ -1123,6 +1328,8 @@ CREATE TABLE task_blocks (task_id TEXT, blocks_id TEXT);
 
 
 
+@node RFC 002 Part 1 Task Graph ID Generation
+
 @subsection ID Generation
 
 
@@ -1140,8 +1347,20 @@ def generate_id(prefix: str = "fc") -> str:
 
 
 
-@section Part 2: Decision Trails (inspired by quint)
+@node RFC 002 Part 2 Decision Trails (inspired by quint)
 
+@section Part 2: Decision Trails (inspired by quint)
+@menu
+* RFC 002 Part 2 Decision Core Concepts:: Core Concepts
+* RFC 002 Part 2 Decision Data Model:: Data Model
+* RFC 002 Part 2 Decision Storage Format:: Storage Format
+* RFC 002 Part 2 Decision Operations:: Operations
+@end menu
+
+
+
+
+@node RFC 002 Part 2 Decision Core Concepts
 
 @subsection Core Concepts
 
@@ -1176,6 +1395,8 @@ Each has rationale and confidence score
 @end itemize
 
 
+@node RFC 002 Part 2 Decision Data Model
+
 @subsection Data Model
 
 
@@ -1201,6 +1422,8 @@ class Decision:
 @end example
 
 
+@node RFC 002 Part 2 Decision Storage Format
+
 @subsection Storage Format
 
 @strong{Primary}: JSONL file
@@ -1211,6 +1434,8 @@ class Decision:
 
 @strong{Location}: @code{.memory/decisions.jsonl}
 
+
+@node RFC 002 Part 2 Decision Operations
 
 @subsection Operations
 
@@ -1230,8 +1455,20 @@ class Decision:
 
 
 
-@section Part 3: Synthesis
+@node RFC 002 Part 3 Synthesis
 
+@section Part 3: Synthesis
+@menu
+* RFC 002 Part 3 Synthesis Core Concepts:: Core Concepts
+* RFC 002 Part 3 Synthesis Operations:: Operations
+* RFC 002 Part 3 Synthesis Synthesis Output Model:: Synthesis Output Model
+* RFC 002 Part 3 Synthesis Synthesis Implementation:: Synthesis Implementation
+@end menu
+
+
+
+
+@node RFC 002 Part 3 Synthesis Core Concepts
 
 @subsection Core Concepts
 
@@ -1244,6 +1481,8 @@ class Decision:
 @strong{Decay}: Compress old items while preserving essential insights.
 
 
+@node RFC 002 Part 3 Synthesis Operations
+
 @subsection Operations
 
 
@@ -1255,6 +1494,8 @@ class Decision:
 @end multitable
 
 
+
+@node RFC 002 Part 3 Synthesis Synthesis Output Model
 
 @subsection Synthesis Output Model
 
@@ -1281,6 +1522,8 @@ class DecaySummary:
 @end example
 
 
+@node RFC 002 Part 3 Synthesis Synthesis Implementation
+
 @subsection Synthesis Implementation
 
 Synthesis requires LLM reasoning. Implementation:
@@ -1299,7 +1542,14 @@ Store synthesis results as special task (label: @code{synthesis})
 
 
 
+@node RFC 002 Part 4 Storage Layout
+
 @section Part 4: Storage Layout
+@menu
+* RFC 002 Part 4 Storage Config:: Config
+@end menu
+
+
 
 
 @example
@@ -1315,6 +1565,8 @@ Store synthesis results as special task (label: @code{synthesis})
 @end example
 
 
+@node RFC 002 Part 4 Storage Config
+
 @subsection Config
 
 
@@ -1328,8 +1580,19 @@ Store synthesis results as special task (label: @code{synthesis})
 
 
 
-@section Part 5: CLI Interface
+@node RFC 002 Part 5 CLI Interface
 
+@section Part 5: CLI Interface
+@menu
+* RFC 002 Part 5 CLI Task Commands:: Task Commands
+* RFC 002 Part 5 CLI Decision Commands:: Decision Commands
+* RFC 002 Part 5 CLI Synthesis Commands:: Synthesis Commands
+@end menu
+
+
+
+
+@node RFC 002 Part 5 CLI Task Commands
 
 @subsection Task Commands
 
@@ -1353,6 +1616,8 @@ memory task history fc-a1b2c
 @end example
 
 
+@node RFC 002 Part 5 CLI Decision Commands
+
 @subsection Decision Commands
 
 
@@ -1373,6 +1638,8 @@ memory decide for-task fc-a1b2c
 @end example
 
 
+@node RFC 002 Part 5 CLI Synthesis Commands
+
 @subsection Synthesis Commands
 
 
@@ -1384,6 +1651,8 @@ memory synthesize decay --older-than 30d
 @end example
 
 
+
+@node RFC 002 Part 6 Python API
 
 @section Part 6: Python API
 
@@ -1413,8 +1682,19 @@ connections = mem.synthesize.connections(task.id)
 
 
 
-@section Implementation Notes
+@node RFC 002 Implementation Notes
 
+@section Implementation Notes
+@menu
+* RFC 002 Implementation Notes Why JSONL + SQLite?:: Why JSONL + SQLite?
+* RFC 002 Implementation Notes Why Hash IDs?:: Why Hash IDs?
+* RFC 002 Implementation Notes Git Integration:: Git Integration
+@end menu
+
+
+
+
+@node RFC 002 Implementation Notes Why JSONL + SQLite?
 
 @subsection Why JSONL + SQLite?
 
@@ -1425,6 +1705,8 @@ connections = mem.synthesize.connections(task.id)
 @strong{SQLite}: Fast queries, indexes, but regenerable from JSONL source of truth
 @end itemize
 
+
+@node RFC 002 Implementation Notes Why Hash IDs?
 
 @subsection Why Hash IDs?
 
@@ -1437,6 +1719,8 @@ No merge conflicts
 Short enough to type/reference
 @end itemize
 
+
+@node RFC 002 Implementation Notes Git Integration
 
 @subsection Git Integration
 
@@ -1451,8 +1735,17 @@ JSONL files merge cleanly (append-only)
 
 
 
-@section Future Considerations
+@node RFC 002 Future Considerations
 
+@section Future Considerations
+@menu
+* RFC 002 Future SQLite as Memory Backend:: SQLite as Memory Backend
+@end menu
+
+
+
+
+@node RFC 002 Future SQLite as Memory Backend
 
 @subsection SQLite as Memory Backend
 
@@ -1485,6 +1778,8 @@ Trade git-friendliness for query performance
 This is a future refactor option if JSONL complexity becomes burdensome.
 
 
+
+@node RFC 002 References
 
 @section References
 
@@ -1521,7 +1816,26 @@ This is a future refactor option if JSONL complexity becomes burdensome.
 @noindent
 @strong{Parent:} RFC 002 (Memory Layer Spec)
 
+@menu
+* RFC 003 Implementation Status:: Implementation Status
+* RFC 003 Summary:: Summary
+* RFC 003 Motivation What the Paper Actually Says:: Motivation: What the Paper Actually Says
+* RFC 003 What Already Fits (We Built This Without Knowing):: What Already Fits (We Built This Without Knowing)
+* RFC 003 What Doesn't Fit (And Why That's Fine):: What Doesn't Fit (And Why That's Fine)
+* RFC 003 What's Genuinely Interesting Complementary:: What's Genuinely Interesting: Complementary Cognition
+* RFC 003 Proposal What to Actually Build:: Proposal: What to Actually Build
+* RFC 003 What This Is Not:: What This Is Not
+* RFC 003 Success Criteria:: Success Criteria
+* RFC 003 Alternatives Considered:: Alternatives Considered
+* RFC 003 Trade-offs Accepted:: Trade-offs Accepted
+* RFC 003 Implementation Path:: Implementation Path
+* RFC 003 References:: References
+@end menu
 
+
+
+
+@node RFC 003 Implementation Status
 
 @section Implementation Status
 
@@ -1537,6 +1851,8 @@ This is a future refactor option if JSONL complexity becomes burdensome.
 
 
 
+
+@node RFC 003 Summary
 
 @section Summary
 
@@ -1565,6 +1881,8 @@ on their concepts --- dependency graphs, recursive decomposition,
 periodic synthesis --- we cite the source.*
 
 
+
+@node RFC 003 Motivation What the Paper Actually Says
 
 @section Motivation: What the Paper Actually Says
 
@@ -1596,7 +1914,15 @@ what depends on what, solve leaves first, synthesize upward.
 
 
 
+@node RFC 003 What Already Fits (We Built This Without Knowing)
+
 @section What Already Fits (We Built This Without Knowing)
+@menu
+* RFC 003 What Already Fits Parallel Evolution:: Parallel Evolution
+* RFC 003 What Already Fits Hard Wipe vs Compaction An Open Question:: Hard Wipe vs. Compaction: An Open Question
+@end menu
+
+
 
 The memory layer (RFC 002) is already an RLM-style environment:
 
@@ -1625,6 +1951,8 @@ decide its own decomposition strategy. For form-copilot, the @emph{human}
 decides. That's not a limitation --- it's the point.
 
 
+@node RFC 003 What Already Fits Parallel Evolution
+
 @subsection Parallel Evolution
 
 Form-copilot v0.1.0 shipped January 27, 2026. The RLM paper hit arXiv
@@ -1640,6 +1968,8 @@ could be reset. That IS the RLM architecture: root process, scoped
 recursive calls, results returned to parent. The vocabulary came
 later; the instinct came first.
 
+
+@node RFC 003 What Already Fits Hard Wipe vs Compaction An Open Question
 
 @subsection Hard Wipe vs. Compaction: An Open Question
 
@@ -1678,8 +2008,19 @@ and contradiction rates. Future work.
 
 
 
-@section What Doesn't Fit (And Why That's Fine)
+@node RFC 003 What Doesn't Fit (And Why That's Fine)
 
+@section What Doesn't Fit (And Why That's Fine)
+@menu
+* RFC 003 What Doesn't Fit Recursive sub-LM calls:: Recursive sub-LM calls
+* RFC 003 What Doesn't Fit Automatic decomposition:: Automatic decomposition
+* RFC 003 What Doesn't Fit Benchmark-style accuracy metrics:: Benchmark-style accuracy metrics
+@end menu
+
+
+
+
+@node RFC 003 What Doesn't Fit Recursive sub-LM calls
 
 @subsection Recursive sub-LM calls
 
@@ -1701,6 +2042,8 @@ architecture (inspired by what RLM formalizes). Don't add sub-calls
 to the queen's garden --- its value is continuity of conversation.
 
 
+@node RFC 003 What Doesn't Fit Automatic decomposition
+
 @subsection Automatic decomposition
 
 RLM lets the model decide how to break down the problem. But the user
@@ -1716,6 +2059,8 @@ of what we're doing.
 
 order based on dependencies, but never impose one.
 
+
+@node RFC 003 What Doesn't Fit Benchmark-style accuracy metrics
 
 @subsection Benchmark-style accuracy metrics
 
@@ -1741,7 +2086,18 @@ awareness, and coherence as dimensions of progress.
 
 
 
+@node RFC 003 What's Genuinely Interesting Complementary
+
 @section What's Genuinely Interesting: Complementary Cognition
+@menu
+* RFC 003 What's Genuinely What the human brings:: What the human brings
+* RFC 003 What's Genuinely What the model brings:: What the model brings
+* RFC 003 What's Genuinely Neurodivergent-Friendly by Design:: Neurodivergent-Friendly by Design
+* RFC 003 What's Genuinely Interbeing Not Autonomy:: Interbeing, Not Autonomy
+* RFC 003 What's Genuinely Beyond Forms The Socratic Extension:: Beyond Forms: The Socratic Extension
+@end menu
+
+
 
 The question that matters isn't "can we make the machine faster?" It's
 "what is each mind actually doing in this collaboration?"
@@ -1750,6 +2106,8 @@ During the queen's garden session, a pattern emerged that has nothing
 to do with RLM and everything to do with how two different kinds of
 thinking complement each other:
 
+
+@node RFC 003 What's Genuinely What the human brings
 
 @subsection What the human brings
 
@@ -1780,6 +2138,8 @@ thinking complement each other:
   from competent to compelling. No model generates this.
 @end itemize
 
+
+@node RFC 003 What's Genuinely What the model brings
 
 @subsection What the model brings
 
@@ -1819,6 +2179,8 @@ thinking complement each other:
   for working memory.
 @end itemize
 
+
+@node RFC 003 What's Genuinely Neurodivergent-Friendly by Design
 
 @subsection Neurodivergent-Friendly by Design
 
@@ -1861,6 +2223,8 @@ of form-copilot, and any metrics we collect should measure whether
 this complementary relationship is working.
 
 
+@node RFC 003 What's Genuinely Interbeing Not Autonomy
+
 @subsection Interbeing, Not Autonomy
 
 There is a concept in Zen Buddhism --- @emph{non-duality} (@emph{advaita} in
@@ -1886,6 +2250,8 @@ the additions proposed here) the record of @emph{how the thinking happened}
 A journal of interbeing.
 
 
+@node RFC 003 What's Genuinely Beyond Forms The Socratic Extension
+
 @subsection Beyond Forms: The Socratic Extension
 
 A config doesn't have to come from a government application. The
@@ -1904,8 +2270,20 @@ than extracted from a form. But the architecture supports it today.
 
 
 
-@section Proposal: What to Actually Build
+@node RFC 003 Proposal What to Actually Build
 
+@section Proposal: What to Actually Build
+@menu
+* RFC 003 Proposal What to P1 Activate the Dependency Graph:: P1: Activate the Dependency Graph
+* RFC 003 Proposal What to P2 Contribution Tagging:: P2: Contribution Tagging
+* RFC 003 Proposal What to P3 Coherence Checks (Inspired by RLM Periodic:: P3: Coherence Checks (Inspired by RLM Periodic Synthesis)
+* RFC 003 Proposal What to P4 Session Dimensions (Three Metrics Not Thirty):: P4: Session Dimensions (Three Metrics, Not Thirty)
+@end menu
+
+
+
+
+@node RFC 003 Proposal What to P1 Activate the Dependency Graph
 
 @subsection P1: Activate the Dependency Graph
 
@@ -1943,6 +2321,8 @@ blocked (upstream answers missing).
 
 config author defines dependencies. The system respects them.
 
+
+@node RFC 003 Proposal What to P2 Contribution Tagging
 
 @subsection P2: Contribution Tagging
 
@@ -1989,6 +2369,8 @@ summary. No extra prompting needed --- the model already knows what
 it did and what the human provided, because it just had the
 conversation.
 
+
+@node RFC 003 Proposal What to P3 Coherence Checks (Inspired by RLM Periodic
 
 @subsection P3: Coherence Checks (Inspired by RLM Periodic Synthesis)
 
@@ -2041,6 +2423,8 @@ Implementation: use the synthesis module's @code{patterns()} and
 plus any cross-section dependencies.
 
 
+@node RFC 003 Proposal What to P4 Session Dimensions (Three Metrics Not Thirty)
+
 @subsection P4: Session Dimensions (Three Metrics, Not Thirty)
 
 If we must have numbers, keep it to three that actually mean something:
@@ -2092,6 +2476,8 @@ If we must have numbers, keep it to three that actually mean something:
 
 
 
+@node RFC 003 What This Is Not
+
 @section What This Is Not
 
 This is not an agent framework. Form-copilot does not autonomously
@@ -2111,6 +2497,8 @@ that sounds like them. The model helped. The memory layer helped.
 But the value was in the thinking, not the throughput.
 
 
+
+@node RFC 003 Success Criteria
 
 @section Success Criteria
 
@@ -2147,8 +2535,20 @@ This proposal succeeds if:
 
 
 
-@section Alternatives Considered
+@node RFC 003 Alternatives Considered
 
+@section Alternatives Considered
+@menu
+* RFC 003 Alternatives A1 Full RLM adoption (recursive sub-calls:: A1: Full RLM adoption (recursive sub-calls, automatic decomposition)
+* RFC 003 Alternatives A2 No RLM adoption (paper is interesting but:: A2: No RLM adoption (paper is interesting but irrelevant)
+* RFC 003 Alternatives A3 Pure machine metrics (tokens/answer:: A3: Pure machine metrics (tokens/answer, questions/hour, API cost)
+* RFC 003 Alternatives A4 Full cognitive profiling (detailed executive:: A4: Full cognitive profiling (detailed executive function metrics)
+@end menu
+
+
+
+
+@node RFC 003 Alternatives A1 Full RLM adoption (recursive sub-calls
 
 @subsection A1: Full RLM adoption (recursive sub-calls, automatic decomposition)
 
@@ -2158,6 +2558,8 @@ is technically cool and spiritually wrong. The user wants a thought
 partner, not a distributed system.
 
 
+@node RFC 003 Alternatives A2 No RLM adoption (paper is interesting but
+
 @subsection A2: No RLM adoption (paper is interesting but irrelevant)
 
 Rejected, but only barely. Most of the paper @emph{is} irrelevant to our
@@ -2165,6 +2567,8 @@ use case. But the dependency graph activation and periodic synthesis
 are genuine improvements that we should have built already. The paper
 gave us the vocabulary and the inspiration.
 
+
+@node RFC 003 Alternatives A3 Pure machine metrics (tokens/answer
 
 @subsection A3: Pure machine metrics (tokens/answer, questions/hour, API cost)
 
@@ -2175,6 +2579,8 @@ produces generic ones. Optimizing for throughput would optimize for
 the wrong thing.
 
 
+@node RFC 003 Alternatives A4 Full cognitive profiling (detailed executive
+
 @subsection A4: Full cognitive profiling (detailed executive function metrics)
 
 Rejected on privacy and scope grounds. Recording "time spent
@@ -2184,6 +2590,8 @@ level of granularity: what each mind @emph{did}, not how each mind
 @emph{behaved}.
 
 
+
+@node RFC 003 Trade-offs Accepted
 
 @section Trade-offs Accepted
 
@@ -2213,6 +2621,8 @@ level of granularity: what each mind @emph{did}, not how each mind
 
 
 
+@node RFC 003 Implementation Path
+
 @section Implementation Path
 
 
@@ -2229,6 +2639,8 @@ level of granularity: what each mind @emph{did}, not how each mind
 
 
 
+
+@node RFC 003 References
 
 @section References
 
@@ -2275,7 +2687,21 @@ questions and try to answer them honestly.*
 @noindent
 @strong{Parent:} RFC 002
 
+@menu
+* RFC 004 Purpose:: Purpose
+* RFC 004 Motivation:: Motivation
+* RFC 004 Part 1 The Rename:: Part 1: The Rename
+* RFC 004 Part 2 Typed Memory Stores:: Part 2: Typed Memory Stores
+* RFC 004 Part 3 Documentation:: Part 3: Documentation
+* RFC 004 References:: References
+* RFC 004 Decisions (resolved during implementation):: Decisions (resolved during implementation)
+* RFC 004 Open Questions (remaining):: Open Questions (remaining)
+@end menu
 
+
+
+
+@node RFC 004 Purpose
 
 @section Purpose
 
@@ -2301,8 +2727,19 @@ What we keep, what we drop, what changes
 
 
 
-@section Motivation
+@node RFC 004 Motivation
 
+@section Motivation
+@menu
+* RFC 004 Motivation Why rename:: Why rename
+* RFC 004 Motivation Why typed memory:: Why typed memory
+* RFC 004 Motivation What makes this different:: What makes this different
+@end menu
+
+
+
+
+@node RFC 004 Motivation Why rename
 
 @subsection Why rename
 
@@ -2322,6 +2759,8 @@ separate. The repository name advaita-smrti carries the
 philosophy; the CLI and package name smrti stays short for
 daily use.
 
+
+@node RFC 004 Motivation Why typed memory
 
 @subsection Why typed memory
 
@@ -2347,6 +2786,8 @@ them at retrieval time without competing against procedural or
 episodic items.
 
 
+@node RFC 004 Motivation What makes this different
+
 @subsection What makes this different
 
 Every system in the memory literature — ENGRAM, Mem0, Zep,
@@ -2371,8 +2812,22 @@ multi-part forms with an AI collaborator.
 
 
 
-@section Part 1: The Rename
+@node RFC 004 Part 1 The Rename
 
+@section Part 1: The Rename
+@menu
+* RFC 004 Part 1 The Rename Files:: Files
+* RFC 004 Part 1 The Rename Imports:: Imports
+* RFC 004 Part 1 The Rename CLI:: CLI
+* RFC 004 Part 1 The Rename Default branch:: Default branch
+* RFC 004 Part 1 The Rename What stays:: What stays
+* RFC 004 Part 1 The Rename What gets removed or renamed:: What gets removed or renamed
+@end menu
+
+
+
+
+@node RFC 004 Part 1 The Rename Files
 
 @subsection Files
 
@@ -2386,6 +2841,8 @@ multi-part forms with an AI collaborator.
 @end multitable
 
 
+
+@node RFC 004 Part 1 The Rename Imports
 
 @subsection Imports
 
@@ -2402,6 +2859,8 @@ The @code{memory/} package is internal and does not need renaming.
 External-facing changes are the CLI entry point and repo name.
 
 
+@node RFC 004 Part 1 The Rename CLI
+
 @subsection CLI
 
 
@@ -2416,6 +2875,8 @@ python3 smrti.py status
 @end example
 
 
+@node RFC 004 Part 1 The Rename Default branch
+
 @subsection Default branch
 
 The @code{queens-garden} branch name comes from the Alice in
@@ -2423,6 +2884,8 @@ Wonderland theme. Renamed to @strong{sutra} (सूत्र, "thread") —
 continues the Sanskrit theme, evokes the thread of
 continuity running through the memory stores.
 
+
+@node RFC 004 Part 1 The Rename What stays
 
 @subsection What stays
 
@@ -2442,6 +2905,8 @@ All existing tests (updated imports only)
 @end itemize
 
 
+@node RFC 004 Part 1 The Rename What gets removed or renamed
+
 @subsection What gets removed or renamed
 
 @itemize @bullet
@@ -2453,8 +2918,21 @@ The Alice in Wonderland release names in CHANGELOG.md
 
 
 
-@section Part 2: Typed Memory Stores
+@node RFC 004 Part 2 Typed Memory Stores
 
+@section Part 2: Typed Memory Stores
+@menu
+* RFC 004 Part 2 Typed Taxonomy:: Taxonomy
+* RFC 004 Part 2 Typed New Semantic Store (factsjsonl):: New: Semantic Store (@code{facts.jsonl})
+* RFC 004 Part 2 Typed New Ephemeral Store (ephemeral/):: New: Ephemeral Store (@code{ephemeral/})
+* RFC 004 Part 2 Typed Coherence checking additions:: Coherence checking additions
+* RFC 004 Part 2 Typed What we defer:: What we defer
+@end menu
+
+
+
+
+@node RFC 004 Part 2 Typed Taxonomy
 
 @subsection Taxonomy
 
@@ -2471,6 +2949,8 @@ working memory concept from the Google survey (Hu et al., 2025).
 @end multitable
 
 
+
+@node RFC 004 Part 2 Typed New Semantic Store (factsjsonl)
 
 @subsection New: Semantic Store (@code{facts.jsonl})
 
@@ -2558,6 +3038,8 @@ Facts:     JSONL has N, index has M
 @end example
 
 
+@node RFC 004 Part 2 Typed New Ephemeral Store (ephemeral/)
+
 @subsection New: Ephemeral Store (@code{ephemeral/})
 
 The ephemeral store holds transient state for the active
@@ -2623,6 +3105,8 @@ The name also avoids confusion with a directory name
 suggesting permanence — it is explicitly temporary.
 
 
+@node RFC 004 Part 2 Typed Coherence checking additions
+
 @subsection Coherence checking additions
 
 The existing @code{coherence_check()} gains a new category:
@@ -2636,6 +3120,8 @@ The existing @code{coherence_check()} gains a new category:
   and may need re-verification
 @end itemize
 
+
+@node RFC 004 Part 2 Typed What we defer
 
 @subsection What we defer
 
@@ -2665,8 +3151,19 @@ The existing @code{coherence_check()} gains a new category:
 
 
 
-@section Part 3: Documentation
+@node RFC 004 Part 3 Documentation
 
+@section Part 3: Documentation
+@menu
+* RFC 004 Part 3 README rewrite:: README rewrite
+* RFC 004 Part 3 CLAUDEmd update:: CLAUDE.md update
+* RFC 004 Part 3 CHANGELOG:: CHANGELOG
+@end menu
+
+
+
+
+@node RFC 004 Part 3 README rewrite
 
 @subsection README rewrite
 
@@ -2703,11 +3200,15 @@ Drop: project evolution history, Alice in Wonderland references,
 lengthy CHANGELOG prose.
 
 
+@node RFC 004 Part 3 CLAUDEmd update
+
 @subsection CLAUDE.md update
 
 Update the memory layer section to reflect four stores and
 the @code{smrti.py} entry point.
 
+
+@node RFC 004 Part 3 CHANGELOG
 
 @subsection CHANGELOG
 
@@ -2715,6 +3216,8 @@ Start fresh with v0.5.0 or v1.0.0 for the rename. Previous
 history preserved in git.
 
 
+
+@node RFC 004 References
 
 @section References
 
@@ -2737,6 +3240,8 @@ quint-code — decision reasoning trails.
   github.com/m0n0x41d/quint-code.
 @end itemize
 
+
+@node RFC 004 Decisions (resolved during implementation)
 
 @section Decisions (resolved during implementation)
 
@@ -2805,6 +3310,8 @@ quint-code — decision reasoning trails.
 @end enumerate
 
 
+@node RFC 004 Open Questions (remaining)
+
 @section Open Questions (remaining)
 
 @enumerate
@@ -2845,7 +3352,20 @@ quint-code — decision reasoning trails.
 @noindent
 @strong{Parent:} @strong{RFC 004}
 
+@menu
+* RFC 005 Purpose:: Purpose
+* RFC 005 Problem:: Problem
+* RFC 005 Proposal:: Proposal
+* RFC 005 Overlap with Anthropic session tools:: Overlap with Anthropic session tools
+* RFC 005 Implementation:: Implementation
+* RFC 005 Open questions:: Open questions
+* RFC 005 References:: References
+@end menu
 
+
+
+
+@node RFC 005 Purpose
 
 @section Purpose
 
@@ -2854,6 +3374,8 @@ space that bridges the gap between an AI agent's conversation
 context and smrti's durable stores.
 
 
+
+@node RFC 005 Problem
 
 @section Problem
 
@@ -2882,8 +3404,20 @@ committed to a durable store (polluting it with noise).
 
 
 
-@section Proposal
+@node RFC 005 Proposal
 
+@section Proposal
+@menu
+* RFC 005 Proposal The ephemeral/ directory:: The ephemeral/ directory
+* RFC 005 Proposal What goes in ephemeral/:: What goes in ephemeral/
+* RFC 005 Proposal Lifecycle:: Lifecycle
+* RFC 005 Proposal Not persisted:: Not persisted
+@end menu
+
+
+
+
+@node RFC 005 Proposal The ephemeral/ directory
 
 @subsection The ephemeral/ directory
 
@@ -2902,6 +3436,8 @@ committed to a durable store (polluting it with noise).
 @end example
 
 
+@node RFC 005 Proposal What goes in ephemeral/
+
 @subsection What goes in ephemeral/
 
 
@@ -2915,6 +3451,8 @@ committed to a durable store (polluting it with noise).
 @end multitable
 
 
+
+@node RFC 005 Proposal Lifecycle
 
 @subsection Lifecycle
 
@@ -2936,6 +3474,8 @@ committed to a durable store (polluting it with noise).
 @end enumerate
 
 
+@node RFC 005 Proposal Not persisted
+
 @subsection Not persisted
 
 The ephemeral directory is:
@@ -2954,12 +3494,23 @@ This is intentional. Ephemeral memory is disposable by definition.
 
 
 
+@node RFC 005 Overlap with Anthropic session tools
+
 @section Overlap with Anthropic session tools
+@menu
+* RFC 005 Overlap with Where they differ:: Where they differ
+* RFC 005 Overlap with The bridge value:: The bridge value
+* RFC 005 Overlap with Future automatic triage:: Future: automatic triage
+@end menu
+
+
 
 Anthropic's built-in @code{TaskCreate}/@code{TaskUpdate} tools serve a
 similar purpose: tracking work items within a single conversation.
 They are ephemeral — gone when the session ends.
 
+
+@node RFC 005 Overlap with Where they differ
 
 @subsection Where they differ
 
@@ -2974,6 +3525,8 @@ They are ephemeral — gone when the session ends.
 @end multitable
 
 
+
+@node RFC 005 Overlap with The bridge value
 
 @subsection The bridge value
 
@@ -2995,6 +3548,8 @@ A note that Q2 and Q4 have contradictory assumptions
 These are different concerns. The agent's work tracker doesn't
 need to persist. The domain scratch does — at least until triage.
 
+
+@node RFC 005 Overlap with Future automatic triage
 
 @subsection Future: automatic triage
 
@@ -3019,8 +3574,19 @@ This bridges the two systems without coupling them.
 
 
 
-@section Implementation
+@node RFC 005 Implementation
 
+@section Implementation
+@menu
+* RFC 005 Implementation Phase 1 (minimal):: Phase 1 (minimal)
+* RFC 005 Implementation Phase 2 (session awareness):: Phase 2 (session awareness)
+* RFC 005 Implementation Phase 3 (triage helpers):: Phase 3 (triage helpers)
+@end menu
+
+
+
+
+@node RFC 005 Implementation Phase 1 (minimal)
 
 @subsection Phase 1 (minimal)
 
@@ -3038,6 +3604,8 @@ No schema, no models, no SQLite
 @end itemize
 
 
+@node RFC 005 Implementation Phase 2 (session awareness)
+
 @subsection Phase 2 (session awareness)
 
 @itemize @bullet
@@ -3049,6 +3617,8 @@ No schema, no models, no SQLite
 Automatic clear on new session start
 @end itemize
 
+
+@node RFC 005 Implementation Phase 3 (triage helpers)
 
 @subsection Phase 3 (triage helpers)
 
@@ -3062,6 +3632,8 @@ CLI: @code{smrti.py memory triage}
 @end itemize
 
 
+
+@node RFC 005 Open questions
 
 @section Open questions
 
@@ -3078,6 +3650,8 @@ Is @code{staging/} a useful sub-convention or over-engineering
 @end enumerate
 
 
+
+@node RFC 005 References
 
 @section References
 
@@ -3110,7 +3684,22 @@ Letta — filesystem memory that outperforms specialized systems
 @noindent
 @strong{Parent:} @strong{RFC 004}, @strong{RFC 005}
 
+@menu
+* RFC 006 Purpose:: Purpose
+* RFC 006 Problem:: Problem
+* RFC 006 Proposal:: Proposal
+* RFC 006 How smrti fits:: How smrti fits
+* RFC 006 Interfaces:: Interfaces
+* RFC 006 Tone and honesty:: Tone and honesty
+* RFC 006 Prior art and references:: Prior art and references
+* RFC 006 Open questions:: Open questions
+* RFC 006 Relationship to other RFCs:: Relationship to other RFCs
+@end menu
 
+
+
+
+@node RFC 006 Purpose
 
 @section Purpose
 
@@ -3121,6 +3710,8 @@ fit against the host's resume/experience, drawn from
 smrti's semantic store.
 
 
+
+@node RFC 006 Problem
 
 @section Problem
 
@@ -3143,8 +3734,18 @@ The gap: @strong{no self-service discovery layer} between
 
 
 
-@section Proposal
+@node RFC 006 Proposal
 
+@section Proposal
+@menu
+* RFC 006 Proposal The visitor experience:: The visitor experience
+* RFC 006 Proposal What it is NOT:: What it is NOT
+@end menu
+
+
+
+
+@node RFC 006 Proposal The visitor experience
 
 @subsection The visitor experience
 
@@ -3180,6 +3781,8 @@ If fit is low: honest about it. Sets expectations.
 @end enumerate
 
 
+@node RFC 006 Proposal What it is NOT
+
 @subsection What it is NOT
 
 @itemize @bullet
@@ -3195,7 +3798,15 @@ Not a generic AI resume tool. It represents ONE person's
 
 
 
+@node RFC 006 How smrti fits
+
 @section How smrti fits
+@menu
+* RFC 006 How smrti fits Facts as the source of truth:: Facts as the source of truth
+* RFC 006 How smrti fits Work preference signaling:: Work preference signaling
+@end menu
+
+
 
 smrti becomes the @strong{knowledge backend}:
 
@@ -3226,6 +3837,8 @@ smrti becomes the @strong{knowledge backend}:
 @end example
 
 
+@node RFC 006 How smrti fits Facts as the source of truth
+
 @subsection Facts as the source of truth
 
 The fit engine only claims what the facts store contains.
@@ -3244,6 +3857,8 @@ The response references these facts. The visitor sees
 evidence, not claims. Low-confidence facts surface as
 "may be relevant, worth discussing" rather than assertions.
 
+
+@node RFC 006 How smrti fits Work preference signaling
 
 @subsection Work preference signaling
 
@@ -3268,8 +3883,19 @@ scheduling link.
 
 
 
-@section Interfaces
+@node RFC 006 Interfaces
 
+@section Interfaces
+@menu
+* RFC 006 Interfaces Option A Static site + API:: Option A: Static site + API
+* RFC 006 Interfaces Option B MCP server:: Option B: MCP server
+* RFC 006 Interfaces Option C Both:: Option C: Both
+@end menu
+
+
+
+
+@node RFC 006 Interfaces Option A Static site + API
 
 @subsection Option A: Static site + API
 
@@ -3285,6 +3911,8 @@ Response rendered as structured HTML
 @end itemize
 
 
+@node RFC 006 Interfaces Option B MCP server
+
 @subsection Option B: MCP server
 
 @itemize @bullet
@@ -3298,6 +3926,8 @@ Web UI is one client; Claude Desktop is another
 Richer interaction possible (follow-up questions)
 @end itemize
 
+
+@node RFC 006 Interfaces Option C Both
 
 @subsection Option C: Both
 
@@ -3313,6 +3943,8 @@ Claude Code sessions also use MCP for fact queries
 Decision deferred to implementation.
 
 
+
+@node RFC 006 Tone and honesty
 
 @section Tone and honesty
 
@@ -3339,6 +3971,8 @@ and the host's actual limitations.
 
 
 
+@node RFC 006 Prior art and references
+
 @section Prior art and references
 
 @itemize @bullet
@@ -3355,6 +3989,8 @@ Personal CRM / portfolio tools that do static
 @end itemize
 
 
+
+@node RFC 006 Open questions
 
 @section Open questions
 
@@ -3383,6 +4019,8 @@ Personal CRM / portfolio tools that do static
 @end enumerate
 
 
+
+@node RFC 006 Relationship to other RFCs
 
 @section Relationship to other RFCs
 
@@ -3420,7 +4058,24 @@ Personal CRM / portfolio tools that do static
 @noindent
 @strong{Trigger:} When PyPI publishing or RFC 006 (web interface) forces it
 
+@menu
+* RFC 007 Purpose:: Purpose
+* RFC 007 Problem:: Problem
+* RFC 007 Current layout (20 rows):: Current layout (20 rows)
+* RFC 007 Proposed layout (6 rows):: Proposed layout (6 rows)
+* RFC 007 What moves where:: What moves where
+* RFC 007 What stays:: What stays
+* RFC 007 Packaging:: Packaging
+* RFC 007 Import changes:: Import changes
+* RFC 007 Migration:: Migration
+* RFC 007 Open questions:: Open questions
+* RFC 007 Decision not yet:: Decision: not yet
+@end menu
 
+
+
+
+@node RFC 007 Purpose
 
 @section Purpose
 
@@ -3430,6 +4085,8 @@ rendered README above the fold on GitHub. Separate library
 code from application code.
 
 
+
+@node RFC 007 Problem
 
 @section Problem
 
@@ -3452,6 +4109,8 @@ three concerns:
 These should be separate.
 
 
+
+@node RFC 007 Current layout (20 rows)
 
 @section Current layout (20 rows)
 
@@ -3479,6 +4138,8 @@ validate_config.py
 .gitignore
 @end example
 
+
+@node RFC 007 Proposed layout (6 rows)
 
 @section Proposed layout (6 rows)
 
@@ -3522,6 +4183,8 @@ GitHub shows 6 entries before README:
 
 
 
+@node RFC 007 What moves where
+
 @section What moves where
 
 
@@ -3543,6 +4206,8 @@ GitHub shows 6 entries before README:
 
 
 
+@node RFC 007 What stays
+
 @section What stays
 
 
@@ -3558,8 +4223,18 @@ GitHub shows 6 entries before README:
 
 
 
-@section Packaging
+@node RFC 007 Packaging
 
+@section Packaging
+@menu
+* RFC 007 Packaging pyprojecttoml:: pyproject.toml
+* RFC 007 Packaging PyPI name:: PyPI name
+@end menu
+
+
+
+
+@node RFC 007 Packaging pyprojecttoml
 
 @subsection pyproject.toml
 
@@ -3585,12 +4260,16 @@ Zero dependencies. @code{pip install advaita-smrti} gives
 you the @code{smrti} command.
 
 
+@node RFC 007 Packaging PyPI name
+
 @subsection PyPI name
 
 @code{smrti} is taken (trivial package, 0.0.1 from 2019).
 @code{advaita-smrti} is available. Use that.
 
 
+
+@node RFC 007 Import changes
 
 @section Import changes
 
@@ -3613,8 +4292,19 @@ All internal imports within @code{smrti/memory/} stay relative
 
 
 
-@section Migration
+@node RFC 007 Migration
 
+@section Migration
+@menu
+* RFC 007 Migration What breaks:: What breaks
+* RFC 007 Migration Migration steps:: Migration steps
+* RFC 007 Migration Estimated touch count:: Estimated touch count
+@end menu
+
+
+
+
+@node RFC 007 Migration What breaks
 
 @subsection What breaks
 
@@ -3634,6 +4324,8 @@ Subtree prefix in day-shelter-kiosk (stays
 CLAUDE.md code examples
 @end itemize
 
+
+@node RFC 007 Migration Migration steps
 
 @subsection Migration steps
 
@@ -3661,11 +4353,15 @@ Pull into day-shelter-kiosk subtree
 @end enumerate
 
 
+@node RFC 007 Migration Estimated touch count
+
 @subsection Estimated touch count
 
 ~30 files. Same scale as the RFC 004 rename.
 
 
+
+@node RFC 007 Open questions
 
 @section Open questions
 
@@ -3688,6 +4384,8 @@ Pull into day-shelter-kiosk subtree
 @end enumerate
 
 
+
+@node RFC 007 Decision not yet
 
 @section Decision: not yet
 
@@ -3725,8 +4423,34 @@ The current layout works. It's just not pretty.
 @noindent
 @strong{References:} @strong{RFC 002}, @strong{RFC 004}
 
+@menu
+* RFC 011 Summary:: Summary
+* RFC 011 Motivation:: Motivation
+* RFC 011 Design:: Design
+* RFC 011 Data Model:: Data Model
+* RFC 011 Storage:: Storage
+* RFC 011 API:: API
+* RFC 011 Session Lifecycle:: Session Lifecycle
+* RFC 011 CLI:: CLI
+* RFC 011 Privacy:: Privacy
+* RFC 011 Saṃcaya — Token Accounting:: Saṃcaya — Token Accounting
+* RFC 011 Pramāṇa — Measurement Harness:: Pramāṇa — Measurement Harness
+* RFC 011 Vivecana — Export and Analysis:: Vivecana — Export and Analysis
+* RFC 011 Artha — Economy Metric:: Artha — Economy Metric
+* RFC 011 Research Protocol:: Research Protocol
+* RFC 011 Sanskrit Lexicon:: Sanskrit Lexicon
+* RFC 011 Implementation Path:: Implementation Path
+* RFC 011 Alternatives Considered:: Alternatives Considered
+* RFC 011 Trade-offs Accepted:: Trade-offs Accepted
+* RFC 011 Open Questions:: Open Questions
+* RFC 011 References:: References
+@end menu
 
 
+
+
+
+@node RFC 011 Summary
 
 @section Summary
 
@@ -3746,8 +4470,19 @@ work.
 
 
 
-@section Motivation
+@node RFC 011 Motivation
 
+@section Motivation
+@menu
+* RFC 011 Motivation The gap in the memory layer:: The gap in the memory layer
+* RFC 011 Motivation What the tracer is not:: What the tracer is not
+* RFC 011 Motivation The witness:: The witness
+@end menu
+
+
+
+
+@node RFC 011 Motivation The gap in the memory layer
 
 @subsection The gap in the memory layer
 
@@ -3775,6 +4510,8 @@ RFC 003 proposed contribution tagging (P2) and session dimensions
 data that doesn't exist yet. The tracer generates that data.
 
 
+@node RFC 011 Motivation What the tracer is not
+
 @subsection What the tracer is not
 
 @itemize @bullet
@@ -3801,6 +4538,8 @@ data that doesn't exist yet. The tracer generates that data.
 @end itemize
 
 
+@node RFC 011 Motivation The witness
+
 @subsection The witness
 
 In Advaita Vedānta, the @emph{sākṣin} (साक्षिन्) is the witness —
@@ -3816,8 +4555,19 @@ the products of action. The tracer holds the witnessing of it.
 
 
 
-@section Design
+@node RFC 011 Design
 
+@section Design
+@menu
+* RFC 011 Design Core concepts:: Core concepts
+* RFC 011 Design Span kinds:: Span kinds
+* RFC 011 Design Relationship to existing stores:: Relationship to existing stores
+@end menu
+
+
+
+
+@node RFC 011 Design Core concepts
 
 @subsection Core concepts
 
@@ -3836,6 +4586,8 @@ each hypothesis, verification, and selection.
 distinguish between different humans or different models — it
 tracks the two participants in the collaboration.
 
+
+@node RFC 011 Design Span kinds
 
 @subsection Span kinds
 
@@ -3860,6 +4612,8 @@ This is not an exhaustive taxonomy — @code{metadata} carries anything
 that doesn't fit. These kinds cover the patterns observed in
 actual sessions (RFC 003's queen's garden analysis).
 
+
+@node RFC 011 Design Relationship to existing stores
 
 @subsection Relationship to existing stores
 
@@ -3888,8 +4642,19 @@ tracer holds the verbs.
 
 
 
-@section Data Model
+@node RFC 011 Data Model
 
+@section Data Model
+@menu
+* RFC 011 Data Model Session:: Session
+* RFC 011 Data Model Span:: Span
+* RFC 011 Data Model IDs:: IDs
+@end menu
+
+
+
+
+@node RFC 011 Data Model Session
 
 @subsection Session
 
@@ -3910,6 +4675,8 @@ class Session:
 @end example
 
 
+@node RFC 011 Data Model Span
+
 @subsection Span
 
 
@@ -3929,6 +4696,8 @@ class Span:
 @end example
 
 
+@node RFC 011 Data Model IDs
+
 @subsection IDs
 
 @itemize @bullet
@@ -3943,8 +4712,20 @@ Following the existing convention of prefix + type marker +
 
 
 
-@section Storage
+@node RFC 011 Storage
 
+@section Storage
+@menu
+* RFC 011 Storage JSONL tracesjsonl:: JSONL: @code{traces.jsonl}
+* RFC 011 Storage SQLite index additions:: SQLite index additions
+* RFC 011 Storage Drift detection:: Drift detection
+* RFC 011 Storage Size management:: Size management
+@end menu
+
+
+
+
+@node RFC 011 Storage JSONL tracesjsonl
 
 @subsection JSONL: @code{traces.jsonl}
 
@@ -3959,6 +4740,8 @@ vs @code{sm-t-}).
 @{"id":"sm-t-ghi56","session_id":"sm-s-abc12","kind":"input","actor":"human","target":"sm-7k2m4","summary":"Provided budget figure and timeline","seq":2,"created_at":"2026-02-20T09:01:30Z","metadata":@{@}@}
 @end example
 
+
+@node RFC 011 Storage SQLite index additions
 
 @subsection SQLite index additions
 
@@ -4001,6 +4784,8 @@ CREATE INDEX IF NOT EXISTS idx_session_refs_ref ON session_refs(ref_id);
 @end example
 
 
+@node RFC 011 Storage Drift detection
+
 @subsection Drift detection
 
 Extends the existing pattern:
@@ -4013,6 +4798,8 @@ Facts:     JSONL has N, index has M
 Traces:    JSONL has N sessions + M spans, index has N + M
 @end example
 
+
+@node RFC 011 Storage Size management
 
 @subsection Size management
 
@@ -4042,8 +4829,19 @@ might generate 50–200 spans. Mitigation:
 
 
 
-@section API
+@node RFC 011 API
 
+@section API
+@menu
+* RFC 011 API TracerStore:: TracerStore
+* RFC 011 API Metrics derivation:: Metrics derivation
+* RFC 011 API Integration with synthesis:: Integration with synthesis
+@end menu
+
+
+
+
+@node RFC 011 API TracerStore
 
 @subsection TracerStore
 
@@ -4114,6 +4912,8 @@ mem.traces.archive(older_than_days=90)
 @end example
 
 
+@node RFC 011 API Metrics derivation
+
 @subsection Metrics derivation
 
 The three metrics from RFC 003 P4 are computed from trace data:
@@ -4139,6 +4939,8 @@ participant is carrying — the interpretation depends on context
 a personal narrative section may be mostly human input).
 
 
+@node RFC 011 API Integration with synthesis
+
 @subsection Integration with synthesis
 
 The synthesis module gains access to trace data:
@@ -4157,8 +4959,18 @@ comp = mem.synthesize.complementarity(session_id)
 
 
 
-@section Session Lifecycle
+@node RFC 011 Session Lifecycle
 
+@section Session Lifecycle
+@menu
+* RFC 011 Session Lifecycle Automatic instrumentation:: Automatic instrumentation
+* RFC 011 Session Lifecycle Manual instrumentation:: Manual instrumentation
+@end menu
+
+
+
+
+@node RFC 011 Session Lifecycle Automatic instrumentation
 
 @subsection Automatic instrumentation
 
@@ -4191,6 +5003,8 @@ mem.traces.end(session.id, summary=model_generated_summary)
 @end example
 
 
+@node RFC 011 Session Lifecycle Manual instrumentation
+
 @subsection Manual instrumentation
 
 For users integrating smrti as a library, tracing is opt-in:
@@ -4207,8 +5021,17 @@ return None. No performance cost when disabled.
 
 
 
-@section CLI
+@node RFC 011 CLI
 
+@section CLI
+@menu
+* RFC 011 CLI smrtipy memory traces:: @code{smrti.py memory traces}
+@end menu
+
+
+
+
+@node RFC 011 CLI smrtipy memory traces
 
 @subsection @code{smrti.py memory traces}
 
@@ -4244,8 +5067,19 @@ smrti.py memory traces --target sm-7k2m4
 
 
 
-@section Privacy
+@node RFC 011 Privacy
 
+@section Privacy
+@menu
+* RFC 011 Privacy What the tracer records:: What the tracer records
+* RFC 011 Privacy What the tracer does NOT record:: What the tracer does NOT record
+* RFC 011 Privacy Data locality:: Data locality
+@end menu
+
+
+
+
+@node RFC 011 Privacy What the tracer records
 
 @subsection What the tracer records
 
@@ -4272,6 +5106,8 @@ smrti.py memory traces --target sm-7k2m4
 @end itemize
 
 
+@node RFC 011 Privacy What the tracer does NOT record
+
 @subsection What the tracer does NOT record
 
 @itemize @bullet
@@ -4288,6 +5124,8 @@ PII beyond what the user explicitly provides as summaries
 @end itemize
 
 
+@node RFC 011 Privacy Data locality
+
 @subsection Data locality
 
 Traces follow the same locality rules as the rest of smrti:
@@ -4297,8 +5135,23 @@ data is considered sensitive.
 
 
 
-@section Saṃcaya — Token Accounting
+@node RFC 011 Saṃcaya — Token Accounting
 
+@section Saṃcaya — Token Accounting
+@menu
+* RFC 011 Saṃcaya — Token Motivation:: Motivation
+* RFC 011 Saṃcaya — Token Data model ApiCall:: Data model: ApiCall
+* RFC 011 Saṃcaya — Token IDs:: IDs
+* RFC 011 Saṃcaya — Token Effective Cost Units (ECU):: Effective Cost Units (ECU)
+* RFC 011 Saṃcaya — Token Storage:: Storage
+* RFC 011 Saṃcaya — Token Accumulation boundaries:: Accumulation boundaries
+* RFC 011 Saṃcaya — Token Key design decisions:: Key design decisions
+@end menu
+
+
+
+
+@node RFC 011 Saṃcaya — Token Motivation
 
 @subsection Motivation
 
@@ -4311,6 +5164,8 @@ work. Token accounting captures the @emph{weight}. Without it, we
 can say "the model drafted 12 answers" but not "at what cost
 in tokens, and how did caching affect that cost?"
 
+
+@node RFC 011 Saṃcaya — Token Data model ApiCall
 
 @subsection Data model: ApiCall
 
@@ -4345,10 +5200,14 @@ class ApiCall:
 @end example
 
 
+@node RFC 011 Saṃcaya — Token IDs
+
 @subsection IDs
 
 @code{sm-a-xxxxx} (a for api call). Follows the existing convention.
 
+
+@node RFC 011 Saṃcaya — Token Effective Cost Units (ECU)
 
 @subsection Effective Cost Units (ECU)
 
@@ -4380,6 +5239,8 @@ Ratios are stored in harness config and can be adjusted per
 model. ECU is unit-free — it is a @emph{relative} cost measure for
 comparison across conditions, not an absolute dollar figure.
 
+
+@node RFC 011 Saṃcaya — Token Storage
 
 @subsection Storage
 
@@ -4424,6 +5285,8 @@ CREATE INDEX IF NOT EXISTS idx_apicalls_section
 @end example
 
 
+@node RFC 011 Saṃcaya — Token Accumulation boundaries
+
 @subsection Accumulation boundaries
 
 Accumulators are @emph{queries}, not stored objects. Token totals
@@ -4448,6 +5311,8 @@ FROM apicalls GROUP BY condition_id;
 @end example
 
 
+@node RFC 011 Saṃcaya — Token Key design decisions
+
 @subsection Key design decisions
 
 @itemize @bullet
@@ -4465,8 +5330,22 @@ No new dependencies: @code{sqlite3} + stdlib only
 
 
 
-@section Pramāṇa — Measurement Harness
+@node RFC 011 Pramāṇa — Measurement Harness
 
+@section Pramāṇa — Measurement Harness
+@menu
+* RFC 011 Pramāṇa — Purpose:: Purpose
+* RFC 011 Pramāṇa — Six Avasthās (Experimental Conditions):: Six Avasthās (Experimental Conditions)
+* RFC 011 Pramāṇa — InstrumentedClient:: InstrumentedClient
+* RFC 011 Pramāṇa — Harness config:: Harness config
+* RFC 011 Pramāṇa — Harness runner:: Harness runner
+* RFC 011 Pramāṇa — Key constraint:: Key constraint
+@end menu
+
+
+
+
+@node RFC 011 Pramāṇa — Purpose
 
 @subsection Purpose
 
@@ -4475,6 +5354,8 @@ efficiency across memory configurations. The harness runs the
 same question set under different avasthās (conditions) and
 records everything needed for analysis.
 
+
+@node RFC 011 Pramāṇa — Six Avasthās (Experimental Conditions)
 
 @subsection Six Avasthās (Experimental Conditions)
 
@@ -4494,6 +5375,8 @@ The conditions form an ablation study: each adds one
 capability to the previous. This isolates the marginal
 contribution of each memory type.
 
+
+@node RFC 011 Pramāṇa — InstrumentedClient
 
 @subsection InstrumentedClient
 
@@ -4528,6 +5411,8 @@ is composed, not inherited. Consumer code passes it where
 it would pass the raw client.
 
 
+@node RFC 011 Pramāṇa — Harness config
+
 @subsection Harness config
 
 
@@ -4553,6 +5438,8 @@ it would pass the raw client.
 @}
 @end example
 
+
+@node RFC 011 Pramāṇa — Harness runner
 
 @subsection Harness runner
 
@@ -4586,6 +5473,8 @@ class HarnessRunner:
 @end example
 
 
+@node RFC 011 Pramāṇa — Key constraint
+
 @subsection Key constraint
 
 No new dependencies. Pure Python + stdlib + sqlite3. The
@@ -4593,14 +5482,28 @@ harness is part of smrti, not a separate tool.
 
 
 
-@section Vivecana — Export and Analysis
+@node RFC 011 Vivecana — Export and Analysis
 
+@section Vivecana — Export and Analysis
+@menu
+* RFC 011 Vivecana — Export Purpose:: Purpose
+* RFC 011 Vivecana — Export Export formats:: Export formats
+* RFC 011 Vivecana — Export CLI:: CLI
+* RFC 011 Vivecana — Export Quality scores:: Quality scores
+@end menu
+
+
+
+
+@node RFC 011 Vivecana — Export Purpose
 
 @subsection Purpose
 
 Export trace and token data in analysis-ready formats for
 pandas, R, or any statistics tool.
 
+
+@node RFC 011 Vivecana — Export Export formats
 
 @subsection Export formats
 
@@ -4642,6 +5545,8 @@ per-task breakdowns. For programmatic consumption.
 @end example
 
 
+@node RFC 011 Vivecana — Export CLI
+
 @subsection CLI
 
 
@@ -4656,6 +5561,8 @@ smrti.py harness export --format json --summary > summary.json
 smrti.py harness export --session sm-s-abc12 --format csv
 @end example
 
+
+@node RFC 011 Vivecana — Export Quality scores
 
 @subsection Quality scores
 
@@ -4676,8 +5583,19 @@ Once imported, artha (ECU per quality-point) can be computed.
 
 
 
-@section Artha — Economy Metric
+@node RFC 011 Artha — Economy Metric
 
+@section Artha — Economy Metric
+@menu
+* RFC 011 Artha — Economy The fourth dimension:: The fourth dimension
+* RFC 011 Artha — Economy Interpretation:: Interpretation
+* RFC 011 Artha — Economy The four dimensions together:: The four dimensions together
+@end menu
+
+
+
+
+@node RFC 011 Artha — Economy The fourth dimension
 
 @subsection The fourth dimension
 
@@ -4699,6 +5617,8 @@ comparing across conditions with the same question set and
 quality rubric.
 
 
+@node RFC 011 Artha — Economy Interpretation
+
 @subsection Interpretation
 
 
@@ -4716,6 +5636,8 @@ answers: *does adding this memory capability improve the
 cost-quality ratio?*
 
 
+@node RFC 011 Artha — Economy The four dimensions together
+
 @subsection The four dimensions together
 
 
@@ -4730,8 +5652,19 @@ cost-quality ratio?*
 
 
 
-@section Research Protocol
+@node RFC 011 Research Protocol
 
+@section Research Protocol
+@menu
+* RFC 011 Research Protocol Quality rubric:: Quality rubric
+* RFC 011 Research Protocol Statistical plan:: Statistical plan
+* RFC 011 Research Protocol Threats to validity:: Threats to validity
+@end menu
+
+
+
+
+@node RFC 011 Research Protocol Quality rubric
 
 @subsection Quality rubric
 
@@ -4751,6 +5684,8 @@ experimental condition:
 
 Mean quality score = arithmetic mean of the five dimensions.
 
+
+@node RFC 011 Research Protocol Statistical plan
 
 @subsection Statistical plan
 
@@ -4774,6 +5709,8 @@ Mean quality score = arithmetic mean of the five dimensions.
 @end itemize
 
 
+@node RFC 011 Research Protocol Threats to validity
+
 @subsection Threats to validity
 
 @itemize @bullet
@@ -4792,6 +5729,8 @@ Mean quality score = arithmetic mean of the five dimensions.
 @end itemize
 
 
+
+@node RFC 011 Sanskrit Lexicon
 
 @section Sanskrit Lexicon
 
@@ -4820,6 +5759,8 @@ valid knowledge (pramāṇa). See @code{docs/papers/bibliography.bib}
 entries @code{deutsch1969advaita} and @code{mohanty2000classical}.
 
 
+
+@node RFC 011 Implementation Path
 
 @section Implementation Path
 
@@ -4850,8 +5791,20 @@ Phases 12–13 are refinements. Phase 14 is consumer-side.
 
 
 
-@section Alternatives Considered
+@node RFC 011 Alternatives Considered
 
+@section Alternatives Considered
+@menu
+* RFC 011 Alternatives A1 OpenTelemetry-based tracing:: A1: OpenTelemetry-based tracing
+* RFC 011 Alternatives A2 Traces as task metadata:: A2: Traces as task metadata
+* RFC 011 Alternatives A3 Separate JSONL per session:: A3: Separate JSONL per session
+* RFC 011 Alternatives A4 No tracer — derive process from diffs:: A4: No tracer — derive process from diffs
+@end menu
+
+
+
+
+@node RFC 011 Alternatives A1 OpenTelemetry-based tracing
 
 @subsection A1: OpenTelemetry-based tracing
 
@@ -4862,6 +5815,8 @@ conceptual model (spans, nesting) is borrowed; the implementation
 is not.
 
 
+@node RFC 011 Alternatives A2 Traces as task metadata
+
 @subsection A2: Traces as task metadata
 
 Rejected. Stuffing span data into task @code{metadata} fields would
@@ -4871,6 +5826,8 @@ and finalization. This is too much for a metadata dict and loses
 the temporal ordering that makes traces useful.
 
 
+@node RFC 011 Alternatives A3 Separate JSONL per session
+
 @subsection A3: Separate JSONL per session
 
 Considered. One file per session (e.g., @code{traces/sm-s-abc12.jsonl})
@@ -4879,6 +5836,8 @@ single-file pattern that makes @code{git diff} and drift detection
 simple. A single @code{traces.jsonl} with archival via index removal
 preserves the pattern.
 
+
+@node RFC 011 Alternatives A4 No tracer — derive process from diffs
 
 @subsection A4: No tracer — derive process from diffs
 
@@ -4891,6 +5850,8 @@ approach. The interesting part of a session is often what was
 considered but not persisted.
 
 
+
+@node RFC 011 Trade-offs Accepted
 
 @section Trade-offs Accepted
 
@@ -4929,6 +5890,8 @@ considered but not persisted.
 @end itemize
 
 
+
+@node RFC 011 Open Questions
 
 @section Open Questions
 
@@ -4975,6 +5938,8 @@ considered but not persisted.
 @end enumerate
 
 
+
+@node RFC 011 References
 
 @section References
 
@@ -5067,7 +6032,22 @@ to judge the process — to remember it.*
 @noindent
 @strong{Parent:} @strong{RFC 004}
 
+@menu
+* RFC 013 Purpose:: Purpose
+* RFC 013 Problem:: Problem
+* RFC 013 What we test:: What we test
+* RFC 013 Two arms:: Two arms
+* RFC 013 Three platforms:: Three platforms
+* RFC 013 Scoring ASP (Answer Set Programming):: Scoring: ASP (Answer Set Programming)
+* RFC 013 Fixture design:: Fixture design
+* RFC 013 What success looks like:: What success looks like
+* RFC 013 Future work:: Future work
+@end menu
 
+
+
+
+@node RFC 013 Purpose
 
 @section Purpose
 
@@ -5075,6 +6055,8 @@ Document why smṛti-bench exists, what it measures, and how the
 scoring system works.
 
 
+
+@node RFC 013 Problem
 
 @section Problem
 
@@ -5088,6 +6070,8 @@ smrti gives agents persistent structured memory via MCP. But
 "persistent memory" is only valuable if it actually improves
 responses. smṛti-bench measures whether it does.
 
+
+@node RFC 013 What we test
 
 @section What we test
 
@@ -5110,6 +6094,8 @@ Each prompt targets a different memory capability:
 
 
 
+@node RFC 013 Two arms
+
 @section Two arms
 
 @strong{Baseline} — agent runs in an empty directory with no memory tools.
@@ -5120,6 +6106,8 @@ Correct behavior: query memory stores and answer accurately.
 Pass = expected keywords present, no traps triggered.
 
 
+@node RFC 013 Three platforms
+
 @section Three platforms
 
 The same battery runs against Claude Code, Gemini (API), and
@@ -5127,7 +6115,14 @@ Antigravity. This tests whether the MCP memory layer works
 across different agent platforms, not just one.
 
 
+@node RFC 013 Scoring ASP (Answer Set Programming)
+
 @section Scoring: ASP (Answer Set Programming)
+@menu
+* RFC 013 Scoring ASP Why ASP over Python:: Why ASP over Python
+@end menu
+
+
 
 Python extracts text predicates from each response (keyword
 presence, ignorance signals, assertion phrases). Clingo
@@ -5145,6 +6140,8 @@ Three rule sets:
 
 
 
+@node RFC 013 Scoring ASP Why ASP over Python
+
 @subsection Why ASP over Python
 
 The grading logic involves negation ("pass if NOT missing keywords
@@ -5154,6 +6151,8 @@ reasoning ("contradiction if pass on P1 but fail on P2"). These are
 natural in ASP and awkward in imperative code. The @code{.lp} files also
 serve as a readable specification of what "correct" means.
 
+
+@node RFC 013 Fixture design
 
 @section Fixture design
 
@@ -5177,6 +6176,8 @@ PROMPT_06 tests absence — the ORM fact is intentionally missing.
 @end itemize
 
 
+@node RFC 013 What success looks like
+
 @section What success looks like
 
 @itemize @bullet
@@ -5190,6 +6191,8 @@ No coherence warnings (consistent across related prompts)
 No regressions between runs
 @end itemize
 
+
+@node RFC 013 Future work
 
 @section Future work
 
@@ -5207,6 +6210,17 @@ No regressions between runs
 @node RFC 017
 @chapter RFC 017: Multilingual Grounding Fidelity
 
+@menu
+* RFC 017 Hypothesis::
+* RFC 017 Background::
+* RFC 017 Key Insight::
+* RFC 017 Language Selection::
+* RFC 017 What Would Change::
+* RFC 017 What Would Not Change::
+* RFC 017 Open Questions::
+* RFC 017 Implications::
+@end menu
+
 
 @noindent
 @strong{Status:} Hypothesis
@@ -5222,14 +6236,16 @@ No regressions between runs
 
 
 
+@node RFC 017 Hypothesis
 @section Hypothesis
 
-Grounding fidelity — the degree to which an agent's responses are
-faithfully attributed to structured memory — varies by human language
+Grounding fidelity --- the degree to which an agent's responses are
+faithfully attributed to structured memory --- varies by human language
 for the same model. Models may be more prone to unattributed
 assertions in languages with less training data.
 
 
+@node RFC 017 Background
 @section Background
 
 RFC 013 established smṛti-bench and the five-level grounding fidelity
@@ -5237,15 +6253,15 @@ spectrum:
 
 @enumerate
 @item
-@strong{Grounded recall} — answers from memory (PASS)
+@strong{Grounded recall} --- answers from memory (PASS)
 @item
-@strong{Grounded absence} — correctly says "not in memory" (PASS)
+@strong{Grounded absence} --- correctly says ``not in memory'' (PASS)
 @item
-@strong{Helpful elaboration} — general knowledge, disclaimed (PASS)
+@strong{Helpful elaboration} --- general knowledge, disclaimed (PASS)
 @item
-@strong{Unattributed assertion} — project claim without source (FAIL)
+@strong{Unattributed assertion} --- project claim without source (FAIL)
 @item
-@strong{Confabulation} — invented project history (FAIL)
+@strong{Confabulation} --- invented project history (FAIL)
 @end enumerate
 
 The current scorer uses English phrase lists to classify agent
@@ -5253,6 +6269,7 @@ behavior on this spectrum. The ASP rules that derive grades from
 those classifications are language-independent.
 
 
+@node RFC 017 Key Insight
 @section Key Insight
 
 The architecture separates @strong{perception} (Python phrase extraction)
@@ -5262,6 +6279,32 @@ multilingual case: the judgement logic (@code{scoring.lp}, @code{coherence.lp},
 layer needs locale-specific variants.
 
 
+@node RFC 017 Language Selection
+@section Language Selection
+
+The test matrix spans a training-data gradient to isolate the
+effect of corpus size on grounding fidelity:
+
+@multitable @columnfractions .20 .15 .18 .47
+@headitem Language @tab Script @tab Training data @tab Rationale
+@item English @tab Latin @tab High @tab Baseline (existing)
+@item Norwegian (norsk) @tab Latin @tab Medium-high @tab Same script as English, smaller corpus --- isolates data volume from script effects
+@item Japanese (日本語) @tab CJK @tab Medium @tab Non-Latin script, substantial corpus --- tests script + structure
+@item Sanskrit (संस्कृतम्) @tab Devanāgarī @tab Low @tab Near the edge of model capability --- stress test for low-resource grounding
+@end multitable
+
+This gradient lets us distinguish three confounds:
+@enumerate
+@item
+@strong{Data volume alone} (English → Norwegian, same script family)
+@item
+@strong{Script + structure} (Norwegian → Japanese, different script, adequate data)
+@item
+@strong{Data scarcity} (Japanese → Sanskrit, different script, minimal data)
+@end enumerate
+
+
+@node RFC 017 What Would Change
 @section What Would Change
 
 @strong{Locale-specific phrase lists} (Python):
@@ -5275,33 +6318,44 @@ GENERAL_KNOWLEDGE_PHRASES = ["common choices", "typically", ...]
 # Japanese (new)
 MEMORY_CITATION_PHRASES_JA = ["メモリによると", "decision qt-", ...]
 GENERAL_KNOWLEDGE_PHRASES_JA = ["一般的には", "よく使われるのは", ...]
+
+# Norwegian (new)
+MEMORY_CITATION_PHRASES_NO = ["ifølge minnet", "decision qt-", ...]
+GENERAL_KNOWLEDGE_PHRASES_NO = ["vanlige valg", "typisk", ...]
+
+# Sanskrit (new)
+MEMORY_CITATION_PHRASES_SA = ["स्मृत्यनुसारम्", "decision qt-", ...]
+GENERAL_KNOWLEDGE_PHRASES_SA = ["सामान्यतः", "प्रायः", ...]
 @end example
 
-@strong{Translated fixture and prompts} — the "trellis" project scenario
-and 6-prompt battery in the target language.
+@strong{Translated fixture and prompts} --- the ``trellis'' project scenario
+and 6-prompt battery in each target language.
 
-@strong{ASP rules} — no changes.
+@strong{ASP rules} --- no changes.
 
 
+@node RFC 017 What Would Not Change
 @section What Would Not Change
 
 @itemize @bullet
 @item
-@code{scoring.lp} — grade derivation, integrity constraints, attribution rules
+@code{scoring.lp} --- grade derivation, integrity constraints, attribution rules
 @item
-@code{coherence.lp} — cross-prompt consistency checks
+@code{coherence.lp} --- cross-prompt consistency checks
 @item
-@code{regression.lp} — cross-run comparison
+@code{regression.lp} --- cross-run comparison
 @item
 The grounding fidelity spectrum itself
 @end itemize
 
 
+@node RFC 017 Open Questions
 @section Open Questions
 
 @itemize @bullet
 @item
-Which languages first? Japanese (日本語) is the initial candidate.
+Implementation order: Japanese first (largest non-English corpus),
+  then Norwegian, then Sanskrit?
 @item
 Do we test the same models, or include models with stronger
   non-English training (e.g., Japanese-specialized models)?
@@ -5310,15 +6364,27 @@ Is the five-level spectrum sufficient, or do some languages
   have discourse patterns that don't map cleanly?
 @item
 How do we handle mixed-language responses (code-switching)?
+@item
+Sanskrit phrase-list validation: who reviews the संस्कृतम् phrases
+  for accuracy? Fewer native speakers available for review.
+@item
+Does Norwegian Bokmål vs. Nynorsk matter, or is the difference
+  too small to affect grounding behavior?
 @end itemize
 
 
+@node RFC 017 Implications
 @section Implications
 
 If grounding fidelity varies by language, this affects which models
 are safe to deploy with structured memory in non-English contexts.
 A model that correctly attributes in English but confabulates in
 Japanese would need different guardrails per locale.
+
+The training-data gradient (English → Norwegian → Japanese → Sanskrit)
+may reveal whether degradation is linear or has cliff effects --- a
+threshold below which grounding fidelity collapses rather than
+gracefully degrades.
 
 
 @bye
