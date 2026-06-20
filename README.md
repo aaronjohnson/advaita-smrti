@@ -113,6 +113,16 @@ See [RFC 013](docs/rfcs/013-bench-rationale.md) for the full rationale.
   (Hu et al., 2025) — survey and taxonomy
 - [Context Engineering: Sessions & Memory](https://www.kaggle.com/whitepaper-context-engineering-sessions-and-memory)
   (Google, 2025) — whitepaper
+- [haft](https://github.com/m0n0x41d/haft) — engineering-decisions
+  engine; FPF governance substrate with evidence decay and parity
+  enforcement (same author as quint-code)
+- [FPF — First Principles Framework](https://github.com/ailev/FPF)
+  (Anatoly Levenchuk / ailev) — the systems-engineering methodology
+  haft is built on
+- [OKF — Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)
+  (Google Cloud, 2026; Apache-2.0) — vendor-neutral Markdown + YAML-frontmatter
+  standard for agent knowledge; complements MCP (MCP = tool access,
+  OKF = the knowledge itself). Closely mirrors smrti's typed stores.
 
 ## See Also
 
@@ -124,6 +134,9 @@ See [RFC 013](docs/rfcs/013-bench-rationale.md) for the full rationale.
   summarization and conflict resolution
 - [Pinecone](https://www.pinecone.io/) — vector database for
   semantic retrieval
+- [nit](https://github.com/asheux/nit) ([nit.tools](https://nit.tools)) —
+  Rust terminal-first editor with a pure protocol-layer core and an
+  MCP server
 
 ## License
 
