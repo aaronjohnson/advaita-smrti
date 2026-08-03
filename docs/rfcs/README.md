@@ -15,3 +15,4 @@ Design decisions for [smrti](../../README.md).
 | [011](011-tracer.md) | Draft | [003](003-recursive-context-and-complementary-cognition.md) | Tracer — session observation, token accounting, measurement harness |
 | [013](013-bench-rationale.md) | Implemented (v0.6.0) | [004](004-smrti-rename-and-typed-memory.md) | smṛti-bench — rationale, design, ASP scoring |
 | [017](017-multilingual-grounding-fidelity.md) | Hypothesis | [013](013-bench-rationale.md) | Multilingual grounding fidelity — does attribution quality vary by language? |
+| [018](018-bash-env-for-claude-code.md) | Draft | — | BASH_ENV for Claude Code — fix version managers in non-interactive shells |
