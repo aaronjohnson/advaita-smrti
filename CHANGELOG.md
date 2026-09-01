@@ -9,6 +9,80 @@ Commit messages follow an Alice in Wonderland theme.
 
 ---
 
+## [0.7.0] - Unreleased - "A Grin Without a Cat"
+
+> "Well! I've often seen a cat without a grin, but a grin without a cat!
+> It's the most curious thing I ever saw in my life."
+
+The MCP server had been dead for a month and nobody noticed, because a
+stdio server that dies during import looks exactly like a server that was
+never approved to launch. Both are silence. `mcp` 2.0 renamed `FastMCP` to
+`MCPServer` and the import went with it.
+
+### Changed
+
+- **Python floor raised to 3.10** (`requires-python`, was 3.9) — the `mcp`
+  SDK 2.x requires it. Nobody else is running this yet, so the drop costs
+  nothing.
+
+- **MCP server migrated to the `mcp` 2.x API** (`smrti/mcp.py`) —
+  `mcp.server.fastmcp.FastMCP` is now `mcp.server.mcpserver.MCPServer`.
+  Two edited lines: the import and the constructor. The constructor keyword,
+  all 22 `@mcp.tool()` decorators, and `run(transport="stdio")` are unchanged;
+  smrti uses no context objects, resources, prompts, or lifespan hooks, which
+  is where 2.0's genuinely breaking changes live.
+
+- **`mcp` extra pinned to `>=2,<3`** (`pyproject.toml`, was `>=1.0`) — the
+  constraint now travels with the install instead of living in one shell
+  history. A floor is not a pin: every fresh install on a new machine was
+  resolving whatever came next. Note that `mcp` 2.x requires Python 3.10+
+  (and moves to `httpx2`); `requires-python` stays at 3.9 because the core
+  package has no dependencies, so on 3.9 the extra fails loudly at install
+  rather than the core becoming uninstallable.
+
+### Added
+
+- **A cause on stderr when the import fails** — the server names the missing
+  class, the required SDK version, and the fix before the traceback. Silence
+  was the whole bug; this makes the corpse visible.
+
+- **A startup line on stderr** — `smrti-mcp: serving memory at <path>`, so a
+  live server is distinguishable from one that never started. stdout stays
+  the protocol's.
+
+- **`tests/test_mcp_server.py`** — imports the server, asserts its tools
+  register and that each carries a description. Nothing in the suite touched
+  the MCP layer before, which is why a dead import survived a month. Skips
+  cleanly when the SDK isn't installed.
+
+- **PyPI packaging** — authors, keywords, trove classifiers, and Changelog
+  and Issues URLs, so the project page is legible rather than bare. An
+  explicit sdist include list keeps the repo root's legacy modules
+  (`smrti.py`, `memory/`, `sea_*.py`), which shadow the real package, out
+  of the tarball.
+
+- **`.github/workflows/publish.yml`** — tag `v*` to build, test, and publish
+  via PyPI Trusted Publishing (OIDC). No API token is stored in the repo.
+  The job refuses to build when the tag disagrees with the `pyproject`
+  version, because PyPI versions are immutable and a wrong one cannot be
+  recalled.
+
+- **`.github/workflows/publish-testpypi.yml`** — a manual dress rehearsal
+  that publishes to TestPyPI so the project page can be read before
+  anything permanent lands. Dispatch-only, never tag-triggered, so a real
+  release cannot arrive here by accident. Each run appends `.dev<run>` to
+  the version, since TestPyPI versions are immutable too and a re-render
+  would otherwise collide with the last one.
+
+### Removed
+
+- **`.github/workflows/test.yml`** — a stale duplicate of `tests.yml`, same
+  workflow name, testing Python 3.8 (below even the old floor) and never
+  installing the package, so every MCP test silently skipped. `tests.yml`
+  is the real one.
+
+---
+
 ## [0.6.0] - 2026-03-18 - "The Jabberwock's Verdict"
 
 > "And hast thou slain the Jabberwock?

@@ -25,6 +25,9 @@ pip install advaita-smrti          # core (no dependencies)
 pip install advaita-smrti[mcp]     # with MCP server support
 ```
 
+Requires Python 3.10+. The core package has no dependencies; the `[mcp]`
+extra pulls in the `mcp` SDK 2.x.
+
 ## Quick Start
 
 ```bash

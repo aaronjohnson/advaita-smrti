@@ -12,15 +12,28 @@ Usage (Claude Code .mcp.json):
 """
 
 import argparse
+import sys
 from typing import Optional
 
-from mcp.server.fastmcp import FastMCP
+try:
+    from mcp.server.mcpserver import MCPServer
+except ImportError as exc:  # pragma: no cover - depends on the install environment
+    # A stdio server that dies during import is invisible: the client sees the
+    # same silence as a server that was never approved. Say what went wrong on
+    # stderr before the traceback so the log has a cause, not just an absence.
+    sys.stderr.write(
+        "smrti-mcp: could not import the MCP SDK server class.\n"
+        f"  cause: {exc}\n"
+        "  smrti requires mcp>=2 (Python 3.10+), where FastMCP was renamed to MCPServer.\n"
+        "  fix:   pip install --upgrade 'advaita-smrti[mcp]'\n"
+    )
+    raise
 
 from smrti import Memory
 
 # --- server setup -----------------------------------------------------------
 
-mcp = FastMCP("smrti", instructions=(
+mcp = MCPServer("smrti", instructions=(
     "smrti provides structured project memory with three stores: "
     "tasks (procedural), decisions (episodic), and facts (semantic). "
     "Use these tools to read and write project knowledge that persists "
@@ -379,6 +392,10 @@ def main():
                         help="Path to memory directory (default: .memory)")
     args = parser.parse_args()
     _memory_path = args.memory_path
+
+    # One line on stderr so a live server is distinguishable from one that
+    # never started. stdout belongs to the protocol; stderr goes to the log.
+    sys.stderr.write(f"smrti-mcp: serving memory at {_memory_path}\n")
 
     mcp.run(transport="stdio")
 
