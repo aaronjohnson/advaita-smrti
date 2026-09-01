@@ -9,6 +9,50 @@ Commit messages follow an Alice in Wonderland theme.
 
 ---
 
+## [Unreleased] - "A Grin Without a Cat"
+
+> "Well! I've often seen a cat without a grin, but a grin without a cat!
+> It's the most curious thing I ever saw in my life."
+
+The MCP server had been dead for a month and nobody noticed, because a
+stdio server that dies during import looks exactly like a server that was
+never approved to launch. Both are silence. `mcp` 2.0 renamed `FastMCP` to
+`MCPServer` and the import went with it.
+
+### Changed
+
+- **MCP server migrated to the `mcp` 2.x API** (`smrti/mcp.py`) —
+  `mcp.server.fastmcp.FastMCP` is now `mcp.server.mcpserver.MCPServer`.
+  Two edited lines: the import and the constructor. The constructor keyword,
+  all 22 `@mcp.tool()` decorators, and `run(transport="stdio")` are unchanged;
+  smrti uses no context objects, resources, prompts, or lifespan hooks, which
+  is where 2.0's genuinely breaking changes live.
+
+- **`mcp` extra pinned to `>=2,<3`** (`pyproject.toml`, was `>=1.0`) — the
+  constraint now travels with the install instead of living in one shell
+  history. A floor is not a pin: every fresh install on a new machine was
+  resolving whatever came next. Note that `mcp` 2.x requires Python 3.10+
+  (and moves to `httpx2`); `requires-python` stays at 3.9 because the core
+  package has no dependencies, so on 3.9 the extra fails loudly at install
+  rather than the core becoming uninstallable.
+
+### Added
+
+- **A cause on stderr when the import fails** — the server names the missing
+  class, the required SDK version, and the fix before the traceback. Silence
+  was the whole bug; this makes the corpse visible.
+
+- **A startup line on stderr** — `smrti-mcp: serving memory at <path>`, so a
+  live server is distinguishable from one that never started. stdout stays
+  the protocol's.
+
+- **`tests/test_mcp_server.py`** — imports the server, asserts its tools
+  register and that each carries a description. Nothing in the suite touched
+  the MCP layer before, which is why a dead import survived a month. Skips
+  cleanly when the SDK isn't installed.
+
+---
+
 ## [0.6.0] - 2026-03-18 - "The Jabberwock's Verdict"
 
 > "And hast thou slain the Jabberwock?
