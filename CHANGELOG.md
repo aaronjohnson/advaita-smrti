@@ -9,7 +9,7 @@ Commit messages follow an Alice in Wonderland theme.
 
 ---
 
-## [Unreleased] - "A Grin Without a Cat"
+## [0.7.0] - Unreleased - "A Grin Without a Cat"
 
 > "Well! I've often seen a cat without a grin, but a grin without a cat!
 > It's the most curious thing I ever saw in my life."
@@ -20,6 +20,10 @@ never approved to launch. Both are silence. `mcp` 2.0 renamed `FastMCP` to
 `MCPServer` and the import went with it.
 
 ### Changed
+
+- **Python floor raised to 3.10** (`requires-python`, was 3.9) — the `mcp`
+  SDK 2.x requires it. Nobody else is running this yet, so the drop costs
+  nothing.
 
 - **MCP server migrated to the `mcp` 2.x API** (`smrti/mcp.py`) —
   `mcp.server.fastmcp.FastMCP` is now `mcp.server.mcpserver.MCPServer`.
@@ -50,6 +54,25 @@ never approved to launch. Both are silence. `mcp` 2.0 renamed `FastMCP` to
   register and that each carries a description. Nothing in the suite touched
   the MCP layer before, which is why a dead import survived a month. Skips
   cleanly when the SDK isn't installed.
+
+- **PyPI packaging** — authors, keywords, trove classifiers, and Changelog
+  and Issues URLs, so the project page is legible rather than bare. An
+  explicit sdist include list keeps the repo root's legacy modules
+  (`smrti.py`, `memory/`, `sea_*.py`), which shadow the real package, out
+  of the tarball.
+
+- **`.github/workflows/publish.yml`** — tag `v*` to build, test, and publish
+  via PyPI Trusted Publishing (OIDC). No API token is stored in the repo.
+  The job refuses to build when the tag disagrees with the `pyproject`
+  version, because PyPI versions are immutable and a wrong one cannot be
+  recalled.
+
+### Removed
+
+- **`.github/workflows/test.yml`** — a stale duplicate of `tests.yml`, same
+  workflow name, testing Python 3.8 (below even the old floor) and never
+  installing the package, so every MCP test silently skipped. `tests.yml`
+  is the real one.
 
 ---
 
