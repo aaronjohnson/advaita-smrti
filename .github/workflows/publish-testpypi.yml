@@ -1,0 +1,75 @@
+name: Publish to TestPyPI
+
+# A dress rehearsal: build the real artifacts and push them to TestPyPI so
+# the project page can be read before anything permanent happens on PyPI.
+# Run it from the Actions tab (or the GitHub mobile app) -- never on a tag,
+# so a real release can't land here by accident.
+#
+# One-time setup at https://test.pypi.org/manage/account/publishing/
+#   project: advaita-smrti | owner: aaronjohnson | repo: advaita-smrti
+#   workflow: publish-testpypi.yml | environment: testpypi
+#
+# TestPyPI versions are immutable too, so each run appends a .devN suffix by
+# default and a re-render never collides with the last one.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dev_suffix:
+        description: 'Append .dev<run number> to the version (leave on to re-render repeatedly)'
+        type: boolean
+        default: true
+
+jobs:
+  testpypi:
+    name: Build and publish to TestPyPI
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write          # required for trusted publishing
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply dev suffix
+        if: ${{ inputs.dev_suffix }}
+        run: |
+          python - <<'PY'
+          import os, pathlib, re
+          p = pathlib.Path("pyproject.toml")
+          s = p.read_text()
+          s, n = re.subn(r'^version = "([^"]+)"$',
+                         lambda m: f'version = "{m.group(1)}.dev{os.environ["GITHUB_RUN_NUMBER"]}"',
+                         s, count=1, flags=re.M)
+          assert n == 1, "could not find the version line in pyproject.toml"
+          p.write_text(s)
+          print(re.search(r'^version = .*$', s, re.M).group(0))
+          PY
+
+      - name: Build sdist and wheel
+        run: |
+          pip install --upgrade pip build twine
+          python -m build
+          twine check --strict dist/*
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+      - name: Where to look
+        run: |
+          echo "### TestPyPI upload complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Project page: https://test.pypi.org/project/advaita-smrti/" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo 'Install it with:' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo 'pip install --index-url https://test.pypi.org/simple/ \' >> $GITHUB_STEP_SUMMARY
+          echo '            --extra-index-url https://pypi.org/simple/ "advaita-smrti[mcp]"' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '(the extra index is needed so the `mcp` dependency resolves from real PyPI)' >> $GITHUB_STEP_SUMMARY

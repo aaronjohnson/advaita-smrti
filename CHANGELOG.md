@@ -67,6 +67,13 @@ never approved to launch. Both are silence. `mcp` 2.0 renamed `FastMCP` to
   version, because PyPI versions are immutable and a wrong one cannot be
   recalled.
 
+- **`.github/workflows/publish-testpypi.yml`** — a manual dress rehearsal
+  that publishes to TestPyPI so the project page can be read before
+  anything permanent lands. Dispatch-only, never tag-triggered, so a real
+  release cannot arrive here by accident. Each run appends `.dev<run>` to
+  the version, since TestPyPI versions are immutable too and a re-render
+  would otherwise collide with the last one.
+
 ### Removed
 
 - **`.github/workflows/test.yml`** — a stale duplicate of `tests.yml`, same
