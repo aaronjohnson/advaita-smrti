@@ -52,7 +52,8 @@ jobs:
 
       - name: Build sdist and wheel
         run: |
-          pip install --upgrade pip build twine
+          # readme_renderer[md] or twine silently SKIPS Markdown validation
+          pip install --upgrade pip build twine 'readme_renderer[md]'
           python -m build
           twine check --strict dist/*
 
